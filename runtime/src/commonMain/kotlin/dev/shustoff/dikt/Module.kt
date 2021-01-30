@@ -8,7 +8,7 @@ abstract class Module {
     protected fun <T> factory(creator: (() -> T)? = null): ReadOnlyProperty<Module, T> =
         FactoryDelegate<T>(creator)
 
-    protected fun <T> singletone(creator: (() -> T)? = null) =
+    protected fun <T> singleton(creator: (() -> T)? = null) =
         lazy(
             creator ?: throw IllegalStateException(
                 "Module ${this::class.simpleName} wasn't property initialized, check if dikt plugin is set up"

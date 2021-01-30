@@ -12,7 +12,7 @@ class DiFunctions(
 fun buildDiFunctions(pluginContext: IrPluginContext): DiFunctions? {
     val factory = pluginContext.referenceFunctions(FqName("dev.shustoff.dikt.Module.factory"))
         .firstOrNull() ?: return null
-    val singleton = pluginContext.referenceFunctions(FqName("dev.shustoff.dikt.Module.singletone"))
+    val singleton = pluginContext.referenceFunctions(FqName("dev.shustoff.dikt.Module.singleton"))
         .firstOrNull() ?: return null
     return DiFunctions(factory, singleton)
 }

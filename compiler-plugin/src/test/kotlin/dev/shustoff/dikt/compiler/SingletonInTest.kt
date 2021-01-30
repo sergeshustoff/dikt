@@ -30,7 +30,7 @@ class SingletonInTest {
             class Injectable(val dependency: Dependency)
 
             class MyModule : Module() {
-                val injectable by singletone<Injectable>()
+                val injectable by singleton<Injectable>()
             }
             """
             )
