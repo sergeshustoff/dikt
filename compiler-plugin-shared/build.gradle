@@ -1,0 +1,29 @@
+apply plugin: "org.jetbrains.kotlin.jvm"
+apply plugin: "maven"
+
+group = "dev.shustoff.dikt"
+archivesBaseName = "compiler-plugin-shared"
+version = "1.0.0"
+//TODO: use single version variable
+install {
+    repositories.mavenInstaller {
+        pom.artifactId = archivesBaseName
+    }
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compileOnly "org.jetbrains.kotlin:kotlin-compiler-embeddable:$kotlin_version"
+    implementation project(":runtime") //TODO: publish to local maven
+    implementation("com.squareup:kotlinpoet:1.7.2")
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+
+build {
+    finalizedBy(install)
+}

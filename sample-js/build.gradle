@@ -1,0 +1,36 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "dev.shustoff.dikt:gradle-plugin:1.0.0"
+    }
+}
+
+apply plugin: 'org.jetbrains.kotlin.js'
+// comment plugin and run gradle-plugin:build first
+apply plugin: 'dev.shustoff.dikt'
+
+version 'unspecified'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+System.setProperty("kotlin.compiler.execution.strategy", "in-process") // For debugging
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-js"
+    implementation project(':runtime')
+    implementation project(':sample-multiplatform')
+    testImplementation "org.jetbrains.kotlin:kotlin-test-js"
+}
+
+kotlin {
+    js(IR) {
+        browser { }
+        binaries.executable()
+    }
+}

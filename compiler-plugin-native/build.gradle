@@ -1,0 +1,77 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.github.jengelman.gradle.plugins:shadow:5.0.0'
+    }
+
+    allprojects {
+        repositories {
+            mavenLocal()
+            jcenter()
+        }
+    }
+}
+
+apply plugin: "org.jetbrains.kotlin.jvm"
+apply plugin: "maven"
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'maven-publish'
+
+group = "dev.shustoff.dikt"
+archivesBaseName = "compiler-plugin-native"
+version = "1.0.0"
+
+repositories {
+    mavenLocal()
+}
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+dependencies {
+    compile project(':compiler-plugin-shared')
+    implementation "org.jetbrains.kotlin:kotlin-stdlib"
+    compileOnly "org.jetbrains.kotlin:kotlin-compiler"
+}
+
+task fatJar(type: Jar) {
+    manifest {
+        attributes 'Implementation-Title': 'Gradle Jar File Example',
+                'Implementation-Version': version,
+                'Main-Class': 'dev.shustoff.dikt.compiler.DiktNativeComponentRegistrar'
+    }
+    baseName = "compiler-plugin-native"
+    version = "1.0.0"
+
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+shadowJar {
+    manifest {
+        inheritFrom project.tasks.fatJar.manifest
+    }
+    baseName = "compiler-plugin-native"
+    version = "1.0.0"
+    classifier = null
+}
+
+publishing {
+    publications {
+        shadow(MavenPublication) { publication ->
+            project.shadow.component(publication)
+        }
+    }
+}
+
+install{
+    dependsOn(shadowJar)
+}
+
+build{
+    dependsOn ':compiler-plugin-shared:build'
+    dependsOn(shadowJar)
+    finalizedBy(publishToMavenLocal)
+}

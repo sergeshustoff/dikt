@@ -1,0 +1,33 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "dev.shustoff.dikt:gradle-plugin:1.0.0"
+    }
+}
+plugins {
+    id 'application'
+    id 'kotlin'
+}
+
+// comment plugin and run gradle-plugin:build first
+apply plugin: 'dev.shustoff.dikt'
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+    kotlinOptions {
+        useIR = true
+    }
+}
+System.setProperty("kotlin.compiler.execution.strategy", "in-process") // For debugging
+
+dependencies {
+    implementation project(':runtime')
+    implementation project(':sample-multiplatform')
+    testImplementation "junit:junit:4.13"
+    testImplementation "com.google.truth:truth:1.0.1"
+}
+application {
+    mainClass = 'dev.shustoff.dikt.sample.SampleMain'
+}

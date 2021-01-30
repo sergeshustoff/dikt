@@ -1,0 +1,38 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "dev.shustoff.dikt:gradle-plugin:1.0.0"
+    }
+}
+apply plugin: 'org.jetbrains.kotlin.multiplatform'
+// comment plugin and run gradle-plugin:build first
+apply plugin: 'dev.shustoff.dikt'
+
+System.setProperty("kotlin.compiler.execution.strategy", "in-process") // For debugging
+
+kotlin {
+    // For ARM, should be changed to iosArm32 or iosArm64
+    // For Linux, should be changed to e.g. linuxX64
+    // For MacOS, should be changed to e.g. macosX64
+    // For Windows, should be changed to e.g. mingwX64
+    mingwX64("native") {
+        binaries {
+            executable {
+                entryPoint 'dev.shustoff.dikt.sample.main'
+                runTask?.args('')
+            }
+        }
+    }
+
+    sourceSets {
+        nativeMain {
+            dependencies {
+                implementation project(':runtime')
+                implementation project(':sample-multiplatform')
+            }
+        }
+    }
+}

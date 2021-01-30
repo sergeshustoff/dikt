@@ -1,0 +1,32 @@
+apply plugin: "java-gradle-plugin"
+apply plugin: "org.jetbrains.kotlin.jvm"
+apply plugin: "maven"
+
+group = "dev.shustoff.dikt"
+archivesBaseName = "gradle-plugin"
+version = "1.0.0"
+
+install {
+    repositories.mavenInstaller {
+        pom.artifactId = archivesBaseName
+    }
+}
+
+gradlePlugin {
+    plugins {
+        diktPlugin {
+            id = "dev.shustoff.dikt"
+            implementationClass = "dev.shustoff.dikt.gradle.DiktGradlePlugin"
+        }
+    }
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-gradle-plugin-api:$kotlin_version"
+    compileOnly "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+}
+
+build {
+    dependsOn(':compiler-plugin:build', ':compiler-plugin-native:build', install)
+}

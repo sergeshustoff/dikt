@@ -1,0 +1,10 @@
+include ':runtime'
+include ':gradle-plugin'
+include ':compiler-plugin-shared'
+include ':compiler-plugin-native'
+include ':compiler-plugin'
+include ':sample-jvm'
+include ':sample-js'
+include ':sample-multiplatform'
+include ':sample-native'
+
