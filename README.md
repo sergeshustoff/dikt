@@ -8,11 +8,11 @@ Simple and powerful DI for kotlin multiplatform
             mavenCentral()
         }
         dependencies {
-            classpath "dev.shustoff.dikt:gradle-plugin:1.0.0"
+            classpath "io.github.sergeshustoff:dikt-gradle-plugin:1.0.0-alpha1"
         }
     }
     
-    apply plugin: 'dev.shustoff.dikt'
+    apply plugin: 'io.github.sergeshustoff.dikt'
     
 ## Usage
 
