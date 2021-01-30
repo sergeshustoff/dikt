@@ -1,11 +1,27 @@
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
+apply plugin: 'maven-publish'
+
+group = "io.github.sergeshustoff"
+archivesBaseName = "dikt-runtime"
+version = "$dikt_version"
+publishing {
+    publications {
+        kotlinMultiplatform {
+            groupId = "io.github.sergeshustoff"
+            artifactId = archivesBaseName
+            version = "$dikt_version"
+        }
+    }
+}
 
 kotlin {
     jvm()
     js(IR) {
         browser { }
     }
-    mingwX64("native")
+    mingwX64()
+    linuxX64()
+    macosX64()
     // For ARM, should be changed to iosArm32 or iosArm64
     // For Linux, should be changed to e.g. linuxX64
     // For MacOS, should be changed to e.g. macosX64
@@ -19,4 +35,8 @@ kotlin {
             }
         }
     }
+}
+
+build {
+    finalizedBy(publishToMavenLocal)
 }

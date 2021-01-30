@@ -22,7 +22,6 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
 System.setProperty("kotlin.compiler.execution.strategy", "in-process") // For debugging
 
 dependencies {
-    implementation project(':runtime')
     implementation project(':sample-multiplatform')
     testImplementation "junit:junit:4.13"
     testImplementation "com.google.truth:truth:1.0.1"

@@ -28,5 +28,5 @@ dependencies {
 }
 
 build {
-    dependsOn(':compiler-plugin:build', ':compiler-plugin-native:build', install)
+    dependsOn(':dikt-compiler-plugin:build', ':dikt-compiler-plugin-native:build', ':dikt-runtime:build', install)
 }

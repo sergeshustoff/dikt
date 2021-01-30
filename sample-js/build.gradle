@@ -22,7 +22,6 @@ System.setProperty("kotlin.compiler.execution.strategy", "in-process") // For de
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-js"
-    implementation project(':runtime')
     implementation project(':sample-multiplatform')
     testImplementation "org.jetbrains.kotlin:kotlin-test-js"
 }

@@ -17,7 +17,7 @@ kotlin {
     js(IR) {
         browser { }
     }
-    mingwX64("native")
+    mingwX64()
     // For ARM, should be changed to iosArm32 or iosArm64
     // For Linux, should be changed to e.g. linuxX64
     // For MacOS, should be changed to e.g. macosX64
@@ -27,7 +27,6 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation project(':runtime')
             }
         }
         jvmTest {

@@ -29,7 +29,6 @@ kotlin {
     sourceSets {
         nativeMain {
             dependencies {
-                implementation project(':runtime')
                 implementation project(':sample-multiplatform')
             }
         }

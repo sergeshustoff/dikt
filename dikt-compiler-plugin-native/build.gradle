@@ -31,7 +31,7 @@ compileKotlin {
     kotlinOptions.jvmTarget = "1.8"
 }
 dependencies {
-    compile project(':compiler-plugin-shared')
+    compile project(':dikt-compiler-plugin-shared')
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
     compileOnly "org.jetbrains.kotlin:kotlin-compiler"
 }
@@ -42,7 +42,7 @@ task fatJar(type: Jar) {
                 'Implementation-Version': version,
                 'Main-Class': 'dev.shustoff.dikt.compiler.DiktNativeComponentRegistrar'
     }
-    baseName = "compiler-plugin-native"
+    baseName = "dikt-compiler-plugin-native"
     version = "$dikt_version"
 
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
@@ -53,7 +53,7 @@ shadowJar {
     manifest {
         inheritFrom project.tasks.fatJar.manifest
     }
-    baseName = "compiler-plugin-native"
+    baseName = "dikt-compiler-plugin-native"
     version = "$dikt_version"
     classifier = null
 }
@@ -71,7 +71,7 @@ install{
 }
 
 build{
-    dependsOn ':compiler-plugin-shared:build'
+    dependsOn ':dikt-compiler-plugin-shared:build'
     dependsOn(shadowJar)
     finalizedBy(publishToMavenLocal)
 }

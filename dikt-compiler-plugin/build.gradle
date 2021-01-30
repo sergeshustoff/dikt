@@ -12,7 +12,7 @@ install {
 }
 
 dependencies {
-    compile project(':compiler-plugin-shared')
+    compile project(':dikt-compiler-plugin-shared')
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     compileOnly "org.jetbrains.kotlin:kotlin-compiler-embeddable:$kotlin_version"
 
@@ -23,6 +23,6 @@ dependencies {
 }
 
 build {
-    dependsOn(':compiler-plugin-shared:build')
+    dependsOn(':dikt-compiler-plugin-shared:build')
     finalizedBy(install)
 }
