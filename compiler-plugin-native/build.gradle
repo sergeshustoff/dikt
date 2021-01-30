@@ -20,9 +20,9 @@ apply plugin: "maven"
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'maven-publish'
 
-group = "dev.shustoff.dikt"
-archivesBaseName = "compiler-plugin-native"
-version = "1.0.0"
+group = "io.github.sergeshustoff"
+archivesBaseName = "dikt-compiler-plugin-native"
+version = "$dikt_version"
 
 repositories {
     mavenLocal()
@@ -43,7 +43,7 @@ task fatJar(type: Jar) {
                 'Main-Class': 'dev.shustoff.dikt.compiler.DiktNativeComponentRegistrar'
     }
     baseName = "compiler-plugin-native"
-    version = "1.0.0"
+    version = "$dikt_version"
 
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
@@ -54,7 +54,7 @@ shadowJar {
         inheritFrom project.tasks.fatJar.manifest
     }
     baseName = "compiler-plugin-native"
-    version = "1.0.0"
+    version = "$dikt_version"
     classifier = null
 }
 

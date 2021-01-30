@@ -2,9 +2,9 @@ apply plugin: "java-gradle-plugin"
 apply plugin: "org.jetbrains.kotlin.jvm"
 apply plugin: "maven"
 
-group = "dev.shustoff.dikt"
-archivesBaseName = "gradle-plugin"
-version = "1.0.0"
+group = "io.github.sergeshustoff"
+archivesBaseName = "dikt-gradle-plugin"
+version = "$dikt_version"
 
 install {
     repositories.mavenInstaller {
@@ -15,7 +15,7 @@ install {
 gradlePlugin {
     plugins {
         diktPlugin {
-            id = "dev.shustoff.dikt"
+            id = "io.github.sergeshustoff.dikt"
             implementationClass = "dev.shustoff.dikt.gradle.DiktGradlePlugin"
         }
     }

@@ -4,12 +4,11 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath "dev.shustoff.dikt:gradle-plugin:1.0.0"
+        classpath "io.github.sergeshustoff:dikt-gradle-plugin:$dikt_version"
     }
 }
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
-// comment plugin and run gradle-plugin:build first
-apply plugin: 'dev.shustoff.dikt'
+apply plugin: 'io.github.sergeshustoff.dikt'
 
 System.setProperty("kotlin.compiler.execution.strategy", "in-process") // For debugging
 

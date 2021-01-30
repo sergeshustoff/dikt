@@ -1,10 +1,9 @@
 apply plugin: "org.jetbrains.kotlin.jvm"
 apply plugin: "maven"
 
-group = "dev.shustoff.dikt"
-archivesBaseName = "compiler-plugin-shared"
-version = "1.0.0"
-//TODO: use single version variable
+group = "io.github.sergeshustoff"
+archivesBaseName = "dikt-compiler-plugin-shared"
+version = "$dikt_version"
 install {
     repositories.mavenInstaller {
         pom.artifactId = archivesBaseName

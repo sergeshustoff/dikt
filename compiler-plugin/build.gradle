@@ -1,9 +1,9 @@
 apply plugin: "org.jetbrains.kotlin.jvm"
 apply plugin: "maven"
 
-group = "dev.shustoff.dikt"
-archivesBaseName = "compiler-plugin"
-version = "1.0.0"
+group = "io.github.sergeshustoff"
+archivesBaseName = "dikt-compiler-plugin"
+version = "$dikt_version"
 
 install {
     repositories.mavenInstaller {

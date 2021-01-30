@@ -17,18 +17,18 @@ class DiktGradlePlugin : KotlinCompilerPluginSupportPlugin {
         return kotlinCompilation.target.project.provider { emptyList() }
     }
 
-    override fun getCompilerPluginId(): String = "dev.shustoff.dikt"
+    override fun getCompilerPluginId(): String = "io.github.sergeshustoff.dikt"
 
     override fun getPluginArtifact(): SubpluginArtifact = SubpluginArtifact(
-        groupId = "dev.shustoff.dikt",
-        artifactId = "compiler-plugin",
-        version = "1.0.0"
+        groupId = "io.github.sergeshustoff",
+        artifactId = "dikt-compiler-plugin",
+        version = "1.0.0-alpha1"
     )
 
     override fun getPluginArtifactForNative(): SubpluginArtifact = SubpluginArtifact(
-        groupId = "dev.shustoff.dikt",
-        artifactId = "compiler-plugin-native",
-        version = "1.0.0"
+        groupId = "io.github.sergeshustoff",
+        artifactId = "dikt-compiler-plugin-native",
+        version = "1.0.0-alpha1"
     )
 
     override fun isApplicable(kotlinCompilation: KotlinCompilation<*>): Boolean {

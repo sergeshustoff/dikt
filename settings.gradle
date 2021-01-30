@@ -3,6 +3,8 @@ include ':gradle-plugin'
 include ':compiler-plugin-shared'
 include ':compiler-plugin-native'
 include ':compiler-plugin'
+
+//comment samples to publish version to local maven
 include ':sample-jvm'
 include ':sample-js'
 include ':sample-multiplatform'
