@@ -77,7 +77,7 @@ class DependencyInjectionBuilder(
         val functionExpression = IrFunctionExpressionImpl(
             initializerCall.startOffset,
             initializerCall.endOffset,
-            IrSimpleTypeImpl(pluginContext.symbols.functionN(0), false, emptyList(), emptyList()),
+            IrSimpleTypeImpl(pluginContext.irBuiltIns.function(0), false, emptyList(), emptyList()),
             function,
             IrStatementOrigin.LAMBDA
         )

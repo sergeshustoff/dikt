@@ -5,8 +5,8 @@ include ':dikt-compiler-plugin-native'
 include ':dikt-compiler-plugin'
 
 //comment samples to publish version to local maven
-//include ':sample-jvm'
-//include ':sample-js'
-//include ':sample-multiplatform'
-//include ':sample-native'
+include ':sample-jvm'
+include ':sample-js'
+include ':sample-multiplatform'
+include ':sample-native'
 

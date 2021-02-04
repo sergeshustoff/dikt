@@ -1,7 +1,11 @@
 # DI.kt
 Simple and powerful DI for kotlin multiplatform
 
+#Work in progress
+
 ## Installation
+
+not published yet
 
     buildscript {
         repositories {
