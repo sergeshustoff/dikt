@@ -3,7 +3,6 @@ package dev.shustoff.dikt.compiler
 import com.google.common.truth.Truth
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -21,6 +20,7 @@ class NullabilityTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.ByDi
             import dev.shustoff.dikt.Module
             import dev.shustoff.dikt.Inject
 
@@ -29,16 +29,17 @@ class NullabilityTest {
                 val dependency: String
             )
 
+            @Module
             class MyModule(
                 val dependency: String?
-            ) : Module() {
-                val injectable by factory<Injectable>()
+            ) {
+                @ByDi fun injectable(): Injectable
             }
             """
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("Can't resolve dependency kotlin.String needed to initialize property injectable in module MyModule")
+        Truth.assertThat(result.messages).contains("Can't resolve dependency kotlin.String needed to initialize injectable in module MyModule")
     }
 
     @Test
@@ -49,6 +50,7 @@ class NullabilityTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.ByDi
             import dev.shustoff.dikt.Module
             import dev.shustoff.dikt.Inject
 
@@ -57,10 +59,11 @@ class NullabilityTest {
                 val dependency: String?
             )
 
+            @Module
             class MyModule(
                 val dependency: String?
-            ) : Module() {
-                val injectable by factory<Injectable>()
+            ) {
+                @ByDi fun injectable(): Injectable
             }
             """
             )

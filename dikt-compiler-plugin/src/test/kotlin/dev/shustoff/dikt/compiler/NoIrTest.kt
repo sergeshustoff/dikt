@@ -3,7 +3,6 @@ package dev.shustoff.dikt.compiler
 import com.google.common.truth.Truth
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -22,14 +21,16 @@ class NoIrTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.ByDi
             import dev.shustoff.dikt.Module
             import dev.shustoff.dikt.Inject
 
             @Inject
             class Injectable()
 
-            class MyModule : Module() {
-                val injectable: Injectable by factory()
+            @Module
+            class MyModule {
+                @ByDi fun injectable(): Injectable
             }
             """
             ),
@@ -46,14 +47,16 @@ class NoIrTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.ByDi
             import dev.shustoff.dikt.Module
             import dev.shustoff.dikt.Inject
 
             @Inject
             class Injectable()
 
-            class MyModule : Module() {
-                val injectable: Injectable by factory()
+            @Module
+            class MyModule {
+                @ByDi fun injectable(): Injectable
             }
             """
             ),

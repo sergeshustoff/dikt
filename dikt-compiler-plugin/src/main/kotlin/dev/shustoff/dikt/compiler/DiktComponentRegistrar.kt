@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.com.intellij.mock.MockProject
 import org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
+import org.jetbrains.kotlin.extensions.StorageComponentContainerContributor
 
 class DiktComponentRegistrar : ComponentRegistrar {
     override fun registerProjectComponents(project: MockProject, configuration: CompilerConfiguration) {
@@ -21,6 +22,7 @@ class DiktComponentRegistrar : ComponentRegistrar {
         if (!useIr) {
             errorCollector.error("Dikt plugin requires IR")
         }
+        StorageComponentContainerContributor.registerExtension(project, DiktStorageComponentContainerContributor())
         IrGenerationExtension.registerExtension(project, DiktIrGenerationExtension(errorCollector))
     }
 }

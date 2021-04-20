@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.extensions.StorageComponentContainerContributor
 
 class DiktNativeComponentRegistrar : ComponentRegistrar {
     override fun registerProjectComponents(project: MockProject, configuration: CompilerConfiguration) {
@@ -15,6 +16,7 @@ class DiktNativeComponentRegistrar : ComponentRegistrar {
             MessageCollector.NONE
         )
         val errorCollector = errorCollector(messageCollector)
+        StorageComponentContainerContributor.registerExtension(project, DiktStorageComponentContainerContributor())
         IrGenerationExtension.registerExtension(project, DiktIrGenerationExtension(errorCollector))
     }
 }

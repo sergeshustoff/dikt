@@ -1,5 +1,5 @@
 package dev.shustoff.dikt
 
-@Target(AnnotationTarget.CLASS)
+@Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.BINARY)
-annotation class Module
+annotation class Cached

@@ -22,20 +22,18 @@ class ConstructorInjectionsTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.Module
-            import dev.shustoff.dikt.Inject
-            import dev.shustoff.dikt.InjectNamed
-            import dev.shustoff.dikt.Named
+            import dev.shustoff.dikt.*
 
             class Dependency
 
             class Injectable @Inject constructor(@InjectNamed("first") val dependency: Dependency)
 
+            @Module
             class MyModule(
                 @Named("first") val dependency1: Dependency,
                 @Named("second") val dependency2: Dependency
-            ) : Module() {
-                val injectable: Injectable by factory()
+            ) {
+                @ByDi fun injectable(): Injectable
             }
             """
             )
@@ -51,17 +49,18 @@ class ConstructorInjectionsTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.ByDi
             import dev.shustoff.dikt.Module
             import dev.shustoff.dikt.Inject
 
-            @Inject
             class Dependency
 
             class Injectable @Inject constructor(val dependency: Dependency)
 
-            class MyModule : Module() {
-                val injectable: Injectable by factory()
-                val dependency: Dependency by factory()
+            @Module
+            class MyModule {
+                @ByDi fun injectable(): Injectable
+                fun dependency(): Dependency = Dependency()
             }
             """
             )
@@ -77,14 +76,16 @@ class ConstructorInjectionsTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.ByDi
             import dev.shustoff.dikt.Module
             import dev.shustoff.dikt.Inject
 
             @Inject
             class Injectable
 
-            class MyModule : Module() {
-                val injectable: Injectable by factory()
+            @Module
+            class MyModule {
+                @ByDi fun injectable(): Injectable
             }
             """
             )
@@ -100,6 +101,7 @@ class ConstructorInjectionsTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.ByDi
             import dev.shustoff.dikt.Inject
             import dev.shustoff.dikt.Module
 
@@ -108,8 +110,9 @@ class ConstructorInjectionsTest {
             
             class Injectable(val dependency: Dependency)
 
-            class MyModule : Module() {
-                val injectable: Injectable by factory()
+            @Module
+            class MyModule {
+                @ByDi fun injectable(): Injectable
             }
             """
             )
@@ -125,6 +128,7 @@ class ConstructorInjectionsTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.ByDi
             import dev.shustoff.dikt.Inject
             import dev.shustoff.dikt.Module
 
@@ -133,13 +137,14 @@ class ConstructorInjectionsTest {
             @Inject
             class Injectable(val dependency: Dependency)
 
-            class MyModule : Module() {
-                val injectable: Injectable by factory()
+            @Module
+            class MyModule {
+                @ByDi fun injectable(): Injectable
             }
             """
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("Can't resolve dependency dev.shustoff.dikt.compiler.Dependency needed to initialize property injectable in module MyModule")
+        Truth.assertThat(result.messages).contains("Can't resolve dependency dev.shustoff.dikt.compiler.Dependency needed to initialize injectable in module MyModule")
     }
 }

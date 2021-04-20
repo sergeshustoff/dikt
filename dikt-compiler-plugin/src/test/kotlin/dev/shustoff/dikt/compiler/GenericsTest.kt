@@ -3,7 +3,6 @@ package dev.shustoff.dikt.compiler
 import com.google.common.truth.Truth
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -21,6 +20,7 @@ class GenericsTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.ByDi
             import dev.shustoff.dikt.Module
             import dev.shustoff.dikt.Inject
 
@@ -30,8 +30,9 @@ class GenericsTest {
                 val numbers: List<Int>
             )
 
-            class MyModule : Module() {
-                val injectable by factory<Injectable>()
+            @Module
+            class MyModule {
+                @ByDi fun injectable(): Injectable
                 
                 fun provideStrings(): List<String> {
                     return listOf()
@@ -48,31 +49,6 @@ class GenericsTest {
     }
 
     @Test
-    fun `generic property supported`() {
-        val result = compile(
-            folder.root,
-            SourceFile.kotlin(
-                "MyModule.kt",
-                """
-            package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.Module
-            import dev.shustoff.dikt.Inject
-
-            @Inject
-            class Injectable<R>(
-                val value: R
-            )
-
-            class MyModule<T>(val value: T) : Module() {
-                val injectable by factory<Injectable<T>>()
-            }
-            """
-            )
-        )
-        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
-    }
-
-    @Test
     fun `generic function supported`() {
         val result = compile(
             folder.root,
@@ -80,17 +56,18 @@ class GenericsTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.ByDi
             import dev.shustoff.dikt.Module
             import dev.shustoff.dikt.Inject
 
+            @Inject
             class Injectable<T>(
                 val value: T
             )
 
-            class MyModule<T>(val value: T) : Module() {
-                val injectable by factory<Injectable<T>>()
-                
-                fun provideInjectable(value: T): Injectable<T> = Injectable(value)
+            @Module
+            class MyModule<T>(val value: T) {
+                @ByDi fun injectable(): Injectable<T>
             }
             """
             )

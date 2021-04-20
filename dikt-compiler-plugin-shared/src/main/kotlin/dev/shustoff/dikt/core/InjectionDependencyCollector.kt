@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.ir.util.properties
 import java.util.*
 
 class InjectionDependencyCollector(
-    private val moduleDeclarations: ModuleDeclarations,
     private val errorCollector: ErrorCollector
 ) {
     fun collectDependencies(
@@ -74,5 +73,5 @@ class InjectionDependencyCollector(
         !it.isFakeOverride && !it.isOperator && !it.isSuspend && !it.isInfix && !it.returnType.isUnit() && !it.returnType.isNothing()
 
     private fun getModuleClassDescriptor(property: IrProperty) =
-        property.getter?.returnType?.getClass()?.takeIf { moduleDeclarations.isModule(it) }
+        property.getter?.returnType?.getClass()?.takeIf { Annotations.isModule(it) }
 }

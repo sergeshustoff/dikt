@@ -22,6 +22,7 @@ class RecursiveDependencyTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.ByDi
             import dev.shustoff.dikt.Module
             import dev.shustoff.dikt.Inject
 
@@ -31,9 +32,10 @@ class RecursiveDependencyTest {
             @Inject
             class Injectable(val dependency: Dependency)
 
-            class MyModule : Module() {
-                val injectable: Injectable by factory()
-                val dependency: Dependency by factory()
+            @Module
+            class MyModule {
+                @ByDi fun injectable(): Injectable
+                @ByDi fun dependency(): Dependency
             }
             """
             )
@@ -51,20 +53,22 @@ class RecursiveDependencyTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.ByDi
             import dev.shustoff.dikt.Inject
             import dev.shustoff.dikt.Module
 
             @Inject
             class Injectable(val injectable: Injectable)
 
-            class MyModule : Module() {
-                val injectable: Injectable by factory()
+            @Module
+            class MyModule {
+                @ByDi fun injectable(): Injectable
             }
             """
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("Recursive dependency in dev.shustoff.dikt.compiler.Injectable needed to initialize property injectable in module MyModule")
+        Truth.assertThat(result.messages).contains("Recursive dependency in dev.shustoff.dikt.compiler.Injectable needed to initialize injectable in module MyModule")
     }
 
     @Test
@@ -75,20 +79,22 @@ class RecursiveDependencyTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.ByDi
             import dev.shustoff.dikt.Inject
             import dev.shustoff.dikt.Module
 
             class Injectable(val injectable: Injectable)
 
-            class MyModule : Module() {
-                val injectable: Injectable by factory()
+            @Module
+            class MyModule {
+                @ByDi fun injectable(): Injectable
                 fun injectable(injectable: Injectable) = Injectable(injectable)
             }
             """
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("Recursive dependency in dev.shustoff.dikt.compiler.Injectable needed to initialize property injectable in module MyModule")
+        Truth.assertThat(result.messages).contains("Recursive dependency in dev.shustoff.dikt.compiler.Injectable needed to initialize injectable in module MyModule")
 
         val result2 = compile(
             folder.root,
@@ -96,6 +102,7 @@ class RecursiveDependencyTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.ByDi
             import dev.shustoff.dikt.Inject
             import dev.shustoff.dikt.Module
 
@@ -104,15 +111,16 @@ class RecursiveDependencyTest {
             @Inject
             class Injectable(val dependency: Dependency)
 
-            class MyModule : Module() {
-                val injectable: Injectable by factory()
+            @Module
+            class MyModule {
+                @ByDi fun injectable(): Injectable
                 fun dependency(dependency: Dependency) = Dependency()
             }
             """
             )
         )
         Truth.assertThat(result2.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result2.messages).contains("Recursive dependency in dev.shustoff.dikt.compiler.Dependency needed to initialize property injectable in module MyModule")
+        Truth.assertThat(result2.messages).contains("Recursive dependency in dev.shustoff.dikt.compiler.Dependency needed to initialize injectable in module MyModule")
     }
 
     @Test
@@ -132,7 +140,8 @@ class RecursiveDependencyTest {
             @Inject
             class Injectable(val dependency: Dependency)
 
-            class MyModule : Module() {
+            @Module
+            class MyModule {
                 val injectable: Injectable by lazy { Injectable(dependency) }
                 val dependency: Dependency = Dependency(injectable)
             }
@@ -152,6 +161,7 @@ class RecursiveDependencyTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.ByDi
             import dev.shustoff.dikt.Module
             import dev.shustoff.dikt.Inject
 
@@ -161,8 +171,9 @@ class RecursiveDependencyTest {
             @Inject
             class Injectable(val dependency: Dependency1)
 
-            class MyModule : Module() {
-                val injectable by factory<Injectable>()
+            @Module
+            class MyModule {
+                @ByDi fun injectable(): Injectable
                 
                 fun provideDependency1(): Dependency1 {
                     provideDependency2()
@@ -190,17 +201,19 @@ class RecursiveDependencyTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.ByDi
             import dev.shustoff.dikt.Module
             import dev.shustoff.dikt.Inject
 
 
             class Injectable()
 
-            class MyModule : Module() {
-                val injectable by factory<Injectable>()
+            @Module
+            class MyModule {
+                @ByDi fun injectable(): Injectable
                 
                 fun provideInjectable(): Injectable {
-                    return injectable
+                    return injectable()
                 }
             }
             """

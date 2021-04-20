@@ -22,6 +22,7 @@ class FunctionDependencyTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.ByDi
             import dev.shustoff.dikt.Inject
             import dev.shustoff.dikt.Module
 
@@ -30,8 +31,9 @@ class FunctionDependencyTest {
             @Inject
             class Injectable(val dependency: Dependency)
 
-            class MyModule : Module() {
-                val injectable: Injectable by factory()
+            @Module
+            class MyModule {
+                @ByDi fun injectable(): Injectable
 
                 private fun provideDependency(): Dependency {
                     return Dependency()
@@ -51,18 +53,16 @@ class FunctionDependencyTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.Inject
-            import dev.shustoff.dikt.InjectNamed
-            import dev.shustoff.dikt.Module
-            import dev.shustoff.dikt.Named
+            import dev.shustoff.dikt.*
 
             class Dependency
 
             @Inject
             class Injectable(@InjectNamed("1") val dependency: Dependency)
 
-            class MyModule : Module() {
-                val injectable: Injectable by factory()
+            @Module
+            class MyModule {
+                @ByDi fun injectable(): Injectable
 
                 @Named("1")
                 private fun provideDependency1(): Dependency {
@@ -88,23 +88,21 @@ class FunctionDependencyTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.Inject
-            import dev.shustoff.dikt.InjectNamed
-            import dev.shustoff.dikt.Module
-            import dev.shustoff.dikt.Named
+            import dev.shustoff.dikt.*
 
             class Dependency(val name: String)
 
             @Inject
             class Injectable(val dependency: Dependency)
 
+            @Module
             class MyModule(
                 @Named("1")
                 val dependency1: String,
                 @Named("2")
                 val dependency2: String
-            ) : Module() {
-                val injectable: Injectable by factory()
+            ) {
+                @ByDi fun injectable(): Injectable
 
                 private fun provideInjectable(@InjectNamed("2") dependency: String): Dependency {
                     return Dependency(dependency)
@@ -116,26 +114,29 @@ class FunctionDependencyTest {
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
     }
 
+    //TODO: handle this scenario
+    @Ignore
     @Test
-    fun `function may provide dependency for property within same module`() {
+    fun `function may provide dependency for function within same module`() {
         val result = compile(
             folder.root,
             SourceFile.kotlin(
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.Inject
-            import dev.shustoff.dikt.InjectNamed
-            import dev.shustoff.dikt.Module
-            import dev.shustoff.dikt.Named
+            import dev.shustoff.dikt.*
 
-            class Injectable()
+            @Inject
+            class Dependency()
 
-            class MyModule : Module() {
-                val injectable: Injectable by factory()
+            class Injectable(val dependency: Dependency)
 
-                private fun provideInjectable(): Injectable {
-                    return Injectable()
+            @Module
+            class MyModule {
+                @ByDi fun injectable(): Injectable
+
+                private fun provideInjectable(dependency: Dependency): Injectable {
+                    return Injectable(dependency)
                 }
             }
             """
@@ -144,4 +145,27 @@ class FunctionDependencyTest {
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
     }
 
+    @Test
+    fun `function may provide cached dependency`() {
+        val result = compile(
+            folder.root,
+            SourceFile.kotlin(
+                "MyModule.kt",
+                """
+            package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.*
+
+            @Inject
+            class Injectable()
+
+            @Module
+            class MyModule {
+                @Cached
+                @ByDi fun injectable(): Injectable
+            }
+            """
+            )
+        )
+        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+    }
 }

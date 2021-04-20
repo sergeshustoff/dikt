@@ -1,6 +1,6 @@
 package dev.shustoff.dikt.sample
 
-import dev.shustoff.dikt.SingletonIn
+import dev.shustoff.dikt.Inject
 
-@SingletonIn<CarModule>
+@Inject
 class CarOwner

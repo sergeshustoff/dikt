@@ -3,7 +3,6 @@ package dev.shustoff.dikt.compiler
 import com.google.common.truth.Truth.assertThat
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -22,6 +21,7 @@ class ModuleDependencyTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.ByDi
             import dev.shustoff.dikt.Module
             import dev.shustoff.dikt.Inject
 
@@ -30,10 +30,12 @@ class ModuleDependencyTest {
             @Inject
             class Injectable(val dependency: Dependency)
 
-            class NestedModule(val dependency: Dependency) : Module()
+            @Module
+            class NestedModule(val dependency: Dependency)
 
-            class MyModule(val nested: NestedModule) : Module() {
-                val injectable: Injectable by factory()
+            @Module
+            class MyModule(val nested: NestedModule) {
+                @ByDi fun injectable(): Injectable
             }
             """
             )
@@ -49,7 +51,8 @@ class ModuleDependencyTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.Module
+            import dev.shustoff.dikt.ByDi
+import dev.shustoff.dikt.Module
             import dev.shustoff.dikt.Inject
 
             class Dependency
@@ -57,11 +60,12 @@ class ModuleDependencyTest {
             @Inject
             class Injectable(val dependency: Dependency)
 
+            @Module
             class MyModule(
                 val dependency1: Dependency,
                 val dependency2: Dependency
-            ) : Module() {
-                val injectable: Injectable by factory()
+            ) {
+                @ByDi fun injectable(): Injectable
             }
             """
             )
@@ -78,6 +82,7 @@ class ModuleDependencyTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.ByDi
             import dev.shustoff.dikt.Module
             import dev.shustoff.dikt.Inject
 
@@ -86,8 +91,9 @@ class ModuleDependencyTest {
             @Inject
             class Injectable(val dependency: Dependency)
 
-            class MyModule : Module() {
-                val injectable: Injectable by factory()
+            @Module
+            class MyModule {
+                @ByDi fun injectable(): Injectable
 
                 fun provide1() = Dependency()
                 fun provide2() = Dependency()
@@ -107,6 +113,7 @@ class ModuleDependencyTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.ByDi
             import dev.shustoff.dikt.Module
             import dev.shustoff.dikt.Inject
 
@@ -115,8 +122,9 @@ class ModuleDependencyTest {
             @Inject
             class Injectable(val dependency: Dependency)
 
-            class MyModule(val dependency: Dependency) : Module() {
-                val injectable: Injectable by factory()
+            @Module
+            class MyModule(val dependency: Dependency) {
+                @ByDi fun injectable(): Injectable
             }
             """
             )
