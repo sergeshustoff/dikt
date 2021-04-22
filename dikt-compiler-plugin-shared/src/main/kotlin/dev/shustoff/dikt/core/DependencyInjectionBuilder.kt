@@ -91,12 +91,14 @@ class DependencyInjectionBuilder(
                 factoryFunction,
                 IrStatementOrigin.LAMBDA
             )
-            irExprBody(irCall(lazyFunction.symbol, lazyType).also {
-                it.putTypeArgument(0, function.returnType)
-                it.putValueArgument(0, functionExpression)
-            })
+            irExprBody(
+                irCall(lazyFunction.symbol, lazyType).also {
+                    it.putTypeArgument(0, function.returnType)
+                    it.putValueArgument(0, functionExpression)
+                }
+            )
         }
-        val getValueFunction =lazyType.getClass()!!.properties.first { it.name.identifier == "value" }.getter!!
+        val getValueFunction = lazyType.getClass()!!.properties.first { it.name.identifier == "value" }.getter!!
         return DeclarationIrBuilder(pluginContext, function.symbol).irBlockBody {
             +irReturn(
                 irCall(getValueFunction).also {

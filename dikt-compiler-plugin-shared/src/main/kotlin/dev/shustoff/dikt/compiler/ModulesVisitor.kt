@@ -4,17 +4,13 @@ import dev.shustoff.dikt.core.*
 import dev.shustoff.dikt.message_collector.ErrorCollector
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.ir.isFinalClass
-import org.jetbrains.kotlin.backend.jvm.codegen.psiElement
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 
 class ModulesVisitor(
     private val errorCollector: ErrorCollector,
-    pluginContext: IrPluginContext,
-    private val moduleSingletones: MutableMap<IrType, MutableList<IrClass>>
+    pluginContext: IrPluginContext
 ) : IrElementVisitorVoid, ErrorCollector by errorCollector {
 
     private val dependencyCollector = InjectionDependencyCollector(this)
@@ -27,9 +23,8 @@ class ModulesVisitor(
     override fun visitClass(declaration: IrClass) {
         if (Annotations.isModule(declaration)) {
             if (!declaration.isFinalClass) {
-                declaration.psiElement.error("Module should be final")
+                declaration.psiElementSafe.error("Module should be final")
             }
-            val singletones = moduleSingletones[declaration.defaultType]
             val dependencies = dependencyCollector.collectDependencies(declaration)
             buildPropertyInjections(declaration, dependencies)
             RecursiveCallsDetector(errorCollector).checkForRecursiveCalls(declaration)
