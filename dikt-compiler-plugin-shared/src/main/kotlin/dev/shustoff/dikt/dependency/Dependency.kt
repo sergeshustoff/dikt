@@ -19,6 +19,16 @@ sealed class Dependency {
 
     abstract fun getRequiredParams(): List<IrValueParameter>
 
+    data class Parameter(
+        val parameter: IrValueParameter
+    ) : Dependency() {
+        override val id: DependencyId = DependencyId(parameter.type, Annotations.getAnnotatedName(parameter).orEmpty())
+        override val psiElement: PsiElement? = parameter.psiElementSafe
+        override val name: String = parameter.name.asString()
+
+        override fun getRequiredParams(): List<IrValueParameter> = emptyList()
+    }
+
     data class Property(
         val property: IrProperty,
         val fromNestedModule: Property?

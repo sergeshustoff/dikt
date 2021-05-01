@@ -5,6 +5,7 @@ import dev.shustoff.dikt.dependency.ResolvedDependency
 import dev.shustoff.dikt.message_collector.ErrorCollector
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrConstructor
+import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.declarations.IrValueParameter
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
@@ -21,24 +22,28 @@ class ModuleDependencies(
 
     fun resolveDependency(
         type: IrType,
-        forDependency: Dependency
-    ): ResolvedDependency? = resolveDependencyInternal(DependencyId(type), forDependency, emptySet(),
-        allowConstructorWithoutAnnotation = true)
+        forFunction: IrSimpleFunction
+    ): ResolvedDependency? {
+        val params = forFunction.valueParameters.associate { Dependency.Parameter(it).let { it.id to it } }
+        return resolveDependencyInternal(DependencyId(type), Dependency.Function(forFunction, null), emptySet(), params,
+            allowConstructorWithoutAnnotation = true)
+    }
 
     private fun resolveDependencyInternal(
         id: DependencyId,
         forDependency: Dependency,
         usedTypes: Set<IrType>,
+        providedParams: Map<DependencyId, Dependency>,
         allowConstructorWithoutAnnotation: Boolean = false
     ): ResolvedDependency? {
-        return findDependency(id, forDependency, module, usedTypes, allowConstructorWithoutAnnotation)
-            ?.let { dependency ->
-                val params = dependency.getRequiredParams()
-                val typeArgumentsMapping = buildTypeArgumentsMapping(id, dependency)
-                getResolveParams(params, forDependency, usedTypes + id.type, typeArgumentsMapping)
-                    ?.let {
-                        ResolvedDependency(dependency, it)
-                    }
+        val dependency = providedParams[id]
+            ?: findDependency(id, forDependency, module, usedTypes, allowConstructorWithoutAnnotation)
+            ?: return null
+        val params = dependency.getRequiredParams()
+        val typeArgumentsMapping = buildTypeArgumentsMapping(id, dependency)
+        return getResolveParams(params, forDependency, usedTypes + id.type, typeArgumentsMapping, providedParams)
+            ?.let {
+                ResolvedDependency(dependency, it)
             }
     }
 
@@ -56,6 +61,7 @@ class ModuleDependencies(
         forDependency: Dependency,
         usedTypes: Set<IrType> = emptySet(),
         typeArgumentsMapping: Map<IrType?, IrType?>,
+        providedParams: Map<DependencyId, Dependency>,
     ): List<ResolvedDependency>? {
         return valueParameters
             .mapNotNull { param ->
@@ -64,6 +70,7 @@ class ModuleDependencies(
                         Annotations.getAnnotatedName(param).orEmpty()),
                     forDependency,
                     usedTypes,
+                    providedParams,
                 )
             }
             .takeIf { it.size == valueParameters.size } // errors reported in findDependency

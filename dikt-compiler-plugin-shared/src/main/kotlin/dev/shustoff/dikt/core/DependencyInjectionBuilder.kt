@@ -86,7 +86,7 @@ class DependencyInjectionBuilder(
                 parent = field
                 body = DeclarationIrBuilder(pluginContext, symbol).irBlockBody {
                     val dependency =
-                        dependencies.resolveDependency(function.returnType, Dependency.Function(function, null))
+                        dependencies.resolveDependency(function.returnType, function)
                     if (dependency != null) {
                         +irReturn(
                             makeDependencyCall(module, dependency, dispatchReceiverParameter)
@@ -120,7 +120,7 @@ class DependencyInjectionBuilder(
         module: IrClass
     ) = DeclarationIrBuilder(pluginContext, function.symbol).irBlockBody {
         val dependency =
-            dependencies.resolveDependency(function.returnType, Dependency.Function(function, null))
+            dependencies.resolveDependency(function.returnType, function)
         if (dependency != null) {
             +irReturn(
                 makeDependencyCall(module, dependency, function.dispatchReceiverParameter)
@@ -150,16 +150,21 @@ class DependencyInjectionBuilder(
                 module
             )
             is Dependency.Property -> makePropertyDependencyCall(dependency.dependency, receiverParameter)
+            is Dependency.Parameter -> makeParameterCall(dependency.dependency)
         }
     }
 
+    private fun IrBlockBodyBuilder.makeParameterCall(dependency: Dependency.Parameter): IrExpression {
+        return irGet(dependency.parameter)
+    }
+
     private fun IrBlockBodyBuilder.makeConstructorDependencyCall(
-        dependency1: Dependency.Constructor,
+        dependency: Dependency.Constructor,
         params: List<ResolvedDependency>,
         module: IrClass,
         receiverParameter: IrValueParameter?
     ): IrConstructorCall {
-        return irCallConstructor(dependency1.constructor.symbol, emptyList()).also {
+        return irCallConstructor(dependency.constructor.symbol, emptyList()).also {
             for ((index, resolved) in params.withIndex()) {
                 it.putValueArgument(index, makeDependencyCall(module, resolved, receiverParameter))
             }

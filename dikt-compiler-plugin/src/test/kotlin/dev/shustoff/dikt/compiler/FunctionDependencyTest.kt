@@ -146,6 +146,58 @@ class FunctionDependencyTest {
     }
 
     @Test
+    fun `function may provide dependency from another module`() {
+        val result = compile(
+            folder.root,
+            SourceFile.kotlin(
+                "MyModule.kt",
+                """
+            package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.*
+
+            class Injectable()
+
+            class OtherModule {
+                fun injectable() = Injectable()
+            }
+
+            @Module
+            class MyModule(private val other: OtherModule) {
+                @ByDi fun injectable(): Injectable
+            }
+            """
+            )
+        )
+        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+    }
+
+    @Test
+    fun `function may provide dependency with params`() {
+        val result = compile(
+            folder.root,
+            SourceFile.kotlin(
+                "MyModule.kt",
+                """
+            package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.*
+
+            class Dependency
+
+            class Injectable(val dependency: Dependency)
+
+            class OtherModule(val dependency: Dependency)
+
+            @Module
+            class MyModule(private val other: OtherModule) {
+                @ByDi fun injectable(dependency: Dependency): Injectable
+            }
+            """
+            )
+        )
+        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+    }
+
+    @Test
     fun `function may provide cached dependency`() {
         val result = compile(
             folder.root,
