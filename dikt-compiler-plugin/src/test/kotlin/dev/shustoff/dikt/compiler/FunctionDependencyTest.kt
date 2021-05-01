@@ -114,8 +114,6 @@ class FunctionDependencyTest {
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
     }
 
-    //TODO: handle this scenario
-    @Ignore
     @Test
     fun `function may provide dependency for function within same module`() {
         val result = compile(
@@ -155,10 +153,18 @@ class FunctionDependencyTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Injectable()
+            class Dependency()
 
-            class OtherModule {
-                fun injectable() = Injectable()
+            class Injectable(val dependency: Dependency)
+
+            @Module
+            class InjectableModule(private val dependency: Dependency) {
+                fun injectable() = Injectable(dependency)
+            }
+
+            @Module
+            class OtherModule(val injectableModule: InjectableModule) {
+                @ByDi fun injectable(): Injectable
             }
 
             @Module

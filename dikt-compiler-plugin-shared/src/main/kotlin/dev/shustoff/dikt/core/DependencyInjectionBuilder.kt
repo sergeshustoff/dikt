@@ -144,12 +144,13 @@ class DependencyInjectionBuilder(
                 receiverParameter
             )
             is Dependency.Function -> makeFunctionDependencyCall(
+                module,
                 dependency.dependency,
                 receiverParameter,
                 dependency.params,
-                module
+                dependency.nestedModulesChain
             )
-            is Dependency.Property -> makePropertyDependencyCall(dependency.dependency, receiverParameter)
+            is Dependency.Property -> makePropertyDependencyCall(module, dependency.dependency, receiverParameter, dependency.nestedModulesChain)
             is Dependency.Parameter -> makeParameterCall(dependency.dependency)
         }
     }
@@ -172,39 +173,32 @@ class DependencyInjectionBuilder(
     }
 
     private fun IrBlockBodyBuilder.makeFunctionDependencyCall(
+        module: IrClass,
         dependency: Dependency.Function,
         receiverParameter: IrValueParameter?,
         params: List<ResolvedDependency>,
-        module: IrClass
+        nestedModulesChain: ResolvedDependency?
     ): IrFunctionAccessExpression {
-        return irCall(dependency.function).also {
-            if (dependency.fromNestedModule != null) {
-                it.dispatchReceiver = makePropertyDependencyCall(dependency.fromNestedModule, receiverParameter)
-            } else {
-                it.dispatchReceiver = IrGetValueImpl(startOffset, endOffset, receiverParameter!!.symbol)
-            }
+        val call = irCall(dependency.function).also {
             for ((index, resolved) in params.withIndex()) {
                 it.putValueArgument(index, makeDependencyCall(module, resolved, receiverParameter))
             }
         }
+        call.dispatchReceiver = nestedModulesChain?.let { makeDependencyCall(module, nestedModulesChain, receiverParameter) }
+            ?: IrGetValueImpl(startOffset, endOffset, receiverParameter!!.symbol)
+        return call
     }
 
     private fun IrBlockBodyBuilder.makePropertyDependencyCall(
+        module: IrClass,
         dependency: Dependency.Property,
-        receiverParameter: IrValueParameter?
+        receiverParameter: IrValueParameter?,
+        nestedModulesChain: ResolvedDependency?
     ): IrFunctionAccessExpression {
-        val getterCall = irCall(dependency.property.getter!!)
-        var call = getterCall
-        var parent = dependency.fromNestedModule
-        // recursive call nested modules if needed
-        while (parent != null) {
-            call = irCall(parent.property.getter!!).also {
-                call.dispatchReceiver = it
-            }
-            parent = parent.fromNestedModule
-        }
-        call.dispatchReceiver = IrGetValueImpl(startOffset, endOffset, receiverParameter!!.symbol)
+        val call = irCall(dependency.property.getter!!)
+        val parentCall = nestedModulesChain?.let { makeDependencyCall(module, it, receiverParameter) }
+        call.dispatchReceiver = parentCall ?: IrGetValueImpl(startOffset, endOffset, receiverParameter!!.symbol)
 
-        return getterCall
+        return call
     }
 }

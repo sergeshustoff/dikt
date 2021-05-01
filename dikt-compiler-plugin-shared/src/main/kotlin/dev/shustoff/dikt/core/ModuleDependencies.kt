@@ -41,9 +41,11 @@ class ModuleDependencies(
             ?: return null
         val params = dependency.getRequiredParams()
         val typeArgumentsMapping = buildTypeArgumentsMapping(id, dependency)
-        return getResolveParams(params, forDependency, usedTypes + id.type, typeArgumentsMapping, providedParams)
+        val resolvedParams = getResolveParams(params, forDependency, usedTypes + id.type, typeArgumentsMapping, providedParams)
+        val nestedChain = getResolveNestedChain(dependency, forDependency, usedTypes + id.type, typeArgumentsMapping, providedParams)
+        return resolvedParams
             ?.let {
-                ResolvedDependency(dependency, it)
+                ResolvedDependency(dependency, nestedChain, it)
             }
     }
 
@@ -76,6 +78,23 @@ class ModuleDependencies(
             .takeIf { it.size == valueParameters.size } // errors reported in findDependency
     }
 
+    private fun getResolveNestedChain(
+        dependency: Dependency,
+        forDependency: Dependency,
+        usedTypes: Set<IrType> = emptySet(),
+        typeArgumentsMapping: Map<IrType?, IrType?>,
+        providedParams: Map<DependencyId, Dependency>,
+    ): ResolvedDependency? {
+        return dependency.fromNestedModule?.let {
+            resolveDependencyInternal(
+                DependencyId(typeArgumentsMapping[it.id.type] ?: it.id.type),
+                forDependency,
+                usedTypes,
+                providedParams,
+            )
+        }
+    }
+
     private fun findDependency(
         id: DependencyId,
         forDependency: Dependency,
@@ -90,21 +109,16 @@ class ModuleDependencies(
             return null
         }
 
-        val propertyDependencyOptions = dependencyMap[id]
-        val propertyCount = propertyDependencyOptions?.count { it is Dependency.Property } ?: 0
-        val functionCount = propertyDependencyOptions?.count { it is Dependency.Function } ?: 0
-        //TODO:ss count properties and functions together? Improve dependency finding logic and allow propagating providers from nested modules
-        if (propertyCount > 1 || (propertyCount == 0 && functionCount > 1)) {
-            forDependency.psiElement.error(
-                "Multiple dependencies provided with type ${id.asErrorString()} in module ${module.name.asString()}",
-            )
-        }
-        val first = propertyDependencyOptions
-            ?.firstOrNull { it != forDependency }
-        if (first != null) {
-            return first
-        }
+        val dependencyOptions = dependencyMap[id].orEmpty() - forDependency
+        // check local and nested in groups as well as parameterless and parameterized
+        return getDependencyFromGroup(forDependency, id, dependencyOptions.filter { it.fromNestedModule == null && it.getRequiredParams().isEmpty() })
+            ?: getDependencyFromGroup(forDependency, id, dependencyOptions.filter { it.fromNestedModule == null && it.getRequiredParams().isNotEmpty() })
+            ?: getDependencyFromGroup(forDependency, id, dependencyOptions.filter { it.fromNestedModule != null && it.getRequiredParams().isEmpty() })
+            ?: getDependencyFromGroup(forDependency, id, dependencyOptions.filter { it.fromNestedModule != null && it.getRequiredParams().isNotEmpty() })
+            ?: getConstructorDependency(forDependency, id, allowConstructorWithoutAnnotation)
+    }
 
+    private fun getConstructorDependency(forDependency: Dependency, id: DependencyId, allowConstructorWithoutAnnotation: Boolean): Dependency? {
         val constructor = findConstructorInjector(id, allowConstructorWithoutAnnotation)
         if (constructor == null || !constructor.isVisible(module)) {
             forDependency.psiElement.error(
@@ -113,6 +127,18 @@ class ModuleDependencies(
             return null
         }
         return Dependency.Constructor(constructor)
+    }
+
+    private fun getDependencyFromGroup(forDependency: Dependency, id: DependencyId, options: List<Dependency>): Dependency? {
+        if (options.isNotEmpty()) {
+            if (options.size > 1) {
+                forDependency.psiElement.error(
+                    "Multiple dependencies provided with type ${id.asErrorString()} in module ${module.name.asString()}",
+                )
+            }
+            return options.first()
+        }
+        return null
     }
 
     private fun findConstructorInjector(id: DependencyId, allowConstructorWithoutAnnotation: Boolean): IrConstructor? {

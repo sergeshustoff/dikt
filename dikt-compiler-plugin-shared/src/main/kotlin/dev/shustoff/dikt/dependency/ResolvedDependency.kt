@@ -1,6 +1,7 @@
 package dev.shustoff.dikt.dependency
 
-class ResolvedDependency(
+data class ResolvedDependency(
     val dependency: Dependency,
+    val nestedModulesChain: ResolvedDependency? = null,
     val params: List<ResolvedDependency> = emptyList()
 )

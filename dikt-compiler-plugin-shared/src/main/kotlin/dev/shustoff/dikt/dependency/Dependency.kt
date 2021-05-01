@@ -17,6 +17,8 @@ sealed class Dependency {
 
     abstract val name: String
 
+    open val fromNestedModule: Dependency? = null
+
     abstract fun getRequiredParams(): List<IrValueParameter>
 
     data class Parameter(
@@ -31,7 +33,7 @@ sealed class Dependency {
 
     data class Property(
         val property: IrProperty,
-        val fromNestedModule: Property?
+        override val fromNestedModule: Dependency?
     ) : Dependency() {
         override val id: DependencyId = DependencyId(property.getter!!.returnType, Annotations.getAnnotatedName(property).orEmpty())
         override val psiElement: PsiElement? = property.psiElementSafe
@@ -51,7 +53,7 @@ sealed class Dependency {
 
     data class Function(
         val function: IrFunction,
-        val fromNestedModule: Property?
+        override val fromNestedModule: Dependency?
     ) : Dependency() {
         override val id: DependencyId = DependencyId(function.returnType, Annotations.getAnnotatedName(function).orEmpty())
         override val psiElement: PsiElement? = function.psiElementSafe

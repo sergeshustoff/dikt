@@ -3,7 +3,6 @@ package dev.shustoff.dikt.core
 import dev.shustoff.dikt.dependency.Dependency
 import dev.shustoff.dikt.message_collector.ErrorCollector
 import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.types.isNothing
@@ -18,53 +17,58 @@ class InjectionDependencyCollector(
     fun collectDependencies(
         module: IrClass
     ): ModuleDependencies {
-        val fullDependencyList: MutableList<Dependency> = module.properties
-            .map { Dependency.Property(it, null) }
-            .toMutableList()
+        val fullDependencyMap: MutableMap<DependencyId, MutableList<Dependency>> = mutableMapOf()
+        module.properties
+            .forEach {
+                val dependency = Dependency.Property(it, null)
+                fullDependencyMap.getOrPut(dependency.id) { mutableListOf() }.add(dependency)
+            }
 
-        fullDependencyList.addAll(
-            module.functions.mapNotNull { createFunctionDependency(it) }
-        )
+        module.functions.forEach {
+            createFunctionDependency(it)?.let { dependency ->
+                fullDependencyMap.getOrPut(dependency.id) { mutableListOf() }.add(dependency)
+            }
+        }
 
-        val modules = LinkedList(fullDependencyList
+        val modules = LinkedList(fullDependencyMap.values.flatten()
             .mapNotNull {
-                if (it is Dependency.Property) {
-                    getModuleClassDescriptor(it.property)
-                        ?.let { classDescriptor -> it to classDescriptor }
-                } else {
-                    null
-                }
+                getModuleClassDescriptor(it)
+                    ?.let { classDescriptor -> it to classDescriptor }
             }
             .toList()
         )
 
         while (modules.isNotEmpty()) {
             val (nestedModule, classDescriptor) = modules.pop()
-            val properties = classDescriptor.properties
+            val dependencies = classDescriptor.properties
                 .filter { it.isVisible(module) }
-                .map { Dependency.Property(it, nestedModule) }
+                .map { Dependency.Property(it, nestedModule) } +
+                    classDescriptor.functions
+                        .filter { it.isVisible(module) }
+                        .mapNotNull { createFunctionDependency(it, nestedModule) }
 
-            val functions = classDescriptor.functions
-                .filter { it.isVisible(module) }
-                .mapNotNull { createFunctionDependency(it, nestedModule) }
+            val withoutDuplicates = dependencies.filter { fullDependencyMap[it.id]?.any { it.fromNestedModule != null } != true }
 
-            fullDependencyList.addAll(properties)
-            fullDependencyList.addAll(functions)
+            withoutDuplicates.forEach { dependency ->
+                fullDependencyMap.getOrPut(dependency.id) { mutableListOf() }.add(dependency)
+            }
 
-            modules.addAll(properties.mapNotNull {
-                getModuleClassDescriptor(it.property)
-                    ?.let { classDescriptor -> it to classDescriptor }
-            })
+            modules.addAll(
+                withoutDuplicates.mapNotNull {
+                    getModuleClassDescriptor(it)
+                        ?.let { classDescriptor -> it to classDescriptor }
+                }.toList()
+            )
         }
 
         return ModuleDependencies(
             errorCollector,
             module,
-            fullDependencyList.groupBy { it.id }
+            fullDependencyMap
         )
     }
 
-    private fun createFunctionDependency(it: IrSimpleFunction, nestedModule: Dependency.Property? = null): Dependency.Function? {
+    private fun createFunctionDependency(it: IrSimpleFunction, nestedModule: Dependency? = null): Dependency.Function? {
         if (!isDependencyFunction(it)) return null
         return Dependency.Function(it, nestedModule)
     }
@@ -72,6 +76,6 @@ class InjectionDependencyCollector(
     private fun isDependencyFunction(it: IrSimpleFunction) =
         !it.isFakeOverride && !it.isOperator && !it.isSuspend && !it.isInfix && !it.returnType.isUnit() && !it.returnType.isNothing()
 
-    private fun getModuleClassDescriptor(property: IrProperty) =
-        property.getter?.returnType?.getClass()?.takeIf { Annotations.isModule(it) }
+    private fun getModuleClassDescriptor(dependency: Dependency) =
+        dependency.id.type.getClass()?.takeIf { Annotations.isModule(it) }
 }
