@@ -56,7 +56,7 @@ class DependencyInjectionBuilder(
         //TODO: clean up the mess?
         val lazyFunction = lazyFunction
         check(lazyFunction != null) { "kotlin.Lazy not found" }
-        val lazyType = pluginContext.referenceClass(FqName("kotlin.Lazy"))!!.typeWith(function.returnType)
+        val lazyType = lazyFunction.returnType.getClass()!!.typeWith(function.returnType)
         val field = module.addField {
             type = lazyType
             name = Name.identifier("__di_cache__${function.name.asString()}")
@@ -73,7 +73,8 @@ class DependencyInjectionBuilder(
             }.apply {
                 parent = field
                 body = DeclarationIrBuilder(pluginContext, symbol).irBlockBody {
-                    val dependency = dependencies.resolveDependency(function.returnType, Dependency.Function(function, null))
+                    val dependency =
+                        dependencies.resolveDependency(function.returnType, Dependency.Function(function, null))
                     if (dependency != null) {
                         +irReturn(
                             makeDependencyCall(module, dependency, dispatchReceiverParameter)
@@ -101,7 +102,7 @@ class DependencyInjectionBuilder(
         val getValueFunction = lazyType.getClass()!!.properties.first { it.name.identifier == "value" }.getter!!
         return DeclarationIrBuilder(pluginContext, function.symbol).irBlockBody {
             +irReturn(
-                irCall(getValueFunction).also {
+                irCall(getValueFunction.symbol, function.returnType).also {
                     it.dispatchReceiver = irGetField(
                         IrGetValueImpl(startOffset, endOffset, function.dispatchReceiverParameter!!.symbol),
                         field
@@ -134,8 +135,18 @@ class DependencyInjectionBuilder(
         receiverParameter: IrValueParameter?
     ): IrExpression {
         return when (dependency.dependency) {
-            is Dependency.Constructor -> makeConstructorDependencyCall(dependency.dependency, dependency.params, module, receiverParameter)
-            is Dependency.Function -> makeFunctionDependencyCall(dependency.dependency, receiverParameter, dependency.params, module)
+            is Dependency.Constructor -> makeConstructorDependencyCall(
+                dependency.dependency,
+                dependency.params,
+                module,
+                receiverParameter
+            )
+            is Dependency.Function -> makeFunctionDependencyCall(
+                dependency.dependency,
+                receiverParameter,
+                dependency.params,
+                module
+            )
             is Dependency.Property -> makePropertyDependencyCall(dependency.dependency, receiverParameter)
         }
     }
