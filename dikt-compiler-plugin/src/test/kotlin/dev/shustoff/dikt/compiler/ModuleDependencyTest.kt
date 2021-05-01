@@ -44,6 +44,39 @@ class ModuleDependencyTest {
     }
 
     @Test
+    fun `compile with dependency depp in nested module`() {
+        val result = compile(
+            folder.root,
+            SourceFile.kotlin(
+                "MyModule.kt",
+                """
+            package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.ByDi
+            import dev.shustoff.dikt.Module
+            import dev.shustoff.dikt.Inject
+
+            class Dependency
+
+            @Inject
+            class Injectable(val dependency: Dependency)
+
+            @Module
+            class NestedModule2(val dependency: Dependency)
+
+            @Module
+            class NestedModule(val nested: NestedModule2)
+
+            @Module
+            class MyModule(val nested: NestedModule) {
+                @ByDi fun injectable(): Injectable
+            }
+            """
+            )
+        )
+        assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+    }
+
+    @Test
     fun `fail with duplicated property dependencies`() {
         val result = compile(
             folder.root,

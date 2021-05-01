@@ -47,7 +47,9 @@ class InjectionDependencyCollector(
                         .filter { it.isVisible(module) }
                         .mapNotNull { createFunctionDependency(it, nestedModule) }
 
-            val withoutDuplicates = dependencies.filter { fullDependencyMap[it.id]?.any { it.fromNestedModule != null } != true }
+            val withoutDuplicates = dependencies
+                .filter { fullDependencyMap[it.id]?.any { it.fromNestedModule != null } != true }
+                .toList()
 
             withoutDuplicates.forEach { dependency ->
                 fullDependencyMap.getOrPut(dependency.id) { mutableListOf() }.add(dependency)
