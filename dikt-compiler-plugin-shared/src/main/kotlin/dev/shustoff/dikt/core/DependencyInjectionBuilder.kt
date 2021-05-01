@@ -10,10 +10,7 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.builders.declarations.addField
 import org.jetbrains.kotlin.ir.builders.declarations.buildFun
-import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
-import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
-import org.jetbrains.kotlin.ir.declarations.IrValueParameter
+import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.IrFunctionExpressionImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
@@ -53,7 +50,22 @@ class DependencyInjectionBuilder(
         dependencies: ModuleDependencies,
         module: IrClass
     ): IrBlockBody {
-        //TODO: clean up the mess?
+        val field = createLazyFieldForSingleton(function, module, dependencies)
+        val getValueFunction = field.type.getClass()!!.properties.first { it.name.identifier == "value" }.getter!!
+        return DeclarationIrBuilder(pluginContext, function.symbol).irBlockBody {
+            +irReturn(
+                irCall(getValueFunction.symbol, function.returnType).also {
+                    it.dispatchReceiver = irGetField(IrGetValueImpl(startOffset, endOffset, function.dispatchReceiverParameter!!.symbol), field)
+                }
+            )
+        }
+    }
+
+    private fun createLazyFieldForSingleton(
+        function: IrSimpleFunction,
+        module: IrClass,
+        dependencies: ModuleDependencies
+    ): IrField {
         val lazyFunction = lazyFunction
         check(lazyFunction != null) { "kotlin.Lazy not found" }
         val lazyType = lazyFunction.returnType.getClass()!!.typeWith(function.returnType)
@@ -99,17 +111,7 @@ class DependencyInjectionBuilder(
                 }
             )
         }
-        val getValueFunction = lazyType.getClass()!!.properties.first { it.name.identifier == "value" }.getter!!
-        return DeclarationIrBuilder(pluginContext, function.symbol).irBlockBody {
-            +irReturn(
-                irCall(getValueFunction.symbol, function.returnType).also {
-                    it.dispatchReceiver = irGetField(
-                        IrGetValueImpl(startOffset, endOffset, function.dispatchReceiverParameter!!.symbol),
-                        field
-                    )
-                }
-            )
-        }
+        return field
     }
 
     private fun createFactoryBody(
