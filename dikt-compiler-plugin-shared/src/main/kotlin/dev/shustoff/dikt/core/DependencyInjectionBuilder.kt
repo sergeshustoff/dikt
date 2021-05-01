@@ -89,7 +89,7 @@ class DependencyInjectionBuilder(
                         dependencies.resolveDependency(function.returnType, function)
                     if (dependency != null) {
                         +irReturn(
-                            makeDependencyCall(module, dependency, dispatchReceiverParameter)
+                            makeDependencyCall(module, dependency, dispatchReceiverParameter ?: module.thisReceiver!!)
                         )
                     } else {
                         // there should be compilation error anyway in resolveDependency call
@@ -123,7 +123,7 @@ class DependencyInjectionBuilder(
             dependencies.resolveDependency(function.returnType, function)
         if (dependency != null) {
             +irReturn(
-                makeDependencyCall(module, dependency, function.dispatchReceiverParameter)
+                makeDependencyCall(module, dependency, function.dispatchReceiverParameter ?: module.thisReceiver!!)
             )
         } else {
             // there should be compilation error anyway in resolveDependency call
@@ -134,7 +134,7 @@ class DependencyInjectionBuilder(
     private fun IrBlockBodyBuilder.makeDependencyCall(
         module: IrClass,
         dependency: ResolvedDependency,
-        receiverParameter: IrValueParameter?
+        receiverParameter: IrValueParameter
     ): IrExpression {
         return when (dependency.dependency) {
             is Dependency.Constructor -> makeConstructorDependencyCall(
@@ -163,7 +163,7 @@ class DependencyInjectionBuilder(
         dependency: Dependency.Constructor,
         params: List<ResolvedDependency>,
         module: IrClass,
-        receiverParameter: IrValueParameter?
+        receiverParameter: IrValueParameter
     ): IrConstructorCall {
         return irCallConstructor(dependency.constructor.symbol, emptyList()).also {
             for ((index, resolved) in params.withIndex()) {
@@ -175,7 +175,7 @@ class DependencyInjectionBuilder(
     private fun IrBlockBodyBuilder.makeFunctionDependencyCall(
         module: IrClass,
         dependency: Dependency.Function,
-        receiverParameter: IrValueParameter?,
+        receiverParameter: IrValueParameter,
         params: List<ResolvedDependency>,
         nestedModulesChain: ResolvedDependency?
     ): IrFunctionAccessExpression {
@@ -185,19 +185,19 @@ class DependencyInjectionBuilder(
             }
         }
         call.dispatchReceiver = nestedModulesChain?.let { makeDependencyCall(module, nestedModulesChain, receiverParameter) }
-            ?: IrGetValueImpl(startOffset, endOffset, receiverParameter!!.symbol)
+            ?: IrGetValueImpl(startOffset, endOffset, receiverParameter.symbol)
         return call
     }
 
     private fun IrBlockBodyBuilder.makePropertyDependencyCall(
         module: IrClass,
         dependency: Dependency.Property,
-        receiverParameter: IrValueParameter?,
+        receiverParameter: IrValueParameter,
         nestedModulesChain: ResolvedDependency?
     ): IrFunctionAccessExpression {
         val call = irCall(dependency.property.getter!!)
         val parentCall = nestedModulesChain?.let { makeDependencyCall(module, it, receiverParameter) }
-        call.dispatchReceiver = parentCall ?: IrGetValueImpl(startOffset, endOffset, receiverParameter!!.symbol)
+        call.dispatchReceiver = parentCall ?: IrGetValueImpl(startOffset, endOffset, receiverParameter.symbol)
 
         return call
     }
