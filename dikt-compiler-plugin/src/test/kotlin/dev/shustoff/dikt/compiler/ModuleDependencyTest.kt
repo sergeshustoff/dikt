@@ -139,6 +139,47 @@ import dev.shustoff.dikt.Module
     }
 
     @Test
+    fun `fail with duplicated function dependencies in nested modules`() {
+        val result = compile(
+            folder.root,
+            SourceFile.kotlin(
+                "MyModule.kt",
+                """
+            package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.ByDi
+            import dev.shustoff.dikt.Module
+            import dev.shustoff.dikt.Inject
+
+            class Dependency
+
+            @Inject
+            class Injectable(val dependency: Dependency)
+
+            @Module
+            class Module1 {
+                fun dependency() = Dependency()
+            }
+
+            @Module
+            class Module2 {
+                fun dependency() = Dependency()            
+            }
+
+            @Module
+            class MyModule(
+                val module1: Module1,
+                val module2: Module2
+            ) {
+                @ByDi fun injectable(): Injectable
+            }
+            """
+            )
+        )
+        assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
+        assertThat(result.messages).contains("MyModule.injectable: Multiple dependencies provided with type dev.shustoff.dikt.compiler.Dependency: module1.dependency, module2.dependency")
+    }
+
+    @Test
     fun `compile with dependency`() {
         val result = compile(
             folder.root,

@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.properties
 import java.util.*
 
-class InjectionDependencyCollector(
+class DependencyCollector(
     private val errorCollector: ErrorCollector
 ) {
     fun collectDependencies(
@@ -47,7 +47,7 @@ class InjectionDependencyCollector(
                         .mapNotNull { createFunctionDependency(it, module) }
 
             val withoutDuplicates = dependencies
-                .filter { fullDependencyMap[it.id]?.any { it.fromNestedModule != null } != true }
+                .filter { fullDependencyMap[it.id]?.any { it.isInNestedModulePath(module.path) } != true }
                 .toList()
 
             withoutDuplicates.forEach { dependency ->

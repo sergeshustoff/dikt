@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.ir.util.render
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
-class DependencyInjectionBuilder(
+class InjectionBuilder(
     private val pluginContext: IrPluginContext,
     errorCollector: ErrorCollector
 ) : ErrorCollector by errorCollector {

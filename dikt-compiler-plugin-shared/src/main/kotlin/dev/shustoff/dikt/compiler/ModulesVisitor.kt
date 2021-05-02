@@ -13,8 +13,8 @@ class ModulesVisitor(
     pluginContext: IrPluginContext
 ) : IrElementVisitorVoid, ErrorCollector by errorCollector {
 
-    private val dependencyCollector = InjectionDependencyCollector(this)
-    private val injectionBuilder = DependencyInjectionBuilder(pluginContext, errorCollector)
+    private val dependencyCollector = DependencyCollector(this)
+    private val injectionBuilder = InjectionBuilder(pluginContext, errorCollector)
 
     override fun visitElement(element: IrElement) {
         element.acceptChildren(this, null)

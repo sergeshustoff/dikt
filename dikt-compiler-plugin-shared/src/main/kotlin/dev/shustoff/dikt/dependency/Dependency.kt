@@ -26,6 +26,17 @@ sealed class Dependency {
         return list.takeUnless { it.isEmpty() }?.joinToString(separator = ".")
     }
 
+    fun isInNestedModulePath(path: Dependency): Boolean {
+        var node: Dependency? = path
+        while (node != null) {
+            if (fromNestedModule == node) {
+                return true
+            }
+            node = node.fromNestedModule
+        }
+        return false
+    }
+
     abstract fun getRequiredParams(): List<IrValueParameter>
 
     data class Parameter(
