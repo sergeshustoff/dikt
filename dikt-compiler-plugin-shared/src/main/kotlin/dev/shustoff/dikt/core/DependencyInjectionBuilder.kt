@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.properties
+import org.jetbrains.kotlin.ir.util.render
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
@@ -42,6 +43,7 @@ class DependencyInjectionBuilder(
             } else {
                 createFactoryBody(function, dependencies, module)
             }
+            function.info("generated function body")
         }
     }
 

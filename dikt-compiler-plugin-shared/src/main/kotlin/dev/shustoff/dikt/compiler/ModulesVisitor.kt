@@ -23,7 +23,7 @@ class ModulesVisitor(
     override fun visitClass(declaration: IrClass) {
         if (Annotations.isModule(declaration)) {
             if (!declaration.isFinalClass) {
-                declaration.psiElementSafe.error("Module should be final")
+                declaration.error("Module should be final")
             }
             val dependencies = dependencyCollector.collectDependencies(declaration)
             buildPropertyInjections(declaration, dependencies)

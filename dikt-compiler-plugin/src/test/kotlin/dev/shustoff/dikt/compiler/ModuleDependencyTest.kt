@@ -104,7 +104,7 @@ import dev.shustoff.dikt.Module
             )
         )
         assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        assertThat(result.messages).contains("Multiple dependencies provided with type dev.shustoff.dikt.compiler.Dependency in module MyModule")
+        assertThat(result.messages).contains("MyModule.injectable: Multiple dependencies provided with type dev.shustoff.dikt.compiler.Dependency: dependency1, dependency2")
     }
 
     @Test
@@ -135,7 +135,7 @@ import dev.shustoff.dikt.Module
             )
         )
         assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        assertThat(result.messages).contains("Multiple dependencies provided with type dev.shustoff.dikt.compiler.Dependency in module MyModule")
+        assertThat(result.messages).contains("MyModule.injectable: Multiple dependencies provided with type dev.shustoff.dikt.compiler.Dependency: provide1, provide2")
     }
 
     @Test

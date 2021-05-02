@@ -39,7 +39,7 @@ class NullabilityTest {
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("Can't resolve dependency kotlin.String needed to initialize injectable in module MyModule")
+        Truth.assertThat(result.messages).contains("MyModule.injectable: Can't resolve dependency kotlin.String")
     }
 
     @Test

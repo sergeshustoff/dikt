@@ -3,6 +3,7 @@ package dev.shustoff.dikt.core
 import dev.shustoff.dikt.dependency.Dependency
 import dev.shustoff.dikt.dependency.ResolvedDependency
 import dev.shustoff.dikt.message_collector.ErrorCollector
+import org.jetbrains.kotlin.ir.backend.js.utils.asString
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrConstructor
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
@@ -25,19 +26,19 @@ class ModuleDependencies(
         forFunction: IrSimpleFunction
     ): ResolvedDependency? {
         val params = forFunction.valueParameters.associate { Dependency.Parameter(it).let { it.id to it } }
-        return resolveDependencyInternal(DependencyId(type), Dependency.Function(forFunction, null), emptySet(), params,
+        return resolveDependencyInternal(DependencyId(type), Dependency.Function(forFunction, null), emptyList(), params,
             allowConstructorWithoutAnnotation = true)
     }
 
     private fun resolveDependencyInternal(
         id: DependencyId,
         forDependency: Dependency,
-        usedTypes: Set<IrType>,
+        usedTypes: List<IrType>,
         providedParams: Map<DependencyId, Dependency>,
         allowConstructorWithoutAnnotation: Boolean = false
     ): ResolvedDependency? {
         val dependency = providedParams[id]
-            ?: findDependency(id, forDependency, module, usedTypes, allowConstructorWithoutAnnotation)
+            ?: findDependency(id, forDependency, usedTypes, allowConstructorWithoutAnnotation)
             ?: return null
         val params = dependency.getRequiredParams()
         val typeArgumentsMapping = buildTypeArgumentsMapping(id, dependency)
@@ -61,7 +62,7 @@ class ModuleDependencies(
     private fun getResolveParams(
         valueParameters: List<IrValueParameter>,
         forDependency: Dependency,
-        usedTypes: Set<IrType> = emptySet(),
+        usedTypes: List<IrType> = emptyList(),
         typeArgumentsMapping: Map<IrType?, IrType?>,
         providedParams: Map<DependencyId, Dependency>,
     ): List<ResolvedDependency>? {
@@ -81,7 +82,7 @@ class ModuleDependencies(
     private fun getResolveNestedChain(
         dependency: Dependency,
         forDependency: Dependency,
-        usedTypes: Set<IrType> = emptySet(),
+        usedTypes: List<IrType> = emptyList(),
         typeArgumentsMapping: Map<IrType?, IrType?>,
         providedParams: Map<DependencyId, Dependency>,
     ): ResolvedDependency? {
@@ -98,13 +99,12 @@ class ModuleDependencies(
     private fun findDependency(
         id: DependencyId,
         forDependency: Dependency,
-        module: IrClass,
-        usedTypes: Set<IrType> = emptySet(),
+        usedTypes: List<IrType> = emptyList(),
         allowConstructorWithoutAnnotation: Boolean = false
     ): Dependency? {
         if (id.type in usedTypes) {
-            forDependency.psiElement.error(
-                "Recursive dependency in ${id.asErrorString()} needed to initialize ${forDependency.name} in module ${module.name.asString()}",
+            forDependency.irElement.error(
+                usedTypes.joinToString(prefix = "Recursive dependency: ",separator = " -> ") { it.asString() }
             )
             return null
         }
@@ -113,16 +113,15 @@ class ModuleDependencies(
         // check local and nested in groups as well as parameterless and parameterized
         return getDependencyFromGroup(forDependency, id, dependencyOptions.filter { it.fromNestedModule == null && it.getRequiredParams().isEmpty() })
             ?: getDependencyFromGroup(forDependency, id, dependencyOptions.filter { it.fromNestedModule == null && it.getRequiredParams().isNotEmpty() })
-            ?: getDependencyFromGroup(forDependency, id, dependencyOptions.filter { it.fromNestedModule != null && it.getRequiredParams().isEmpty() })
-            ?: getDependencyFromGroup(forDependency, id, dependencyOptions.filter { it.fromNestedModule != null && it.getRequiredParams().isNotEmpty() })
+            ?: getDependencyFromGroup(forDependency, id, dependencyOptions.filter { it.fromNestedModule != null })
             ?: getConstructorDependency(forDependency, id, allowConstructorWithoutAnnotation)
     }
 
     private fun getConstructorDependency(forDependency: Dependency, id: DependencyId, allowConstructorWithoutAnnotation: Boolean): Dependency? {
         val constructor = findConstructorInjector(id, allowConstructorWithoutAnnotation)
         if (constructor == null || !constructor.isVisible(module)) {
-            forDependency.psiElement.error(
-                "Can't resolve dependency ${id.asErrorString()} needed to initialize ${forDependency.name} in module ${module.name.asString()}",
+            forDependency.irElement.error(
+                "Can't resolve dependency ${id.asErrorString()}",
             )
             return null
         }
@@ -132,8 +131,8 @@ class ModuleDependencies(
     private fun getDependencyFromGroup(forDependency: Dependency, id: DependencyId, options: List<Dependency>): Dependency? {
         if (options.isNotEmpty()) {
             if (options.size > 1) {
-                forDependency.psiElement.error(
-                    "Multiple dependencies provided with type ${id.asErrorString()} in module ${module.name.asString()}",
+                forDependency.irElement.error(
+                    options.mapNotNull { it.nameWithNestedChain() }.joinToString(prefix = "Multiple dependencies provided with type ${id.asErrorString()}: ")
                 )
             }
             return options.first()

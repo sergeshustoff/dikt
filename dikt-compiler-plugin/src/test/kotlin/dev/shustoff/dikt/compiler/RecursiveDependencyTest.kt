@@ -41,8 +41,8 @@ class RecursiveDependencyTest {
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("Recursive dependency in injectable in module MyModule")
-        Truth.assertThat(result.messages).contains("Recursive dependency in dependency in module MyModule")
+        Truth.assertThat(result.messages).contains("MyModule.injectable: Recursive dependency detected")
+        Truth.assertThat(result.messages).contains("MyModule.dependency: Recursive dependency detected")
     }
 
     @Test
@@ -68,7 +68,7 @@ class RecursiveDependencyTest {
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("Recursive dependency in dev.shustoff.dikt.compiler.Injectable needed to initialize injectable in module MyModule")
+        Truth.assertThat(result.messages).contains("MyModule.injectable: Recursive dependency: dev.shustoff.dikt.compiler.Injectable")
     }
 
     @Test
@@ -94,7 +94,7 @@ class RecursiveDependencyTest {
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("Recursive dependency in dev.shustoff.dikt.compiler.Injectable needed to initialize injectable in module MyModule")
+        Truth.assertThat(result.messages).contains("MyModule.injectable: Recursive dependency: dev.shustoff.dikt.compiler.Injectable")
 
         val result2 = compile(
             folder.root,
@@ -120,7 +120,7 @@ class RecursiveDependencyTest {
             )
         )
         Truth.assertThat(result2.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result2.messages).contains("Recursive dependency in dev.shustoff.dikt.compiler.Dependency needed to initialize injectable in module MyModule")
+        Truth.assertThat(result2.messages).contains("MyModule.injectable: Recursive dependency: dev.shustoff.dikt.compiler.Injectable -> dev.shustoff.dikt.compiler.Dependency")
     }
 
     @Test
@@ -149,8 +149,8 @@ class RecursiveDependencyTest {
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("Recursive dependency in injectable in module MyModule")
-        Truth.assertThat(result.messages).contains("Recursive dependency in dependency in module MyModule")
+        Truth.assertThat(result.messages).contains("MyModule.injectable: Recursive dependency detected")
+        Truth.assertThat(result.messages).contains("MyModule.dependency: Recursive dependency detected")
     }
 
     @Test
@@ -189,8 +189,8 @@ class RecursiveDependencyTest {
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("Recursive dependency in provideDependency1 in module MyModule")
-        Truth.assertThat(result.messages).contains("Recursive dependency in provideDependency2 in module MyModule")
+        Truth.assertThat(result.messages).contains("MyModule.provideDependency1: Recursive dependency detected")
+        Truth.assertThat(result.messages).contains("MyModule.provideDependency2: Recursive dependency detected")
     }
 
     @Test
@@ -220,8 +220,8 @@ class RecursiveDependencyTest {
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("Recursive dependency in injectable in module MyModule")
-        Truth.assertThat(result.messages).contains("Recursive dependency in provideInjectable in module MyModule")
+        Truth.assertThat(result.messages).contains("MyModule.injectable: Recursive dependency detected")
+        Truth.assertThat(result.messages).contains("MyModule.provideInjectable: Recursive dependency detected")
     }
 
 }

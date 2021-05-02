@@ -1,7 +1,6 @@
 package dev.shustoff.dikt.core
 
 import dev.shustoff.dikt.compiler.FullCodeDependencyCollector
-import dev.shustoff.dikt.compiler.psiElementSafe
 import dev.shustoff.dikt.message_collector.ErrorCollector
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationWithName
@@ -48,10 +47,11 @@ class RecursiveCallsDetector(
             }
         }
         val declarationsWithCycles = inDegreeCount.filterValues { it > 0 }.keys
+        if (declarationsWithCycles.isNotEmpty()) {
+            module.error(declarationsWithCycles.joinToString(prefix = "Recursive dependency detected: ") { it.name.asString() })
+        }
         for (declaration in declarationsWithCycles) {
-            declaration.psiElementSafe.error(
-                "Recursive dependency in ${declaration.name} in module ${module.name.asString()}",
-            )
+            declaration.error("Recursive dependency detected")
         }
     }
 
