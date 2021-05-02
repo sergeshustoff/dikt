@@ -2,4 +2,4 @@ package dev.shustoff.dikt
 
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.BINARY)
-annotation class Cached
+annotation class SingletonByDi

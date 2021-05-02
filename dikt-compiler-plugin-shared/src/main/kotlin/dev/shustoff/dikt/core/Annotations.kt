@@ -20,25 +20,25 @@ object Annotations {
     private val injectNamedAnnotation = FqName("dev.shustoff.dikt.InjectNamed")
     private val byDiAnnotation = FqName("dev.shustoff.dikt.ByDi")
     private val moduleAnnotation = FqName("dev.shustoff.dikt.Module")
-    private val cachedAnnotation = FqName("dev.shustoff.dikt.Cached")
+    private val singletonAnnotation = FqName("dev.shustoff.dikt.SingletonByDi")
 
     fun isModule(declaration: IrClass) = declaration.annotations.hasAnnotation(moduleAnnotation)
 
     fun isProvidedByDi(descriptor: CallableMemberDescriptor): Boolean {
         val containingDeclaration = descriptor.containingDeclaration
         return descriptor is FunctionDescriptor
-                && descriptor.annotations.hasAnnotation(byDiAnnotation)
+                && (descriptor.annotations.hasAnnotation(byDiAnnotation) || descriptor.annotations.hasAnnotation(singletonAnnotation))
                 && containingDeclaration is ClassDescriptor
                 && containingDeclaration.annotations.hasAnnotation(moduleAnnotation)
     }
 
     fun isSingleton(descriptor: IrSimpleFunction): Boolean {
-        return descriptor.annotations.hasAnnotation(cachedAnnotation)
+        return descriptor.annotations.hasAnnotation(singletonAnnotation)
     }
 
     fun isProvidedByDi(descriptor: IrSimpleFunction): Boolean {
         val containingDeclaration = descriptor.parent
-        return descriptor.annotations.hasAnnotation(byDiAnnotation)
+        return (descriptor.annotations.hasAnnotation(byDiAnnotation) || descriptor.annotations.hasAnnotation(singletonAnnotation))
                 && containingDeclaration is IrClass
                 && containingDeclaration.annotations.hasAnnotation(moduleAnnotation)
     }

@@ -204,7 +204,7 @@ class FunctionDependencyTest {
     }
 
     @Test
-    fun `function may provide cached dependency`() {
+    fun `function may provide singleton dependency`() {
         val result = compile(
             folder.root,
             SourceFile.kotlin(
@@ -218,8 +218,7 @@ class FunctionDependencyTest {
 
             @Module
             class MyModule {
-                @Cached
-                @ByDi fun injectable(): Injectable
+                @SingletonByDi fun injectable(): Injectable
             }
             """
             )
