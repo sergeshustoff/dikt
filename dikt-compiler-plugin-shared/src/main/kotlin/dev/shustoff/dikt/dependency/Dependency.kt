@@ -3,6 +3,7 @@ package dev.shustoff.dikt.dependency
 import dev.shustoff.dikt.core.Annotations
 import dev.shustoff.dikt.core.DependencyId
 import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.types.IrType
 import java.util.*
 
 sealed class Dependency {
@@ -39,9 +40,10 @@ sealed class Dependency {
 
     data class Property(
         val property: IrProperty,
-        override val fromNestedModule: Dependency?
+        override val fromNestedModule: Dependency?,
+        val returnType: IrType = property.getter!!.returnType
     ) : Dependency() {
-        override val id: DependencyId = DependencyId(property.getter!!.returnType, Annotations.getAnnotatedName(property).orEmpty())
+        override val id: DependencyId = DependencyId(returnType, Annotations.getAnnotatedName(property).orEmpty())
         override val irElement: IrDeclarationWithName = property
         override val name: String = property.name.asString()
 
@@ -59,9 +61,10 @@ sealed class Dependency {
 
     data class Function(
         val function: IrFunction,
-        override val fromNestedModule: Dependency?
+        override val fromNestedModule: Dependency?,
+        val returnType: IrType = function.returnType
     ) : Dependency() {
-        override val id: DependencyId = DependencyId(function.returnType, Annotations.getAnnotatedName(function).orEmpty())
+        override val id: DependencyId = DependencyId(returnType, Annotations.getAnnotatedName(function).orEmpty())
         override val irElement: IrDeclarationWithName = function
         override val name: String = function.name.asString()
         override fun getRequiredParams(): List<IrValueParameter> = function.valueParameters

@@ -4,9 +4,8 @@ import dev.shustoff.dikt.dependency.Dependency
 import dev.shustoff.dikt.message_collector.ErrorCollector
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
-import org.jetbrains.kotlin.ir.types.getClass
-import org.jetbrains.kotlin.ir.types.isNothing
-import org.jetbrains.kotlin.ir.types.isUnit
+import org.jetbrains.kotlin.ir.types.*
+import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.properties
 import java.util.*
@@ -15,16 +14,16 @@ class InjectionDependencyCollector(
     private val errorCollector: ErrorCollector
 ) {
     fun collectDependencies(
-        module: IrClass
+        rootModule: IrClass
     ): ModuleDependencies {
         val fullDependencyMap: MutableMap<DependencyId, MutableList<Dependency>> = mutableMapOf()
-        module.properties
+        rootModule.properties
             .forEach {
                 val dependency = Dependency.Property(it, null)
                 fullDependencyMap.getOrPut(dependency.id) { mutableListOf() }.add(dependency)
             }
 
-        module.functions.forEach {
+        rootModule.functions.forEach {
             createFunctionDependency(it)?.let { dependency ->
                 fullDependencyMap.getOrPut(dependency.id) { mutableListOf() }.add(dependency)
             }
@@ -33,19 +32,19 @@ class InjectionDependencyCollector(
         val modules = LinkedList(fullDependencyMap.values.flatten()
             .mapNotNull {
                 getModuleClassDescriptor(it)
-                    ?.let { classDescriptor -> it to classDescriptor }
+                    ?.let { classDescriptor -> Module(it, classDescriptor) }
             }
             .toList()
         )
 
         while (modules.isNotEmpty()) {
-            val (nestedModule, classDescriptor) = modules.pop()
-            val dependencies = classDescriptor.properties
-                .filter { it.isVisible(module) }
-                .map { Dependency.Property(it, nestedModule) } +
-                    classDescriptor.functions
-                        .filter { it.isVisible(module) }
-                        .mapNotNull { createFunctionDependency(it, nestedModule) }
+            val module = modules.pop()
+            val dependencies = module.clazz.properties
+                .filter { it.isVisible(rootModule) }
+                .map { Dependency.Property(it, module.path, returnType = module.typeMap[it.getter!!.returnType] ?: it.getter!!.returnType) } +
+                    module.clazz.functions
+                        .filter { it.isVisible(rootModule) }
+                        .mapNotNull { createFunctionDependency(it, module) }
 
             val withoutDuplicates = dependencies
                 .filter { fullDependencyMap[it.id]?.any { it.fromNestedModule != null } != true }
@@ -58,21 +57,21 @@ class InjectionDependencyCollector(
             modules.addAll(
                 withoutDuplicates.mapNotNull {
                     getModuleClassDescriptor(it)
-                        ?.let { classDescriptor -> it to classDescriptor }
+                        ?.let { classDescriptor -> Module(it, classDescriptor) }
                 }.toList()
             )
         }
 
         return ModuleDependencies(
             errorCollector,
-            module,
+            rootModule,
             fullDependencyMap
         )
     }
 
-    private fun createFunctionDependency(it: IrSimpleFunction, nestedModule: Dependency? = null): Dependency.Function? {
+    private fun createFunctionDependency(it: IrSimpleFunction, module: Module? = null): Dependency.Function? {
         if (!isDependencyFunction(it)) return null
-        return Dependency.Function(it, nestedModule)
+        return Dependency.Function(it, module?.path, returnType = module?.typeMap?.get(it.returnType) ?: it.returnType)
     }
 
     private fun isDependencyFunction(it: IrSimpleFunction) =
@@ -80,4 +79,15 @@ class InjectionDependencyCollector(
 
     private fun getModuleClassDescriptor(dependency: Dependency) =
         dependency.id.type.getClass()?.takeIf { Annotations.isModule(it) }
+
+    private data class Module(
+        val path: Dependency,
+        val clazz: IrClass,
+    ) {
+        val typeMap: Map<IrType?, IrType?> by lazy {
+            val typeArguments = (path.id.type as? IrSimpleType)?.arguments?.map { it as? IrType }
+            val dependencyTypeArguments = (clazz.defaultType as? IrSimpleType)?.arguments?.map { it as? IrType }
+            dependencyTypeArguments?.zip(typeArguments.orEmpty())?.toMap().orEmpty()
+        }
+    }
 }
