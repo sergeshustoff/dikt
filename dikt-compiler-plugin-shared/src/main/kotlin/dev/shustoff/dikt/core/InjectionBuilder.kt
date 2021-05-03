@@ -64,7 +64,7 @@ class InjectionBuilder(
         return DeclarationIrBuilder(pluginContext, function.symbol).irBlockBody {
             +irReturn(
                 irCall(getValueFunction.symbol, function.returnType).also {
-                    it.dispatchReceiver = irGetField(IrGetValueImpl(startOffset, endOffset, function.dispatchReceiverParameter!!.symbol), field)
+                    it.dispatchReceiver = irGetField(IrGetValueImpl(startOffset, endOffset, (function.dispatchReceiverParameter ?: module.thisReceiver)!!.symbol), field)
                 }
             )
         }
