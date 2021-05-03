@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.properties
-import org.jetbrains.kotlin.ir.util.render
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
@@ -45,6 +44,14 @@ class InjectionBuilder(
             }
             function.info("generated function body")
         }
+    }
+
+    fun buildExtensionInjection(
+        function: IrFunction,
+        dependencies: ModuleDependencies
+    ) {
+        function.body = createFactoryBody(function, dependencies, null)
+        function.info("generated function body")
     }
 
     private fun createSingletonBody(
@@ -91,7 +98,7 @@ class InjectionBuilder(
                         dependencies.resolveDependency(function.returnType, function)
                     if (dependency != null) {
                         +irReturn(
-                            makeDependencyCall(module, dependency, dispatchReceiverParameter ?: module.thisReceiver!!)
+                            makeDependencyCall(dependency, dispatchReceiverParameter ?: module.thisReceiver!!)
                         )
                     } else {
                         // there should be compilation error anyway in resolveDependency call
@@ -117,15 +124,15 @@ class InjectionBuilder(
     }
 
     private fun createFactoryBody(
-        function: IrSimpleFunction,
+        function: IrFunction,
         dependencies: ModuleDependencies,
-        module: IrClass
+        module: IrClass?
     ) = DeclarationIrBuilder(pluginContext, function.symbol).irBlockBody {
         val dependency =
             dependencies.resolveDependency(function.returnType, function)
         if (dependency != null) {
             +irReturn(
-                makeDependencyCall(module, dependency, function.dispatchReceiverParameter ?: module.thisReceiver!!)
+                makeDependencyCall(dependency, function.dispatchReceiverParameter ?: module?.thisReceiver)
             )
         } else {
             // there should be compilation error anyway in resolveDependency call
@@ -134,25 +141,22 @@ class InjectionBuilder(
     }
 
     private fun IrBlockBodyBuilder.makeDependencyCall(
-        module: IrClass,
         dependency: ResolvedDependency,
-        receiverParameter: IrValueParameter
+        receiverParameter: IrValueParameter?
     ): IrExpression {
         return when (dependency.dependency) {
             is Dependency.Constructor -> makeConstructorDependencyCall(
                 dependency.dependency,
                 dependency.params,
-                module,
                 receiverParameter
             )
             is Dependency.Function -> makeFunctionDependencyCall(
-                module,
                 dependency.dependency,
                 receiverParameter,
                 dependency.params,
                 dependency.nestedModulesChain
             )
-            is Dependency.Property -> makePropertyDependencyCall(module, dependency.dependency, receiverParameter, dependency.nestedModulesChain)
+            is Dependency.Property -> makePropertyDependencyCall(dependency.dependency, receiverParameter, dependency.nestedModulesChain)
             is Dependency.Parameter -> makeParameterCall(dependency.dependency)
         }
     }
@@ -164,42 +168,39 @@ class InjectionBuilder(
     private fun IrBlockBodyBuilder.makeConstructorDependencyCall(
         dependency: Dependency.Constructor,
         params: List<ResolvedDependency>,
-        module: IrClass,
-        receiverParameter: IrValueParameter
+        receiverParameter: IrValueParameter?
     ): IrConstructorCall {
         return irCallConstructor(dependency.constructor.symbol, emptyList()).also {
             for ((index, resolved) in params.withIndex()) {
-                it.putValueArgument(index, makeDependencyCall(module, resolved, receiverParameter))
+                it.putValueArgument(index, makeDependencyCall(resolved, receiverParameter))
             }
         }
     }
 
     private fun IrBlockBodyBuilder.makeFunctionDependencyCall(
-        module: IrClass,
         dependency: Dependency.Function,
-        receiverParameter: IrValueParameter,
+        receiverParameter: IrValueParameter?,
         params: List<ResolvedDependency>,
         nestedModulesChain: ResolvedDependency?
     ): IrFunctionAccessExpression {
-        val call = irCall(dependency.function).also {
+        val call = irCall(dependency.function.symbol, dependency.returnType).also {
             for ((index, resolved) in params.withIndex()) {
-                it.putValueArgument(index, makeDependencyCall(module, resolved, receiverParameter))
+                it.putValueArgument(index, makeDependencyCall(resolved, receiverParameter))
             }
         }
-        call.dispatchReceiver = nestedModulesChain?.let { makeDependencyCall(module, nestedModulesChain, receiverParameter) }
-            ?: IrGetValueImpl(startOffset, endOffset, receiverParameter.symbol)
+        call.dispatchReceiver = nestedModulesChain?.let { makeDependencyCall(nestedModulesChain, receiverParameter) }
+            ?: IrGetValueImpl(startOffset, endOffset, receiverParameter!!.symbol)
         return call
     }
 
     private fun IrBlockBodyBuilder.makePropertyDependencyCall(
-        module: IrClass,
         dependency: Dependency.Property,
-        receiverParameter: IrValueParameter,
+        receiverParameter: IrValueParameter?,
         nestedModulesChain: ResolvedDependency?
     ): IrFunctionAccessExpression {
-        val call = irCall(dependency.property.getter!!)
-        val parentCall = nestedModulesChain?.let { makeDependencyCall(module, it, receiverParameter) }
-        call.dispatchReceiver = parentCall ?: IrGetValueImpl(startOffset, endOffset, receiverParameter.symbol)
+        val call = irCall(dependency.property.getter!!.symbol, dependency.returnType)
+        val parentCall = nestedModulesChain?.let { makeDependencyCall(it, receiverParameter) }
+        call.dispatchReceiver = parentCall ?: IrGetValueImpl(startOffset, endOffset, receiverParameter!!.symbol)
 
         return call
     }

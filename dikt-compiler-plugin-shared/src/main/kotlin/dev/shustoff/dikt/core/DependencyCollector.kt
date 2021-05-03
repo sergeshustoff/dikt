@@ -3,7 +3,9 @@ package dev.shustoff.dikt.core
 import dev.shustoff.dikt.dependency.Dependency
 import dev.shustoff.dikt.message_collector.ErrorCollector
 import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
+import org.jetbrains.kotlin.ir.declarations.IrValueParameter
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.functions
@@ -14,19 +16,26 @@ class DependencyCollector(
     private val errorCollector: ErrorCollector
 ) {
     fun collectDependencies(
-        rootModule: IrClass
+        visibilityChecker: VisibilityChecker,
+        properties: Sequence<IrProperty> = emptySequence(),
+        functions: Sequence<IrSimpleFunction> = emptySequence(),
+        params: List<IrValueParameter> = emptyList()
     ): ModuleDependencies {
         val fullDependencyMap: MutableMap<DependencyId, MutableList<Dependency>> = mutableMapOf()
-        rootModule.properties
+        properties
             .forEach {
                 val dependency = Dependency.Property(it, null)
                 fullDependencyMap.getOrPut(dependency.id) { mutableListOf() }.add(dependency)
             }
 
-        rootModule.functions.forEach {
+        functions.forEach {
             createFunctionDependency(it)?.let { dependency ->
                 fullDependencyMap.getOrPut(dependency.id) { mutableListOf() }.add(dependency)
             }
+        }
+        params.forEach {
+            val dependency = Dependency.Parameter(it)
+            fullDependencyMap.getOrPut(dependency.id) { mutableListOf() }.add(dependency)
         }
 
         val modules = LinkedList(fullDependencyMap.values.flatten()
@@ -40,10 +49,10 @@ class DependencyCollector(
         while (modules.isNotEmpty()) {
             val module = modules.pop()
             val dependencies = module.clazz.properties
-                .filter { it.isVisible(rootModule) }
+                .filter { visibilityChecker.isVisible(it) }
                 .map { Dependency.Property(it, module.path, returnType = module.typeMap[it.getter!!.returnType] ?: it.getter!!.returnType) } +
                     module.clazz.functions
-                        .filter { it.isVisible(rootModule) }
+                        .filter { visibilityChecker.isVisible(it) }
                         .mapNotNull { createFunctionDependency(it, module) }
 
             val withoutDuplicates = dependencies
@@ -64,7 +73,7 @@ class DependencyCollector(
 
         return ModuleDependencies(
             errorCollector,
-            rootModule,
+            visibilityChecker,
             fullDependencyMap
         )
     }

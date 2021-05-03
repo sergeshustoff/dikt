@@ -6,8 +6,7 @@ import dev.shustoff.dikt.Named
 
 @Module
 class EngineModule(
-    @Named("engineName")
-    val engineName: String
+    val engineNameModule: EngineNameModule<String>
 ) {
 
     fun buildEngine(@InjectNamed("engineName") name: String): Engine {

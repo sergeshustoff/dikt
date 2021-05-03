@@ -4,10 +4,7 @@ import dev.shustoff.dikt.dependency.Dependency
 import dev.shustoff.dikt.dependency.ResolvedDependency
 import dev.shustoff.dikt.message_collector.ErrorCollector
 import org.jetbrains.kotlin.ir.backend.js.utils.asString
-import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.declarations.IrConstructor
-import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
-import org.jetbrains.kotlin.ir.declarations.IrValueParameter
+import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.getClass
@@ -17,13 +14,13 @@ import org.jetbrains.kotlin.ir.util.primaryConstructor
 
 class ModuleDependencies(
     errorCollector: ErrorCollector,
-    private val module: IrClass,
+    private val visibilityChecker: VisibilityChecker,
     private val dependencyMap: Map<DependencyId, List<Dependency>>
 ) : ErrorCollector by errorCollector {
 
     fun resolveDependency(
         type: IrType,
-        forFunction: IrSimpleFunction
+        forFunction: IrFunction
     ): ResolvedDependency? {
         val params = forFunction.valueParameters.associate { Dependency.Parameter(it).let { it.id to it } }
         return resolveDependencyInternal(DependencyId(type), Dependency.Function(forFunction, null), emptyList(), params,
@@ -119,7 +116,7 @@ class ModuleDependencies(
 
     private fun getConstructorDependency(forDependency: Dependency, id: DependencyId, allowConstructorWithoutAnnotation: Boolean): Dependency? {
         val constructor = findConstructorInjector(id, allowConstructorWithoutAnnotation)
-        if (constructor == null || !constructor.isVisible(module)) {
+        if (constructor == null || !visibilityChecker.isVisible(constructor)) {
             forDependency.irElement.error(
                 "Can't resolve dependency ${id.asErrorString()}",
             )

@@ -11,5 +11,6 @@ class DiktIrGenerationExtension(
 ) : IrGenerationExtension, ErrorCollector by errorCollector {
     override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {
         moduleFragment.acceptVoid(ModulesVisitor(errorCollector, pluginContext))
+        moduleFragment.acceptVoid(ExtensionFunctionsVisitor(errorCollector, pluginContext))
     }
 }

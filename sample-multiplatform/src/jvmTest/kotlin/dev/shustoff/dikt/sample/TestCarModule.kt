@@ -4,7 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 
 class TestCarModule {
-    private val module = CarModule(EngineModule("test engine"))
+    private val module = CarModule(EngineModule(EngineNameModule("test engine")))
     @Test
     fun `car created successfully`() {
         assertThat(module.car()).isNotNull()
@@ -18,5 +18,11 @@ class TestCarModule {
     @Test
     fun `different cars are produced`() {
         assertThat(module.car()).isNotSameInstanceAs(module.car())
+    }
+
+    @Test
+    fun `extension function works`() {
+        val garage = module.getGarage()
+        assertThat(garage).isNotNull()
     }
 }

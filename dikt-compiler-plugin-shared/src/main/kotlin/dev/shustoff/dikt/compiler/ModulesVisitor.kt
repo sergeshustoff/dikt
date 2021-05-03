@@ -6,6 +6,8 @@ import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.ir.isFinalClass
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.util.functions
+import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 
 class ModulesVisitor(
@@ -25,17 +27,14 @@ class ModulesVisitor(
             if (!declaration.isFinalClass) {
                 declaration.error("Module should be final")
             }
-            val dependencies = dependencyCollector.collectDependencies(declaration)
-            buildPropertyInjections(declaration, dependencies)
+            val dependencies = dependencyCollector.collectDependencies(
+                visibilityChecker = VisibilityChecker(declaration),
+                properties = declaration.properties,
+                functions = declaration.functions
+            )
+            injectionBuilder.buildInjections(declaration, dependencies)
             RecursiveCallsDetector(errorCollector).checkForRecursiveCalls(declaration)
         }
         super.visitClass(declaration)
-    }
-
-    private fun buildPropertyInjections(
-        declaration: IrClass,
-        dependencies: ModuleDependencies
-    ) {
-        injectionBuilder.buildInjections(declaration, dependencies)
     }
 }
