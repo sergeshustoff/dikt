@@ -35,7 +35,9 @@ class ExternalSingletonCreator(
     override fun visitClass(declaration: IrClass) {
         val moduleType = declaration.defaultType
         singletones[moduleType]?.forEach { singleton ->
-            if (declaration.functions.any { it.returnType == moduleType } || declaration.properties.any { it.getter?.returnType == moduleType }) {
+            if (declaration.properties.any { it.getter?.returnType == moduleType } ||
+                declaration.functions.any { it.returnType == moduleType && it.valueParameters.isEmpty() && !Annotations.isSingleton(it) }
+            ) {
                 singleton.error("This type is already provided in module ${moduleType.asString()}")
             } else {
                 declaration.addFunction {
