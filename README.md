@@ -26,8 +26,88 @@ Create module and declare provided dependencies. Use @ByDi to mark properties an
     class CarModule(
         val externalDependency: Something,
     ) {
-        @ByDi val someSingleton: SomeSingleton
+        @SingletonByDi val someSingleton(): SomeSingleton
         @ByDi fun provideSomethingElse(): SomethingElse
     }
   
 Under the hood constructor with @Inject annotation will be called for SomethingElse and SomeSingleton. If there is no annotated constructor - primary constructor is used for direct dependency. If constructor requires some parameters - they will be retrieved form module properties, nested modules, module functions or created by a constructor with @Inject annotation.
+
+
+## Annotations
+
+### @ByDi
+
+Magical annotation that tells compiler plugin to generate method body.
+Function parameters and constructors marked with @Inject are used as provided dependencies, as well as anything inside parameter of type annotated with @Module or containing module.
+
+Types returned from such functions don't need to be marked with @Inject.
+
+Might be used for extension functions outside of module.
+#### Example:
+    
+    class Something(val name: String)
+
+    @ByDi fun provideSomething(name: String): Something
+
+Code above for example will be transformed to
+
+    fun provideSomethingElse(name: String) = SomethingElse(name)
+The transformation only affects compiled code, so your codebase is safe from plugin)
+
+### @SingletonByDi
+
+Same as @ByDi, but creates lazy property and returns value from it. Doesn't support function parameters.
+
+### @Module
+
+Tells compiler plugin that provided dependency of that type should provide all its visible methods and properties as dependency. 
+ 
+#### Example:
+
+    class Something(val name: String)
+
+    @Module
+    class MyModule(val somethingName: String) {
+        @ByDi fun provideSomething(): Something
+    }
+
+Example above will use somethingName property of MyModule to provide name parameter for Something constructor.
+
+### @SingletonIn<TModule>
+
+This annotation set on a class tels compiler plugin to generate @ByDi function in module TModule for this type.
+
+#### Example
+
+For example this code is equivalent of the code from previous example:
+
+    @SingletonIn<MyModule>
+    class Something(val name: String)
+
+    @Module
+    class MyModule(val somethingName: String)
+
+### @Inject
+
+This annotation marks a constructor to be used to create type instance as dependency for something.
+Set on type it marks primary constructor. 
+
+Types with constructors marked by this annotation will be provided as dependency in any module with dependencies needed for calling this constructor.
+
+#### Example:
+
+    @Inject
+    class Dependency()
+
+    class Something(val dependency: Dependency)
+
+    @Module
+    class MyModule() {
+        @ByDi fun provideSomething(): Something
+    }
+
+### @InjectNamed, @Named
+
+Annotation @InjectNamed("key") is applied to method or constructor parameters and indicates that dependency provided for this parameter should be marked as @Named("key").
+
+@Named("key") is applied to function parameters and, properties and functions in module, marking them for providing to parameters marked with @InjectNamed("key")
