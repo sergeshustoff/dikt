@@ -8,9 +8,7 @@ import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.getClass
-import org.jetbrains.kotlin.ir.util.constructors
-import org.jetbrains.kotlin.ir.util.hasAnnotation
-import org.jetbrains.kotlin.ir.util.primaryConstructor
+import org.jetbrains.kotlin.ir.util.*
 
 class ModuleDependencies(
     errorCollector: ErrorCollector,
@@ -116,11 +114,17 @@ class ModuleDependencies(
 
     private fun getConstructorDependency(forDependency: Dependency, id: DependencyId, allowConstructorWithoutAnnotation: Boolean): Dependency? {
         val constructor = findConstructorInjector(id, allowConstructorWithoutAnnotation)
+
         if (constructor == null || !visibilityChecker.isVisible(constructor)) {
             forDependency.irElement.error(
                 "Can't resolve dependency ${id.asErrorString()}",
             )
             return null
+        } else {
+            val module = Annotations.getSingletonModule(constructor.parentAsClass)
+            if (module != null && (forDependency.id != id || module != forDependency.irElement.parentAsClass.defaultType)) {
+                forDependency.irElement.error("Can't provide singleton bound to module ${module.asString()}")
+            }
         }
         return Dependency.Constructor(constructor)
     }
