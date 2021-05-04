@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.backend.common.ir.isFinalClass
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.util.functions
+import org.jetbrains.kotlin.ir.util.isInterface
 import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 
@@ -24,16 +25,21 @@ class ModulesVisitor(
 
     override fun visitClass(declaration: IrClass) {
         if (Annotations.isModule(declaration)) {
-            if (!declaration.isFinalClass) {
+            if (declaration.isInterface) {
+                if (declaration.functions.any { Annotations.isProvidedByDi(it) }) {
+                    declaration.error("Interface module should not have @ByDi methods")
+                }
+            } else if (!declaration.isFinalClass) {
                 declaration.error("Module should be final")
+            } else {
+                val dependencies = dependencyCollector.collectDependencies(
+                    visibilityChecker = VisibilityChecker(declaration),
+                    properties = declaration.properties,
+                    functions = declaration.functions
+                )
+                injectionBuilder.buildInjections(declaration, dependencies)
+                RecursiveCallsDetector(errorCollector).checkForRecursiveCalls(declaration)
             }
-            val dependencies = dependencyCollector.collectDependencies(
-                visibilityChecker = VisibilityChecker(declaration),
-                properties = declaration.properties,
-                functions = declaration.functions
-            )
-            injectionBuilder.buildInjections(declaration, dependencies)
-            RecursiveCallsDetector(errorCollector).checkForRecursiveCalls(declaration)
         }
         super.visitClass(declaration)
     }

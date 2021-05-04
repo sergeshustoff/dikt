@@ -4,7 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 
 class TestCarModule {
-    private val module = CarModule(EngineModule(EngineNameModule("test engine")))
+    private val module = CarModule(EngineModule(EngineNameModuleImpl("test engine")))
     @Test
     fun `car created successfully`() {
         assertThat(module.car()).isNotNull()

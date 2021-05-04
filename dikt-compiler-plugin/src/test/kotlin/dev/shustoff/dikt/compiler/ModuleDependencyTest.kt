@@ -205,4 +205,64 @@ import dev.shustoff.dikt.Module
         )
         assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
     }
+
+    @Test
+    fun `module can be interface`() {
+        val result = compile(
+            folder.root,
+            SourceFile.kotlin(
+                "MyModule.kt",
+                """
+            package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.ByDi
+            import dev.shustoff.dikt.Module
+            import dev.shustoff.dikt.Inject
+
+            class Dependency
+
+            @Inject
+            class Injectable(val dependency: Dependency)
+            
+            @Module
+            interface OtherModule {
+                val dependency: Dependency
+            }
+    
+            @Module
+            class MyModule(val other: OtherModule) {
+                @ByDi fun injectable(): Injectable
+            }
+            """
+            )
+        )
+        assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+    }
+
+    @Test
+    fun `cant module can't have @ByDi methods`() {
+        val result = compile(
+            folder.root,
+            SourceFile.kotlin(
+                "MyModule.kt",
+                """
+            package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.ByDi
+            import dev.shustoff.dikt.Module
+            import dev.shustoff.dikt.Inject
+
+            class Dependency
+
+            @Inject
+            class Injectable(val dependency: Dependency)
+            
+            @Module
+            interface Module {
+                val dependency: Dependency
+                @ByDi fun injectable(): Injectable            
+            }
+            """
+            )
+        )
+        assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
+    }
 }
