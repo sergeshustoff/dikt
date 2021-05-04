@@ -29,7 +29,8 @@ object Annotations {
                 && (descriptor.annotations.hasAnnotation(byDiAnnotation) ||
                 (descriptor.annotations.hasAnnotation(singletonAnnotation)
                         && containingDeclaration is ClassDescriptor
-                        && containingDeclaration.annotations.hasAnnotation(moduleAnnotation)))
+                        && containingDeclaration.annotations.hasAnnotation(moduleAnnotation)
+                        && descriptor.valueParameters.isEmpty()))
     }
 
     fun isSingleton(descriptor: IrFunction): Boolean {
@@ -41,7 +42,8 @@ object Annotations {
         return descriptor.annotations.hasAnnotation(byDiAnnotation) ||
                 (descriptor.annotations.hasAnnotation(singletonAnnotation)
                         && containingDeclaration is IrClass
-                        && containingDeclaration.annotations.hasAnnotation(moduleAnnotation))
+                        && containingDeclaration.annotations.hasAnnotation(moduleAnnotation)
+                        && descriptor.valueParameters.isEmpty())
     }
 
     fun getAnnotatedName(element: IrAnnotationContainer): String? {

@@ -225,4 +225,27 @@ class FunctionDependencyTest {
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
     }
+
+    @Test
+    fun `parameters for singletons not supported`() {
+        val result = compile(
+            folder.root,
+            SourceFile.kotlin(
+                "MyModule.kt",
+                """
+            package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.*
+
+            @Inject
+            class Injectable(val name: String)
+
+            @Module
+            class MyModule {
+                @SingletonByDi fun injectable(name: String): Injectable
+            }
+            """
+            )
+        )
+        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
+    }
 }
