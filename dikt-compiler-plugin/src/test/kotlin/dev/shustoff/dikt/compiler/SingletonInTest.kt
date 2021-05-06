@@ -66,4 +66,30 @@ class SingletonInTest {
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
         Truth.assertThat(result.messages).contains("MyModule.injectable: Can't provide singleton bound to module dev.shustoff.dikt.compiler.OtherModule")
     }
+
+    @Test
+    fun `don't duplicate dependency with @SingletoneIn annotation in module if already has @SingletonByDi`() {
+        val result = compile(
+            folder.root,
+            SourceFile.kotlin(
+                "MyModule.kt",
+                """
+            package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.*
+
+            @SingletonIn<MyModule>
+            class Dependency()
+
+            class Injectable(val dependency: Dependency)
+
+            @Module
+            class MyModule {
+                @SingletonByDi fun dependency(): Dependency
+                @ByDi fun injectable(): Injectable
+            }
+            """
+            )
+        )
+        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+    }
 }

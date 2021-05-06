@@ -33,18 +33,18 @@ class ExternalSingletonCreator(
     }
 
     override fun visitClass(declaration: IrClass) {
-        val moduleType = declaration.defaultType
-        singletones[moduleType]?.forEach { singleton ->
-            val functionsOfSameType = declaration.functions.filter { it.returnType == moduleType && it.valueParameters.isEmpty() }.toList()
-            if (declaration.properties.any { it.getter?.returnType == moduleType } || functionsOfSameType.any { !Annotations.isSingleton(it) }) {
-                singleton.error("This type is already provided in module ${moduleType.asString()}")
+        singletones[declaration.defaultType]?.forEach { singleton ->
+            val singletonType = singleton.defaultType
+            val functionsOfSameType = declaration.functions.filter { it.returnType == singletonType && it.valueParameters.isEmpty() }.toList()
+            if (declaration.properties.any { it.getter?.returnType == singletonType } || functionsOfSameType.any { !Annotations.isSingleton(it) }) {
+                singleton.error("This type is already provided in module ${declaration.defaultType.asString()}")
             } else if (functionsOfSameType.isEmpty()) {
                 declaration.addFunction {
                     name = Name.identifier("provide${singleton.name.asString()}")
                     visibility = DescriptorVisibilities.PUBLIC
                     startOffset = declaration.startOffset
                     endOffset = declaration.endOffset
-                    returnType = singleton.defaultType
+                    returnType = singletonType
                 }.also {
                     val constructor = singletonAnnotationClass.primaryConstructor!!
                     it.dispatchReceiverParameter = declaration.thisReceiver!!.copyTo(it)
@@ -52,7 +52,7 @@ class ExternalSingletonCreator(
                 }
             }
         }
-        singletones.remove(moduleType)
+        singletones.remove(declaration.defaultType)
         super.visitClass(declaration)
     }
 }
