@@ -35,13 +35,12 @@ class ExternalSingletonCreator(
     override fun visitClass(declaration: IrClass) {
         val moduleType = declaration.defaultType
         singletones[moduleType]?.forEach { singleton ->
-            if (declaration.properties.any { it.getter?.returnType == moduleType } ||
-                declaration.functions.any { it.returnType == moduleType && it.valueParameters.isEmpty() && !Annotations.isSingleton(it) }
-            ) {
+            val functionsOfSameType = declaration.functions.filter { it.returnType == moduleType && it.valueParameters.isEmpty() }.toList()
+            if (declaration.properties.any { it.getter?.returnType == moduleType } || functionsOfSameType.any { !Annotations.isSingleton(it) }) {
                 singleton.error("This type is already provided in module ${moduleType.asString()}")
-            } else {
+            } else if (functionsOfSameType.isEmpty()) {
                 declaration.addFunction {
-                    name = Name.identifier("provide${declaration.name.asString()}")
+                    name = Name.identifier("provide${singleton.name.asString()}")
                     visibility = DescriptorVisibilities.PUBLIC
                     startOffset = declaration.startOffset
                     endOffset = declaration.endOffset
