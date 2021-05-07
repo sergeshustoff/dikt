@@ -1,0 +1,23 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.intellij' version '0.7.3'
+}
+
+version dikt_version
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile project(':dikt-compiler-plugin-shared')
+}
+
+intellij {
+    updateSinceUntilBuild false
+    plugins 'org.jetbrains.kotlin'
+}
+patchPluginXml {
+    changeNotes """
+      Disable errors for @ByDi fuctions without bodies"""
+}

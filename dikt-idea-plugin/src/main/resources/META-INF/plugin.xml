@@ -1,0 +1,16 @@
+<idea-plugin>
+    <id>dikt-idea-plugin</id>
+    <name>DI.kt</name>
+    <idea-version since-build="201.*"/>
+    <vendor email="serge.shustoff@gmail.com" url="https://github.com/sergeshustoff/DI.kt">Serge Shustoff</vendor>
+
+    <description><![CDATA[
+    Provides minimal support for DI.kt kotlin compiler plugin in your ide.
+    ]]></description>
+
+    <depends>org.jetbrains.kotlin</depends>
+
+    <extensions defaultExtensionNs="org.jetbrains.kotlin">
+        <storageComponentContainerContributor implementation="dev.shustoff.dikt.compiler.DiktStorageComponentContainerContributor" />
+    </extensions>
+</idea-plugin>

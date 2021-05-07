@@ -3,6 +3,7 @@ include ':dikt-gradle-plugin'
 include ':dikt-compiler-plugin-shared'
 include ':dikt-compiler-plugin-native'
 include ':dikt-compiler-plugin'
+include 'dikt-idea-plugin'
 
 //comment samples to publish version to local maven
 include ':sample-jvm'
