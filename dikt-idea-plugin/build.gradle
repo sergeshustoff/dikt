@@ -15,9 +15,7 @@ dependencies {
 
 intellij {
     updateSinceUntilBuild false
+    downloadSources false
     plugins 'org.jetbrains.kotlin'
 }
-patchPluginXml {
-    changeNotes """
-      Disable errors for @ByDi fuctions without bodies"""
-}
+buildSearchableOptions.enabled = false
