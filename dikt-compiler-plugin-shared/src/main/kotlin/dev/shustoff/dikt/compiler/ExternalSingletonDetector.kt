@@ -2,6 +2,7 @@ package dev.shustoff.dikt.compiler
 
 import dev.shustoff.dikt.core.Annotations
 import dev.shustoff.dikt.message_collector.ErrorCollector
+import org.jetbrains.kotlin.backend.jvm.ir.isInCurrentModule
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.types.IrType
@@ -20,6 +21,8 @@ class ExternalSingletonDetector(
             val moduleClass = module.getClass()
             if (moduleClass == null || !Annotations.isModule(moduleClass)) {
                 declaration.error("Singleton can be provided only in class with @Module annotation")
+            } else if (!moduleClass.isInCurrentModule() || !declaration.isInCurrentModule()) {
+                declaration.error("Both singleton and di module should belong to the same kotlin module")
             } else {
                 data.getOrPut(module) { mutableListOf() }.add(declaration)
             }
