@@ -66,12 +66,12 @@ publishing {
     }
 }
 
-install{
+install {
     dependsOn(shadowJar)
+    dependsOn ':dikt-compiler-plugin-shared:install'
+    finalizedBy(publishToMavenLocal)
 }
 
 build{
-    dependsOn ':dikt-compiler-plugin-shared:build'
     dependsOn(shadowJar)
-    finalizedBy(publishToMavenLocal)
 }

@@ -36,7 +36,3 @@ kotlin {
         }
     }
 }
-
-build {
-    finalizedBy(publishToMavenLocal)
-}

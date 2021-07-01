@@ -6,6 +6,7 @@ archivesBaseName = "dikt-compiler-plugin"
 version = "$dikt_version"
 
 install {
+    dependsOn(':dikt-compiler-plugin-shared:install')
     repositories.mavenInstaller {
         pom.artifactId = archivesBaseName
     }
@@ -20,9 +21,4 @@ dependencies {
     testImplementation "com.github.tschuchortdev:kotlin-compile-testing:1.3.1"
     testImplementation "junit:junit:4.13"
     testImplementation "com.google.truth:truth:1.0.1"
-}
-
-build {
-    dependsOn(':dikt-compiler-plugin-shared:build')
-    finalizedBy(install)
 }

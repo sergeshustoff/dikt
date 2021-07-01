@@ -5,6 +5,7 @@ group = "io.github.sergeshustoff"
 archivesBaseName = "dikt-compiler-plugin-shared"
 version = "$dikt_version"
 install {
+    dependsOn ':dikt-runtime:publishToMavenLocal'
     repositories.mavenInstaller {
         pom.artifactId = archivesBaseName
     }
@@ -20,8 +21,4 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
     kotlinOptions {
         jvmTarget = "1.8"
     }
-}
-
-build {
-    finalizedBy(install)
 }

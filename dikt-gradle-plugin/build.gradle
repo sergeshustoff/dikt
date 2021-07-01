@@ -7,6 +7,7 @@ archivesBaseName = "dikt-gradle-plugin"
 version = "$dikt_version"
 
 install {
+    dependsOn(':dikt-compiler-plugin:install', ':dikt-compiler-plugin-native:install')
     repositories.mavenInstaller {
         pom.artifactId = archivesBaseName
     }
@@ -25,8 +26,4 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation "org.jetbrains.kotlin:kotlin-gradle-plugin-api:$kotlin_version"
     compileOnly "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-}
-
-build {
-    dependsOn(':dikt-compiler-plugin:build', ':dikt-compiler-plugin-native:build', ':dikt-runtime:build', install)
 }
