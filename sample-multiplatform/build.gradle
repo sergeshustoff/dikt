@@ -1,16 +1,7 @@
-buildscript {
-    repositories {
-        mavenLocal()
-        mavenCentral()
-    }
-    dependencies {
-        classpath "io.github.sergeshustoff:dikt-gradle-plugin:$dikt_version"
-    }
+plugins {
+    id('org.jetbrains.kotlin.multiplatform')
+    id('io.github.sergeshustoff.dikt')
 }
-apply plugin: 'org.jetbrains.kotlin.multiplatform'
-apply plugin: 'io.github.sergeshustoff.dikt'
-
-System.setProperty("kotlin.compiler.execution.strategy", "in-process") // For debugging
 
 kotlin {
     jvm()
@@ -27,6 +18,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
+                implementation 'com.github.sergeshustoff.dikt:dikt-runtime:1.0.0-alpha2'
             }
         }
         jvmTest {

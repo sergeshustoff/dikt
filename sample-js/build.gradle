@@ -1,15 +1,7 @@
-buildscript {
-    repositories {
-        mavenLocal()
-        mavenCentral()
-    }
-    dependencies {
-        classpath "io.github.sergeshustoff:dikt-gradle-plugin:$dikt_version"
-    }
+plugins {
+    id('org.jetbrains.kotlin.js')
+    id('io.github.sergeshustoff.dikt')
 }
-
-apply plugin: 'org.jetbrains.kotlin.js'
-apply plugin: 'io.github.sergeshustoff.dikt'
 
 version 'unspecified'
 
@@ -17,8 +9,6 @@ repositories {
     mavenLocal()
     mavenCentral()
 }
-
-System.setProperty("kotlin.compiler.execution.strategy", "in-process") // For debugging
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-js"
