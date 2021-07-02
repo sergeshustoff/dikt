@@ -14,7 +14,7 @@ class DiktGradlePlugin : KotlinCompilerPluginSupportPlugin {
     override fun apply(target: Project) {
         target.extensions.create("dikt", DiktGradleExtension::class.java)
         target.configurations.filter { it.name.endsWith("implementation", ignoreCase = true) }.forEach {
-            target.dependencies.add(it.name, target.dependencies.create("io.github.sergeshustoff.dikt:dikt-runtime:$version"))
+            target.dependencies.add(it.name, target.dependencies.create("com.github.sergeshustoff.dikt:dikt-runtime:$version"))
         }
     }
 
@@ -22,18 +22,18 @@ class DiktGradlePlugin : KotlinCompilerPluginSupportPlugin {
         return kotlinCompilation.target.project.provider { emptyList() }
     }
 
-    override fun getCompilerPluginId(): String = "io.github.sergeshustoff.dikt"
+    override fun getCompilerPluginId(): String = "com.github.sergeshustoff.dikt"
 
     override fun getPluginArtifact(): SubpluginArtifact {
         return SubpluginArtifact(
-            groupId = "io.github.sergeshustoff.dikt",
+            groupId = "com.github.sergeshustoff.dikt",
             artifactId = "dikt-compiler-plugin",
             version = version
         )
     }
 
     override fun getPluginArtifactForNative(): SubpluginArtifact = SubpluginArtifact(
-        groupId = "io.github.sergeshustoff.dikt",
+        groupId = "com.github.sergeshustoff.dikt",
         artifactId = "dikt-compiler-plugin-native",
         version = version
     )
