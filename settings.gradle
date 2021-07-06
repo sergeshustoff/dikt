@@ -1,13 +1,14 @@
 pluginManagement {
     resolutionStrategy {
         eachPlugin {
-            if (requested.id.toString() == "io.github.sergeshustoff.dikt") {
+            if (requested.id.toString() == "com.github.sergeshustoff.dikt") {
                 useModule("com.github.sergeshustoff.dikt:dikt-gradle-plugin:$dikt_sample_version")
             }
         }
     }
     repositories {
         gradlePluginPortal()
+        mavenLocal()
         maven { url "https://jitpack.io" }
     }
 }

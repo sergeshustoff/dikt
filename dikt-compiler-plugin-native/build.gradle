@@ -20,7 +20,7 @@ apply plugin: "maven"
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'maven-publish'
 
-group = "io.github.sergeshustoff"
+group = "com.github.sergeshustoff.dikt"
 archivesBaseName = "dikt-compiler-plugin-native"
 version = "$dikt_version"
 

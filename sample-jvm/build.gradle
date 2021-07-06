@@ -1,7 +1,7 @@
 plugins {
     id 'application'
     id 'kotlin'
-    id 'io.github.sergeshustoff.dikt'
+    id 'com.github.sergeshustoff.dikt'
 }
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
@@ -9,6 +9,7 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
         useIR = true
     }
 }
+System.setProperty("kotlin.compiler.execution.strategy", "in-process") // For debugging
 dependencies {
     implementation project(':sample-multiplatform')
     testImplementation "junit:junit:4.13"

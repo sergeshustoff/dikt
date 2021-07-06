@@ -1,13 +1,13 @@
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
 apply plugin: 'maven-publish'
 
-group = "io.github.sergeshustoff"
+group = "com.github.sergeshustoff.dikt"
 archivesBaseName = "dikt-runtime"
 version = "$dikt_version"
 publishing {
     publications {
         kotlinMultiplatform {
-            groupId = "io.github.sergeshustoff"
+            groupId = "com.github.sergeshustoff.dikt"
             artifactId = archivesBaseName
             version = "$dikt_version"
         }

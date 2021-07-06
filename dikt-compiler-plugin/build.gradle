@@ -1,7 +1,7 @@
 apply plugin: "org.jetbrains.kotlin.jvm"
 apply plugin: "maven"
 
-group = "io.github.sergeshustoff"
+group = "com.github.sergeshustoff.dikt"
 archivesBaseName = "dikt-compiler-plugin"
 version = "$dikt_version"
 
