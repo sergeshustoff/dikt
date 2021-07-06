@@ -1,13 +1,12 @@
 package dev.shustoff.dikt.gradle
 
 import org.gradle.api.Project
-import org.gradle.api.artifacts.DependencyResolutionListener
-import org.gradle.api.artifacts.ResolvableDependencies
 import org.gradle.api.provider.Provider
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilerPluginSupportPlugin
 import org.jetbrains.kotlin.gradle.plugin.SubpluginArtifact
 import org.jetbrains.kotlin.gradle.plugin.SubpluginOption
+import java.io.File
 
 class DiktGradlePlugin : KotlinCompilerPluginSupportPlugin {
 
@@ -19,7 +18,12 @@ class DiktGradlePlugin : KotlinCompilerPluginSupportPlugin {
     }
 
     override fun applyToCompilation(kotlinCompilation: KotlinCompilation<*>): Provider<List<SubpluginOption>> {
-        return kotlinCompilation.target.project.provider { emptyList() }
+        val project = kotlinCompilation.target.project
+        return kotlinCompilation.target.project.provider {
+            listOf(
+                SubpluginOption("cachesDir", File(project.project.buildDir, "diktCaches/${kotlinCompilation.compilationName}").path),
+            )
+        }
     }
 
     override fun getCompilerPluginId(): String = "com.github.sergeshustoff.dikt"
@@ -43,7 +47,7 @@ class DiktGradlePlugin : KotlinCompilerPluginSupportPlugin {
     }
 
     companion object {
-        private const val version = "1.0.0-alpha2"
+        private const val version = "1.0.0-alpha3"
     }
 }
 
