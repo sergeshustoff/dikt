@@ -12,9 +12,11 @@ import org.jetbrains.kotlin.ir.builders.declarations.addFunction
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.util.*
+import org.jetbrains.kotlin.ir.util.defaultType
+import org.jetbrains.kotlin.ir.util.functions
+import org.jetbrains.kotlin.ir.util.primaryConstructor
+import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
 class ExternalSingletonCreator(
@@ -34,14 +36,8 @@ class ExternalSingletonCreator(
 
     override fun visitClass(declaration: IrClass) {
         if (Annotations.isModule(declaration)) {
-            val foundSingletons = singletones[declaration.defaultType]
-            val cachedSingletons = incrementalCache?.singletonsByModule?.get(declaration.kotlinFqName)?.mapNotNull {
-                pluginContext.referenceClass(FqName(it))?.owner
-                    ?.takeIf { Annotations.getSingletonModule(it) == declaration.defaultType }
-            }
-            val allSingletons = (foundSingletons.orEmpty() + cachedSingletons.orEmpty()).distinctBy { it.kotlinFqName }
-            incrementalCache?.singletonsByModule?.set(declaration.kotlinFqName, allSingletons.map { it.kotlinFqName.asString() })
-
+            val foundSingletons = singletones[declaration.defaultType].orEmpty()
+            val allSingletons = incrementalCache?.getSingletons(declaration, foundSingletons, pluginContext, errorCollector) ?: foundSingletons
             allSingletons.forEach { singleton ->
                 val singletonType = singleton.defaultType
                 val functionsOfSameType = declaration.functions.filter { it.returnType == singletonType && it.valueParameters.isEmpty() }.toList()

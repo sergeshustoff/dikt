@@ -23,7 +23,7 @@ class SingletonInTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            @SingletonIn<MyModule>
+            @SingletonIn(MyModule::class)
             class Dependency()
 
             class Injectable(val dependency: Dependency)
@@ -48,7 +48,7 @@ class SingletonInTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            @SingletonIn<OtherModule>
+            @SingletonIn(OtherModule::class)
             class Dependency @Inject constructor()
 
             class Injectable(val dependency: Dependency)
@@ -64,7 +64,7 @@ class SingletonInTest {
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("MyModule.injectable: Can't provide singleton bound to module dev.shustoff.dikt.compiler.OtherModule")
+        Truth.assertThat(result.messages).contains("MyModule.injectable: Can't provide singleton of type dev.shustoff.dikt.compiler.Dependency bound to module dev.shustoff.dikt.compiler.OtherModule")
     }
 
     @Test
@@ -77,7 +77,7 @@ class SingletonInTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            @SingletonIn<MyModule>
+            @SingletonIn(MyModule::class)
             class Dependency()
 
             class Injectable(val dependency: Dependency)

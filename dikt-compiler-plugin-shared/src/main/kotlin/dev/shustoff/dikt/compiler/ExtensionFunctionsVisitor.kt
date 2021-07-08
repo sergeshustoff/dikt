@@ -4,6 +4,7 @@ import dev.shustoff.dikt.core.Annotations
 import dev.shustoff.dikt.core.DependencyCollector
 import dev.shustoff.dikt.core.InjectionBuilder
 import dev.shustoff.dikt.core.VisibilityChecker
+import dev.shustoff.dikt.incremental.IncrementalCache
 import dev.shustoff.dikt.message_collector.ErrorCollector
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.ir.IrElement
@@ -13,7 +14,8 @@ import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 
 class ExtensionFunctionsVisitor(
     private val errorCollector: ErrorCollector,
-    pluginContext: IrPluginContext
+    pluginContext: IrPluginContext,
+    private val incrementalCache: IncrementalCache?
 ) : IrElementVisitorVoid, ErrorCollector by errorCollector {
 
     private val dependencyCollector = DependencyCollector(this)
@@ -33,8 +35,9 @@ class ExtensionFunctionsVisitor(
             } else {
                 val dependencies = dependencyCollector.collectDependencies(
                     visibilityChecker = VisibilityChecker(declaration),
-                    params = declaration.valueParameters + listOfNotNull(declaration.extensionReceiverParameter)
+                    params = declaration.valueParameters + listOfNotNull(declaration.extensionReceiverParameter),
                 )
+                incrementalCache?.saveExtensionDependency(declaration, dependencies)
                 injectionBuilder.buildExtensionInjection(declaration, dependencies)
             }
         }

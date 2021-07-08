@@ -19,8 +19,8 @@ class DiktIrGenerationExtension(
         val singletones = mutableMapOf<IrType, MutableList<IrClass>>()
         moduleFragment.accept(ExternalSingletonDetector(errorCollector), singletones)
         moduleFragment.acceptVoid(ExternalSingletonCreator(errorCollector, pluginContext, singletones, incrementalCache))
-        moduleFragment.acceptVoid(ModulesVisitor(errorCollector, pluginContext))
-        moduleFragment.acceptVoid(ExtensionFunctionsVisitor(errorCollector, pluginContext))
+        moduleFragment.acceptVoid(ModulesVisitor(errorCollector, pluginContext, incrementalCache))
+        moduleFragment.acceptVoid(ExtensionFunctionsVisitor(errorCollector, pluginContext, incrementalCache))
 
         incrementalCache?.flush()
     }

@@ -74,7 +74,7 @@ class DependencyCollector(
         return ModuleDependencies(
             errorCollector,
             visibilityChecker,
-            fullDependencyMap
+            fullDependencyMap,
         )
     }
 

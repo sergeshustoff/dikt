@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.functions
+import org.jetbrains.kotlin.ir.util.kotlinFqName
 import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -33,16 +34,16 @@ class InjectionBuilder(
 
     fun buildInjections(
         module: IrClass,
-        dependencies: ModuleDependencies
+        dependencies: ModuleDependencies,
     ) {
         val functions = module.functions.filter { function -> Annotations.isProvidedByDi(function) }.toList()
         functions.forEach { function ->
+            function.info("generating function body for ${function.kotlinFqName.asString()}")
             function.body = if (Annotations.isSingleton(function)) {
                 createSingletonBody(function, dependencies, module)
             } else {
                 createFactoryBody(function, dependencies, module)
             }
-            function.info("generated function body")
         }
     }
 
@@ -50,14 +51,14 @@ class InjectionBuilder(
         function: IrFunction,
         dependencies: ModuleDependencies
     ) {
+        function.info("generating function body for ${function.kotlinFqName.asString()}")
         function.body = createFactoryBody(function, dependencies, null)
-        function.info("generated function body")
     }
 
     private fun createSingletonBody(
         function: IrSimpleFunction,
         dependencies: ModuleDependencies,
-        module: IrClass
+        module: IrClass,
     ): IrBlockBody {
         val field = createLazyFieldForSingleton(function, module, dependencies)
         val getValueFunction = field.type.getClass()!!.properties.first { it.name.identifier == "value" }.getter!!
@@ -73,7 +74,7 @@ class InjectionBuilder(
     private fun createLazyFieldForSingleton(
         function: IrSimpleFunction,
         module: IrClass,
-        dependencies: ModuleDependencies
+        dependencies: ModuleDependencies,
     ): IrField {
         val lazyFunction = lazyFunction
         check(lazyFunction != null) { "kotlin.Lazy not found" }

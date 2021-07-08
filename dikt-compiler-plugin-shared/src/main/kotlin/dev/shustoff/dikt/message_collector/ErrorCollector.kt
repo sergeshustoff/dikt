@@ -31,7 +31,7 @@ private class ErrorCollectorImpl(
 
     override fun IrDeclarationWithName?.info(text: String) {
         messageCollector.report(
-            CompilerMessageSeverity.INFO,
+            CompilerMessageSeverity.WARNING,
             fullName()?.let { "$it: $text" } ?: text,
         )
     }

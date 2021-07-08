@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.ir.util.*
 class ModuleDependencies(
     errorCollector: ErrorCollector,
     private val visibilityChecker: VisibilityChecker,
-    private val dependencyMap: Map<DependencyId, List<Dependency>>
+    private val dependencyMap: Map<DependencyId, List<Dependency>>,
 ) : ErrorCollector by errorCollector {
 
     fun resolveDependency(
@@ -121,9 +121,10 @@ class ModuleDependencies(
             )
             return null
         } else {
-            val module = Annotations.getSingletonModule(constructor.parentAsClass)
+            val targetClass = constructor.parentAsClass
+            val module = Annotations.getSingletonModule(targetClass)
             if (module != null && (forDependency.id != id || module != forDependency.irElement.parentAsClass.defaultType)) {
-                forDependency.irElement.error("Can't provide singleton bound to module ${module.asString()}")
+                forDependency.irElement.error("Can't provide singleton of type ${id.type.asString()} bound to module ${module.asString()}")
             }
         }
         return Dependency.Constructor(constructor)

@@ -4,10 +4,9 @@ import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.expressions.IrClassReference
 import org.jetbrains.kotlin.ir.expressions.IrConst
-import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.types.typeOrNull
 import org.jetbrains.kotlin.ir.util.getAnnotation
 import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.name.FqName
@@ -59,6 +58,6 @@ object Annotations {
 
     fun getSingletonModule(element: IrClass): IrType? {
         val annotation = element.getAnnotation(singletonInAnnotation)
-        return (annotation?.type as? IrSimpleType)?.arguments?.get(0)?.typeOrNull
+        return (annotation?.getValueArgument(0) as? IrClassReference)?.classType
     }
 }
