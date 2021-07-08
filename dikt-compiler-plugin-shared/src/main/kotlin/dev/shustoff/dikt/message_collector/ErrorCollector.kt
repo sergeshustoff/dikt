@@ -1,7 +1,9 @@
 package dev.shustoff.dikt.message_collector
 
+import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
+import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationWithName
 import org.jetbrains.kotlin.ir.util.getPackageFragment
 import java.util.*
@@ -9,6 +11,7 @@ import java.util.*
 interface ErrorCollector {
     fun IrDeclarationWithName?.info(text: String)
     fun IrDeclarationWithName?.error(text: String)
+    fun info(text: String)
     fun error(text: String)
 }
 
@@ -33,6 +36,10 @@ private class ErrorCollectorImpl(
         )
     }
 
+    override fun info(text: String) {
+        messageCollector.report(CompilerMessageSeverity.WARNING, text)
+    }
+
     private fun IrDeclarationWithName?.fullName(): String? {
         var node = this
         val nodes = LinkedList<String>()
@@ -48,5 +55,14 @@ private class ErrorCollectorImpl(
         return nodes.takeUnless { it.isEmpty() }?.joinToString(separator = ".")
     }
 }
+
+fun errorCollector(
+    configuration: CompilerConfiguration
+): ErrorCollector = ErrorCollectorImpl(
+    configuration.get(
+        CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY,
+        MessageCollector.NONE
+    )
+)
 
 fun errorCollector(messageCollector: MessageCollector): ErrorCollector = ErrorCollectorImpl(messageCollector)
