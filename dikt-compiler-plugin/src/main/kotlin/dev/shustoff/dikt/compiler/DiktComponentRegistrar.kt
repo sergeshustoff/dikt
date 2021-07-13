@@ -1,6 +1,6 @@
 package dev.shustoff.dikt.compiler
 
-import dev.shustoff.dikt.incremental.incrementalCache
+import dev.shustoff.dikt.incremental.incrementalHelper
 import dev.shustoff.dikt.message_collector.errorCollector
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.com.intellij.mock.MockProject
@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.extensions.StorageComponentContainerContributor
 class DiktComponentRegistrar : ComponentRegistrar {
     override fun registerProjectComponents(project: MockProject, configuration: CompilerConfiguration) {
         val errorCollector = errorCollector(configuration)
-        val incrementalCache = incrementalCache(configuration, errorCollector)
+        val incrementalCache = incrementalHelper(configuration, errorCollector)
         val useIr = configuration.get(JVMConfigurationKeys.IR, true) //TODO: find how to detect ir in js
 
         if (!useIr) {

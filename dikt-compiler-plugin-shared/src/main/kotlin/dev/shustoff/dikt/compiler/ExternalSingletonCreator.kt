@@ -1,7 +1,7 @@
 package dev.shustoff.dikt.compiler
 
 import dev.shustoff.dikt.core.Annotations
-import dev.shustoff.dikt.incremental.IncrementalCache
+import dev.shustoff.dikt.incremental.IncrementalHelper
 import dev.shustoff.dikt.message_collector.ErrorCollector
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.ir.copyTo
@@ -23,7 +23,7 @@ class ExternalSingletonCreator(
     private val errorCollector: ErrorCollector,
     private val pluginContext: IrPluginContext,
     private val singletones: MutableMap<IrType, MutableList<IrClass>>,
-    private val incrementalCache: IncrementalCache?
+    private val incrementalHelper: IncrementalHelper?
 ) : IrElementVisitorVoid, ErrorCollector by errorCollector {
 
     private val singletonAnnotationClass by lazy {
@@ -37,7 +37,7 @@ class ExternalSingletonCreator(
     override fun visitClass(declaration: IrClass) {
         if (Annotations.isModule(declaration)) {
             val foundSingletons = singletones[declaration.defaultType].orEmpty()
-            val allSingletons = incrementalCache?.getSingletons(declaration, foundSingletons, pluginContext) ?: foundSingletons
+            val allSingletons = incrementalHelper?.getSingletons(declaration, foundSingletons, pluginContext) ?: foundSingletons
             allSingletons.forEach { singleton ->
                 val singletonType = singleton.defaultType
                 val functionsOfSameType = declaration.functions.filter { it.returnType == singletonType && it.valueParameters.isEmpty() }.toList()

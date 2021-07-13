@@ -10,15 +10,17 @@ import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.incremental.components.Position
 import org.jetbrains.kotlin.incremental.components.ScopeKind
 import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.declarations.IrConstructor
-import org.jetbrains.kotlin.ir.declarations.IrFunction
+import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.path
+import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classFqName
+import org.jetbrains.kotlin.ir.types.classOrNull
+import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.name.FqName
 import java.io.File
 
-class IncrementalCache(
+class IncrementalHelper(
     cacheDir: File,
     private val lookupTracker: LookupTracker,
     private val errorCollector: ErrorCollector
@@ -59,45 +61,38 @@ class IncrementalCache(
         return allSingletons
     }
 
-    fun saveModuleDependency(declaration: IrClass, dependencies: ModuleDependencies) {
-        //TODO: find all visible modules and add lookups for them
+    fun recordModuleDependency(declaration: IrDeclaration, dependencies: ModuleDependencies) {
+        dependencies.getAllModules()
+            .also {
+                errorCollector.info("Recording ${it.size} modules for ${declaration.file.path}")
+            }
+            .forEach { recordTypeLookup(declaration, it) } //TODO: doesn't track all fields and functions
     }
 
-    fun saveExtensionDependency(declaration: IrFunction, dependencies: ModuleDependencies) {
-        //TODO: find all visible modules and add lookups for them
-    }
-
-    fun recordConstructorLookup(diFunction: IrFunction, constructor: IrConstructor) {
-        val position = if (lookupTracker.requiresPosition) {
-            Position(diFunction.fileEntry.getLineNumber(diFunction.startOffset), diFunction.fileEntry.getColumnNumber(diFunction.startOffset))
-        } else {
-            Position.NO_POSITION
-        }
-        val clazz = constructor.parentAsClass
-        val packageFqName = clazz.packageFqName
-        if (packageFqName != null) {
+    fun recordTypeLookup(from: IrDeclaration, type: IrType) {
+        type.getClass()?.symbol
+        val clazz = type.classOrNull?.owner ?: return
+        clazz.packageFqName?.let { packageFqName ->
+            val position = if (lookupTracker.requiresPosition) {
+                Position(from.fileEntry.getLineNumber(from.startOffset),
+                    from.fileEntry.getColumnNumber(from.startOffset))
+            } else {
+                Position.NO_POSITION
+            }
+            //TODO: check incremental compilation when depend on class without package or nested class
             lookupTracker.record(
-                diFunction.file.path,
+                from.file.path,
                 position,
                 packageFqName.asString(),
                 ScopeKind.PACKAGE,
                 clazz.name.asString()
             )
-        } else {
-            //TODO:ss check incremental compilation when depend on class without package or nested class
-            lookupTracker.record(
-                diFunction.file.path,
-                position,
-                clazz.kotlinFqName.asString(),
-                ScopeKind.CLASSIFIER,
-                constructor.name.asString()
-            )
         }
     }
 }
 
-fun incrementalCache(configuration: CompilerConfiguration, errorCollector: ErrorCollector): IncrementalCache? {
+fun incrementalHelper(configuration: CompilerConfiguration, errorCollector: ErrorCollector): IncrementalHelper? {
     val cache = configuration.get(DIKT_CACHE) ?: return null
     val lookupTracker = configuration.get(CommonConfigurationKeys.LOOKUP_TRACKER) ?: return null
-    return IncrementalCache(cache, lookupTracker, errorCollector)
+    return IncrementalHelper(cache, lookupTracker, errorCollector)
 }

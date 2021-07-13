@@ -1,7 +1,7 @@
 package dev.shustoff.dikt.compiler
 
 import dev.shustoff.dikt.core.*
-import dev.shustoff.dikt.incremental.IncrementalCache
+import dev.shustoff.dikt.incremental.IncrementalHelper
 import dev.shustoff.dikt.message_collector.ErrorCollector
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.ir.isFinalClass
@@ -15,11 +15,11 @@ import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 class ModulesVisitor(
     private val errorCollector: ErrorCollector,
     pluginContext: IrPluginContext,
-    private val incrementalCache: IncrementalCache?
+    private val incrementalHelper: IncrementalHelper?
 ) : IrElementVisitorVoid, ErrorCollector by errorCollector {
 
     private val dependencyCollector = DependencyCollector(this)
-    private val injectionBuilder = InjectionBuilder(pluginContext, errorCollector, incrementalCache)
+    private val injectionBuilder = InjectionBuilder(pluginContext, errorCollector, incrementalHelper)
 
     override fun visitElement(element: IrElement) {
         element.acceptChildren(this, null)
@@ -40,7 +40,7 @@ class ModulesVisitor(
                     functions = declaration.functions
                 )
                 injectionBuilder.buildInjections(declaration, dependencies)
-                incrementalCache?.saveModuleDependency(declaration, dependencies)
+                incrementalHelper?.recordModuleDependency(declaration, dependencies)
                 RecursiveCallsDetector(errorCollector).checkForRecursiveCalls(declaration)
             }
         }

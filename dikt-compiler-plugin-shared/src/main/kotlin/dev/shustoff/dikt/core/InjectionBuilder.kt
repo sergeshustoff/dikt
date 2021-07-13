@@ -2,7 +2,7 @@ package dev.shustoff.dikt.core
 
 import dev.shustoff.dikt.dependency.Dependency
 import dev.shustoff.dikt.dependency.ResolvedDependency
-import dev.shustoff.dikt.incremental.IncrementalCache
+import dev.shustoff.dikt.incremental.IncrementalHelper
 import dev.shustoff.dikt.message_collector.ErrorCollector
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.name.Name
 class InjectionBuilder(
     private val pluginContext: IrPluginContext,
     errorCollector: ErrorCollector,
-    private val incrementalCache: IncrementalCache?
+    private val incrementalHelper: IncrementalHelper?
 ) : ErrorCollector by errorCollector {
 
     private val lazyFunction by lazy {
@@ -177,7 +177,7 @@ class InjectionBuilder(
         receiverParameter: IrValueParameter?,
         forDiFunction: IrFunction
     ): IrConstructorCall {
-        incrementalCache?.recordConstructorLookup(forDiFunction, dependency.constructor)
+        incrementalHelper?.recordTypeLookup(forDiFunction, dependency.constructor.returnType)
         return irCallConstructor(dependency.constructor.symbol, emptyList()).also {
             for ((index, resolved) in params.withIndex()) {
                 it.putValueArgument(index, makeDependencyCall(resolved, receiverParameter, forDiFunction))

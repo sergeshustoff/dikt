@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.extensions.CollectAdditionalSourcesExtension
 import org.jetbrains.kotlin.psi.KtFile
 
 class DiktCollectAdditionalSourcesExtension(
-    private val incrementalCache: IncrementalCache,
+    private val incrementalHelper: IncrementalHelper,
     private val errorCollector: ErrorCollector
 ) : CollectAdditionalSourcesExtension {
     override fun collectAdditionalSourcesAndUpdateConfiguration(

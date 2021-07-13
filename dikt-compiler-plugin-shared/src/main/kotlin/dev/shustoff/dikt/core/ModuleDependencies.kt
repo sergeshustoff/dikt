@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.ir.backend.js.utils.asString
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.util.*
 
@@ -15,6 +16,12 @@ class ModuleDependencies(
     private val visibilityChecker: VisibilityChecker,
     private val dependencyMap: Map<DependencyId, List<Dependency>>,
 ) : ErrorCollector by errorCollector {
+
+    fun getAllModules(): List<IrType> {
+        return dependencyMap.keys.mapNotNull {
+            it.type.takeIf { it.getClass()?.let { Annotations.isModule(it) } == true }
+        }
+    }
 
     fun resolveDependency(
         type: IrType,
