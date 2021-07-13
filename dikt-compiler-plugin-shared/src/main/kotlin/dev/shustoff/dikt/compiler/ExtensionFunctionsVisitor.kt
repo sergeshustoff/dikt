@@ -19,7 +19,7 @@ class ExtensionFunctionsVisitor(
 ) : IrElementVisitorVoid, ErrorCollector by errorCollector {
 
     private val dependencyCollector = DependencyCollector(this)
-    private val injectionBuilder = InjectionBuilder(pluginContext, errorCollector)
+    private val injectionBuilder = InjectionBuilder(pluginContext, errorCollector, incrementalCache)
 
     override fun visitElement(element: IrElement) {
         // modules are handled separately

@@ -37,7 +37,7 @@ class ExternalSingletonCreator(
     override fun visitClass(declaration: IrClass) {
         if (Annotations.isModule(declaration)) {
             val foundSingletons = singletones[declaration.defaultType].orEmpty()
-            val allSingletons = incrementalCache?.getSingletons(declaration, foundSingletons, pluginContext, errorCollector) ?: foundSingletons
+            val allSingletons = incrementalCache?.getSingletons(declaration, foundSingletons, pluginContext) ?: foundSingletons
             allSingletons.forEach { singleton ->
                 val singletonType = singleton.defaultType
                 val functionsOfSameType = declaration.functions.filter { it.returnType == singletonType && it.valueParameters.isEmpty() }.toList()

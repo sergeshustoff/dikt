@@ -2,6 +2,7 @@ package dev.shustoff.dikt.core
 
 import dev.shustoff.dikt.dependency.Dependency
 import dev.shustoff.dikt.dependency.ResolvedDependency
+import dev.shustoff.dikt.incremental.IncrementalCache
 import dev.shustoff.dikt.message_collector.ErrorCollector
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
@@ -25,7 +26,8 @@ import org.jetbrains.kotlin.name.Name
 
 class InjectionBuilder(
     private val pluginContext: IrPluginContext,
-    errorCollector: ErrorCollector
+    errorCollector: ErrorCollector,
+    private val incrementalCache: IncrementalCache?
 ) : ErrorCollector by errorCollector {
 
     private val lazyFunction by lazy {
@@ -99,7 +101,7 @@ class InjectionBuilder(
                         dependencies.resolveDependency(function.returnType, function)
                     if (dependency != null) {
                         +irReturn(
-                            makeDependencyCall(dependency, dispatchReceiverParameter ?: module.thisReceiver!!)
+                            makeDependencyCall(dependency, dispatchReceiverParameter ?: module.thisReceiver!!, function)
                         )
                     } else {
                         // there should be compilation error anyway in resolveDependency call
@@ -133,7 +135,7 @@ class InjectionBuilder(
             dependencies.resolveDependency(function.returnType, function)
         if (dependency != null) {
             +irReturn(
-                makeDependencyCall(dependency, function.dispatchReceiverParameter ?: module?.thisReceiver)
+                makeDependencyCall(dependency, function.dispatchReceiverParameter ?: module?.thisReceiver, function)
             )
         } else {
             // there should be compilation error anyway in resolveDependency call
@@ -143,21 +145,24 @@ class InjectionBuilder(
 
     private fun IrBlockBodyBuilder.makeDependencyCall(
         dependency: ResolvedDependency,
-        receiverParameter: IrValueParameter?
+        receiverParameter: IrValueParameter?,
+        forDiFunction: IrFunction
     ): IrExpression {
         return when (dependency.dependency) {
             is Dependency.Constructor -> makeConstructorDependencyCall(
                 dependency.dependency,
                 dependency.params,
-                receiverParameter
+                receiverParameter,
+                forDiFunction
             )
             is Dependency.Function -> makeFunctionDependencyCall(
                 dependency.dependency,
                 receiverParameter,
                 dependency.params,
-                dependency.nestedModulesChain
+                dependency.nestedModulesChain,
+                forDiFunction
             )
-            is Dependency.Property -> makePropertyDependencyCall(dependency.dependency, receiverParameter, dependency.nestedModulesChain)
+            is Dependency.Property -> makePropertyDependencyCall(dependency.dependency, receiverParameter, dependency.nestedModulesChain, forDiFunction)
             is Dependency.Parameter -> makeParameterCall(dependency.dependency)
         }
     }
@@ -169,11 +174,13 @@ class InjectionBuilder(
     private fun IrBlockBodyBuilder.makeConstructorDependencyCall(
         dependency: Dependency.Constructor,
         params: List<ResolvedDependency>,
-        receiverParameter: IrValueParameter?
+        receiverParameter: IrValueParameter?,
+        forDiFunction: IrFunction
     ): IrConstructorCall {
+        incrementalCache?.recordConstructorLookup(forDiFunction, dependency.constructor)
         return irCallConstructor(dependency.constructor.symbol, emptyList()).also {
             for ((index, resolved) in params.withIndex()) {
-                it.putValueArgument(index, makeDependencyCall(resolved, receiverParameter))
+                it.putValueArgument(index, makeDependencyCall(resolved, receiverParameter, forDiFunction))
             }
         }
     }
@@ -182,25 +189,28 @@ class InjectionBuilder(
         dependency: Dependency.Function,
         receiverParameter: IrValueParameter?,
         params: List<ResolvedDependency>,
-        nestedModulesChain: ResolvedDependency?
+        nestedModulesChain: ResolvedDependency?,
+        forDiFunction: IrFunction
     ): IrFunctionAccessExpression {
         val call = irCall(dependency.function.symbol, dependency.returnType).also {
             for ((index, resolved) in params.withIndex()) {
-                it.putValueArgument(index, makeDependencyCall(resolved, receiverParameter))
+                it.putValueArgument(index, makeDependencyCall(resolved, receiverParameter, forDiFunction))
             }
         }
-        call.dispatchReceiver = nestedModulesChain?.let { makeDependencyCall(nestedModulesChain, receiverParameter) }
-            ?: IrGetValueImpl(startOffset, endOffset, receiverParameter!!.symbol)
+        call.dispatchReceiver = nestedModulesChain?.let {
+            makeDependencyCall(nestedModulesChain, receiverParameter, forDiFunction)
+        } ?: IrGetValueImpl(startOffset, endOffset, receiverParameter!!.symbol)
         return call
     }
 
     private fun IrBlockBodyBuilder.makePropertyDependencyCall(
         dependency: Dependency.Property,
         receiverParameter: IrValueParameter?,
-        nestedModulesChain: ResolvedDependency?
+        nestedModulesChain: ResolvedDependency?,
+        forDiFunction: IrFunction
     ): IrFunctionAccessExpression {
         val call = irCall(dependency.property.getter!!.symbol, dependency.returnType)
-        val parentCall = nestedModulesChain?.let { makeDependencyCall(it, receiverParameter) }
+        val parentCall = nestedModulesChain?.let { makeDependencyCall(it, receiverParameter, forDiFunction) }
         call.dispatchReceiver = parentCall ?: IrGetValueImpl(startOffset, endOffset, receiverParameter!!.symbol)
 
         return call

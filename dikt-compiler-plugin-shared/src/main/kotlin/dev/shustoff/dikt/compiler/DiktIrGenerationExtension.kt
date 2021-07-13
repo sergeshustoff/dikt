@@ -15,7 +15,9 @@ class DiktIrGenerationExtension(
     private val incrementalCache: IncrementalCache?
 ) : IrGenerationExtension, ErrorCollector by errorCollector {
     override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {
-        moduleFragment.files.forEach { info("Dikt processing file: ${it.name}") }
+        moduleFragment.files.forEach {
+            info("Dikt processing file: ${it.name}")
+        }
         val singletones = mutableMapOf<IrType, MutableList<IrClass>>()
         moduleFragment.accept(ExternalSingletonDetector(errorCollector), singletones)
         moduleFragment.acceptVoid(ExternalSingletonCreator(errorCollector, pluginContext, singletones, incrementalCache))

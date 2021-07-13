@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.extensions.StorageComponentContainerContributor
 class DiktComponentRegistrar : ComponentRegistrar {
     override fun registerProjectComponents(project: MockProject, configuration: CompilerConfiguration) {
         val errorCollector = errorCollector(configuration)
-        val incrementalCache = incrementalCache(configuration)
+        val incrementalCache = incrementalCache(configuration, errorCollector)
         val useIr = configuration.get(JVMConfigurationKeys.IR, true) //TODO: find how to detect ir in js
 
         if (!useIr) {
