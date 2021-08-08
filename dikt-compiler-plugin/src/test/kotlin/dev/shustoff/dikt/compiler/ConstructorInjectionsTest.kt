@@ -145,6 +145,6 @@ class ConstructorInjectionsTest {
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("MyModule.injectable: Can't resolve dependency dev.shustoff.dikt.compiler.Dependency")
+        Truth.assertThat(result.messages).contains("MyModule.kt: (12, 10): Can't resolve dependency dev.shustoff.dikt.compiler.Dependency")
     }
 }

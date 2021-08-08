@@ -64,7 +64,7 @@ class SingletonInTest {
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("MyModule.injectable: Can't provide singleton of type dev.shustoff.dikt.compiler.Dependency bound to module dev.shustoff.dikt.compiler.OtherModule")
+        Truth.assertThat(result.messages).contains("MyModule.kt: (13, 10): Can't provide singleton of type dev.shustoff.dikt.compiler.Dependency bound to module dev.shustoff.dikt.compiler.OtherModule")
     }
 
     @Test
