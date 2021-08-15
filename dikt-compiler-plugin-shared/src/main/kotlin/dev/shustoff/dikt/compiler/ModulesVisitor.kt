@@ -1,7 +1,7 @@
 package dev.shustoff.dikt.compiler
 
 import dev.shustoff.dikt.core.*
-import dev.shustoff.dikt.incremental.IncrementalHelper
+import dev.shustoff.dikt.incremental.IncrementalCompilationHelper
 import dev.shustoff.dikt.message_collector.ErrorCollector
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.ir.isFinalClass
@@ -15,11 +15,12 @@ import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 class ModulesVisitor(
     private val errorCollector: ErrorCollector,
     pluginContext: IrPluginContext,
-    private val incrementalHelper: IncrementalHelper?
+    private val incrementalHelper: IncrementalCompilationHelper?,
+    singletonGenerator: ModuleSingletonGenerator
 ) : IrElementVisitorVoid, ErrorCollector by errorCollector {
 
-    private val dependencyCollector = DependencyCollector(this)
-    private val injectionBuilder = InjectionBuilder(pluginContext, errorCollector, incrementalHelper)
+    private val dependencyCollector = DependencyCollector(this, singletonGenerator)
+    private val injectionBuilder = InjectionBuilder(pluginContext, errorCollector)
 
     override fun visitElement(element: IrElement) {
         element.acceptChildren(this, null)
@@ -39,8 +40,16 @@ class ModulesVisitor(
                     properties = declaration.properties,
                     functions = declaration.functions
                 )
-                injectionBuilder.buildInjections(declaration, dependencies)
-                incrementalHelper?.recordModuleDependency(declaration, dependencies)
+                val diFunctions = declaration.functions
+                    .filter { function -> Annotations.isProvidedByDi(function) }
+                    .map { function -> function to dependencies.resolveDependency(function.returnType, function) }
+                    .toList()
+
+                diFunctions.forEach { (function, dependency) ->
+                    injectionBuilder.buildModuleFunctionInjections(declaration, function, dependency)
+                }
+
+                incrementalHelper?.recordModuleDependency(declaration, dependencies, diFunctions.mapNotNull { it.second })
                 RecursiveCallsDetector(errorCollector).checkForRecursiveCalls(declaration)
             }
         }

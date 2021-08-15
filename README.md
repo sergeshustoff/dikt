@@ -10,7 +10,7 @@ In settings.gradle add:
     pluginManagement {
         resolutionStrategy {
             eachPlugin {
-                if (requested.id.toString() == "io.github.sergeshustoff.dikt") {
+                if (requested.id.toString() == "com.github.sergeshustoff.dikt") {
                     useModule("com.github.sergeshustoff.dikt:dikt-gradle-plugin:1.0.0-alpha2")
                 }
             }
@@ -40,7 +40,7 @@ In module that you wish to use DI.kt add plugin:
 
     plugins {
         ...
-        id 'io.github.sergeshustoff.dikt'
+        id 'com.github.sergeshustoff.dikt'
     }
 
 If you use multiplatform plugin also add dependency for annotations:
@@ -117,7 +117,7 @@ Tells compiler plugin that provided dependency of that type should provide all i
 
 Example above will use somethingName property of MyModule to provide name parameter for Something constructor.
 
-### @SingletonIn<TModule>
+### @SingletonIn(TModule::class)
 
 This annotation set on a class tells compiler plugin to generate @ByDi function in module TModule for this type.
 
@@ -125,7 +125,7 @@ This annotation set on a class tells compiler plugin to generate @ByDi function 
 
 For example this code is equivalent of the code from previous example:
 
-    @SingletonIn<MyModule>
+    @SingletonIn(MyModule::class)
     class Something(val name: String)
 
     @Module

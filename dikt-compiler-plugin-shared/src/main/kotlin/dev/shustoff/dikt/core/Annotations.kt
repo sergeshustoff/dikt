@@ -60,4 +60,8 @@ object Annotations {
         val annotation = element.getAnnotation(singletonInAnnotation)
         return (annotation?.getValueArgument(0) as? IrClassReference)?.classType
     }
+
+    fun hasSingletonInAnnotation(element: IrClass): Boolean {
+        return element.hasAnnotation(singletonInAnnotation)
+    }
 }

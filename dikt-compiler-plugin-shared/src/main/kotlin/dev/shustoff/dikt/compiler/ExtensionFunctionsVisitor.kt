@@ -1,10 +1,8 @@
 package dev.shustoff.dikt.compiler
 
-import dev.shustoff.dikt.core.Annotations
-import dev.shustoff.dikt.core.DependencyCollector
-import dev.shustoff.dikt.core.InjectionBuilder
-import dev.shustoff.dikt.core.VisibilityChecker
-import dev.shustoff.dikt.incremental.IncrementalHelper
+import dev.shustoff.dikt.core.*
+import dev.shustoff.dikt.dependency.ResolvedDependency
+import dev.shustoff.dikt.incremental.IncrementalCompilationHelper
 import dev.shustoff.dikt.message_collector.ErrorCollector
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.ir.IrElement
@@ -15,11 +13,12 @@ import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 class ExtensionFunctionsVisitor(
     private val errorCollector: ErrorCollector,
     pluginContext: IrPluginContext,
-    private val incrementalHelper: IncrementalHelper?
+    private val incrementalHelper: IncrementalCompilationHelper?,
+    singletonGenerator: ModuleSingletonGenerator
 ) : IrElementVisitorVoid, ErrorCollector by errorCollector {
 
-    private val dependencyCollector = DependencyCollector(this)
-    private val injectionBuilder = InjectionBuilder(pluginContext, errorCollector, incrementalHelper)
+    private val dependencyCollector = DependencyCollector(this, singletonGenerator)
+    private val injectionBuilder = InjectionBuilder(pluginContext, errorCollector)
 
     override fun visitElement(element: IrElement) {
         // modules are handled separately
@@ -37,8 +36,9 @@ class ExtensionFunctionsVisitor(
                     visibilityChecker = VisibilityChecker(declaration),
                     params = declaration.valueParameters + listOfNotNull(declaration.extensionReceiverParameter),
                 )
-                incrementalHelper?.recordModuleDependency(declaration, dependencies)
-                injectionBuilder.buildExtensionInjection(declaration, dependencies)
+                val dependency: ResolvedDependency? = dependencies.resolveDependency(declaration.returnType, declaration)
+                injectionBuilder.buildExtensionInjection(declaration, dependency)
+                incrementalHelper?.recordExtensionDependency(declaration, dependencies, dependency)
             }
         }
 

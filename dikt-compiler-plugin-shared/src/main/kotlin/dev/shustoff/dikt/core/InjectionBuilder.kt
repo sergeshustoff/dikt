@@ -2,7 +2,7 @@ package dev.shustoff.dikt.core
 
 import dev.shustoff.dikt.dependency.Dependency
 import dev.shustoff.dikt.dependency.ResolvedDependency
-import dev.shustoff.dikt.incremental.IncrementalHelper
+import dev.shustoff.dikt.incremental.IncrementalCompilationHelper
 import dev.shustoff.dikt.message_collector.ErrorCollector
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
 import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.types.typeWith
-import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.kotlinFqName
 import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.name.FqName
@@ -26,43 +25,40 @@ import org.jetbrains.kotlin.name.Name
 
 class InjectionBuilder(
     private val pluginContext: IrPluginContext,
-    errorCollector: ErrorCollector,
-    private val incrementalHelper: IncrementalHelper?
+    errorCollector: ErrorCollector
 ) : ErrorCollector by errorCollector {
 
     private val lazyFunction by lazy {
         pluginContext.referenceFunctions(FqName("kotlin.lazy")).firstOrNull()?.owner
     }
 
-    fun buildInjections(
+    fun buildModuleFunctionInjections(
         module: IrClass,
-        dependencies: ModuleDependencies,
+        function: IrSimpleFunction,
+        dependency: ResolvedDependency?
     ) {
-        val functions = module.functions.filter { function -> Annotations.isProvidedByDi(function) }.toList()
-        functions.forEach { function ->
-            function.info("generating function body for ${function.kotlinFqName.asString()}")
-            function.body = if (Annotations.isSingleton(function)) {
-                createSingletonBody(function, dependencies, module)
-            } else {
-                createFactoryBody(function, dependencies, module)
-            }
+        function.info("generating function body for ${function.kotlinFqName.asString()}")
+        function.body = if (Annotations.isSingleton(function)) {
+            createSingletonBody(function, dependency, module)
+        } else {
+            createFactoryBody(function, dependency, module)
         }
     }
 
     fun buildExtensionInjection(
         function: IrFunction,
-        dependencies: ModuleDependencies
+        dependency: ResolvedDependency?
     ) {
         function.info("generating function body for ${function.kotlinFqName.asString()}")
-        function.body = createFactoryBody(function, dependencies, null)
+        function.body = createFactoryBody(function, dependency, null)
     }
 
     private fun createSingletonBody(
         function: IrSimpleFunction,
-        dependencies: ModuleDependencies,
+        dependency: ResolvedDependency?,
         module: IrClass,
     ): IrBlockBody {
-        val field = createLazyFieldForSingleton(function, module, dependencies)
+        val field = createLazyFieldForSingleton(function, module, dependency)
         val getValueFunction = field.type.getClass()!!.properties.first { it.name.identifier == "value" }.getter!!
         return DeclarationIrBuilder(pluginContext, function.symbol).irBlockBody {
             +irReturn(
@@ -76,7 +72,7 @@ class InjectionBuilder(
     private fun createLazyFieldForSingleton(
         function: IrSimpleFunction,
         module: IrClass,
-        dependencies: ModuleDependencies,
+        dependency: ResolvedDependency?,
     ): IrField {
         val lazyFunction = lazyFunction
         check(lazyFunction != null) { "kotlin.Lazy not found" }
@@ -97,15 +93,13 @@ class InjectionBuilder(
             }.apply {
                 parent = field
                 body = DeclarationIrBuilder(pluginContext, symbol).irBlockBody {
-                    val dependency =
-                        dependencies.resolveDependency(function.returnType, function)
                     if (dependency != null) {
                         +irReturn(
                             makeDependencyCall(dependency, dispatchReceiverParameter ?: module.thisReceiver!!, function)
                         )
                     } else {
                         // there should be compilation error anyway in resolveDependency call
-                        +irThrow(irNull())
+                        +irThrow(irNull()) //TODO: throw a proper error just in case
                     }
                 }
             }
@@ -128,11 +122,9 @@ class InjectionBuilder(
 
     private fun createFactoryBody(
         function: IrFunction,
-        dependencies: ModuleDependencies,
+        dependency: ResolvedDependency?,
         module: IrClass?
     ) = DeclarationIrBuilder(pluginContext, function.symbol).irBlockBody {
-        val dependency =
-            dependencies.resolveDependency(function.returnType, function)
         if (dependency != null) {
             +irReturn(
                 makeDependencyCall(dependency, function.dispatchReceiverParameter ?: module?.thisReceiver, function)
@@ -177,7 +169,6 @@ class InjectionBuilder(
         receiverParameter: IrValueParameter?,
         forDiFunction: IrFunction
     ): IrConstructorCall {
-        incrementalHelper?.recordTypeLookup(forDiFunction, dependency.constructor.returnType)
         return irCallConstructor(dependency.constructor.symbol, emptyList()).also {
             for ((index, resolved) in params.withIndex()) {
                 it.putValueArgument(index, makeDependencyCall(resolved, receiverParameter, forDiFunction))

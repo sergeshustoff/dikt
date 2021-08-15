@@ -4,10 +4,11 @@ import dev.shustoff.dikt.dependency.Dependency
 import dev.shustoff.dikt.dependency.ResolvedDependency
 import dev.shustoff.dikt.message_collector.ErrorCollector
 import org.jetbrains.kotlin.ir.backend.js.utils.asString
-import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.declarations.IrConstructor
+import org.jetbrains.kotlin.ir.declarations.IrFunction
+import org.jetbrains.kotlin.ir.declarations.IrValueParameter
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.util.*
 
@@ -150,8 +151,7 @@ class ModuleDependencies(
     }
 
     private fun findConstructorInjector(id: DependencyId, allowConstructorWithoutAnnotation: Boolean): IrConstructor? {
-        return id.type.getClass()
-            ?.takeIf { id.name.isEmpty() }
+        return id.type.takeIf { id.name.isEmpty() }?.getClass()
             ?.let { clazz ->
                 clazz.constructors.firstOrNull { it.hasAnnotation(Annotations.injectAnnotation) }
                     ?: clazz.takeIf { it.hasAnnotation(Annotations.injectAnnotation) || allowConstructorWithoutAnnotation }?.primaryConstructor

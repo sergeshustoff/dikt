@@ -1,7 +1,9 @@
 package dev.shustoff.dikt.core
 
 import dev.shustoff.dikt.dependency.Dependency
+import dev.shustoff.dikt.incremental.IncrementalCompilationHelper
 import dev.shustoff.dikt.message_collector.ErrorCollector
+import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
@@ -13,7 +15,8 @@ import org.jetbrains.kotlin.ir.util.properties
 import java.util.*
 
 class DependencyCollector(
-    private val errorCollector: ErrorCollector
+    private val errorCollector: ErrorCollector,
+    private val moduleSingletonGenerator: ModuleSingletonGenerator
 ) {
     fun collectDependencies(
         visibilityChecker: VisibilityChecker,
@@ -48,12 +51,10 @@ class DependencyCollector(
 
         while (modules.isNotEmpty()) {
             val module = modules.pop()
-            val dependencies = module.clazz.properties
-                .filter { visibilityChecker.isVisible(it) }
-                .map { Dependency.Property(it, module.path, returnType = module.typeMap[it.getter!!.returnType] ?: it.getter!!.returnType) } +
-                    module.clazz.functions
-                        .filter { visibilityChecker.isVisible(it) }
-                        .mapNotNull { createFunctionDependency(it, module) }
+            moduleSingletonGenerator.generateModuleSingletonsIfNotGeneratedYet(module.clazz)
+            //TODO: cache module dependencies (calculate once per run for all things that depend on module)
+            val dependencies = getModuleRawProperties(module, visibilityChecker) +
+                    getModuleRawFunctions(module, visibilityChecker)
 
             val withoutDuplicates = dependencies
                 .filter { fullDependencyMap[it.id]?.any { it.isInNestedModulePath(module.path) } != true }
@@ -77,6 +78,26 @@ class DependencyCollector(
             fullDependencyMap,
         )
     }
+
+    private fun getModuleRawProperties(
+        module: Module,
+        visibilityChecker: VisibilityChecker
+    ): Sequence<Dependency.Property> = module.clazz.properties
+        .filter { visibilityChecker.isVisible(it) }
+        .map {
+            Dependency.Property(
+                it,
+                module.path,
+                returnType = module.typeMap[it.getter!!.returnType] ?: it.getter!!.returnType
+            )
+        }
+
+    private fun getModuleRawFunctions(
+        module: Module,
+        visibilityChecker: VisibilityChecker
+    ) = module.clazz.functions
+        .filter { visibilityChecker.isVisible(it) }
+        .mapNotNull { createFunctionDependency(it, module) }
 
     private fun createFunctionDependency(it: IrSimpleFunction, module: Module? = null): Dependency.Function? {
         if (!isDependencyFunction(it)) return null
