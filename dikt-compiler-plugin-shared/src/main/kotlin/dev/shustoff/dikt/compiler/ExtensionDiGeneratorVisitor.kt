@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 
-class ExtensionFunctionsVisitor(
+class ExtensionDiGeneratorVisitor(
     private val errorCollector: ErrorCollector,
     pluginContext: IrPluginContext,
     private val incrementalHelper: IncrementalCompilationHelper?,
@@ -38,7 +38,7 @@ class ExtensionFunctionsVisitor(
                 )
                 val dependency: ResolvedDependency? = dependencies.resolveDependency(declaration.returnType, declaration)
                 injectionBuilder.buildExtensionInjection(declaration, dependency)
-                incrementalHelper?.recordExtensionDependency(declaration, dependencies, dependency)
+                incrementalHelper?.recordExtensionDependency(declaration, dependency)
             }
         }
 

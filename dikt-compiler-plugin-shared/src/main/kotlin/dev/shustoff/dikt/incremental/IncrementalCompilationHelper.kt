@@ -1,25 +1,24 @@
 package dev.shustoff.dikt.incremental
 
 import dev.shustoff.dikt.core.Annotations
-import dev.shustoff.dikt.core.ModuleDependencies
-import dev.shustoff.dikt.core.VisibilityChecker
 import dev.shustoff.dikt.dependency.Dependency
 import dev.shustoff.dikt.dependency.ResolvedDependency
 import dev.shustoff.dikt.message_collector.ErrorCollector
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
+import org.jetbrains.kotlin.backend.jvm.ir.isInCurrentModule
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.path
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.types.getClass
-import org.jetbrains.kotlin.ir.util.defaultType
-import org.jetbrains.kotlin.ir.util.file
-import org.jetbrains.kotlin.ir.util.kotlinFqName
+import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.synthetic.isVisibleOutside
 import java.io.File
 import java.util.*
 
@@ -28,45 +27,107 @@ class IncrementalCompilationHelper(
     lookupTracker: LookupTracker,
     private val errorCollector: ErrorCollector
 ) {
-    // Something that had or has SingletonIn (added/changed/removed) -> consider target module changed
-    // Something created by constructor (changed) -> recompile module that called the constructor (but not module's dependencies)
-    // Module (changed) -> recompile all modules that depended on it in case it provides dependency to replace a constructor call
+    // if any type used in ByDi changed constructor signature or annotations -> recompile ByDi
+    // if any module has added/changed/removed fun/property providing certain type: rebuild all ByDi that uses type regardless of access to module
+    // TODO:later recompile only if has access to changed module?
 
     private val singletonsByModule = ClassToStringsListMap(File(cacheDir, "singletonsByModule"))
+    private val classifiersByModule = ClassToStringsListMap(File(cacheDir, "classifiersByModule"))
+    private val returnedTypesByModule = ClassToStringsListMap(File(cacheDir, "returnedTypesByModule"))
 
-    private val modulesDependentOnModule = ClassToStringsListMap(File(cacheDir, "classesDependentOnModule"))
-    private val functionsDependentOnModule = ClassToStringsListMap(File(cacheDir, "functionsDependentOnModule"))
-    private val modulesDependentOnSingletons = ClassToStringsListMap(File(cacheDir, "classesDependentOnSingletons"))
-    private val functionsDependentSingletons = ClassToStringsListMap(File(cacheDir, "functionsDependentSingletons"))
+    //TODO:later clean it somehow to remove deleted dependency?
+    private val dependencyByUsedType = ClassToStringsListMap(File(cacheDir, "dependencyByUsedType"))
+
     private val pathByFqName = ClassToPathMap(File(cacheDir, "pathByFqName"))
 
     private val lookupHelper = LookupHelper(lookupTracker)
 
-    private val changedSingletons = mutableSetOf<FqName>()
-
     fun flush() {
         singletonsByModule.flush(false)
-        modulesDependentOnModule.flush(false)
-        functionsDependentOnModule.flush(false)
-        modulesDependentOnSingletons.flush(false)
-        functionsDependentSingletons.flush(false)
+        classifiersByModule.flush(false)
+        returnedTypesByModule.flush(false)
+        dependencyByUsedType.flush(false)
         pathByFqName.flush(false)
     }
 
-    fun updateSingletonsCache(
-        module: IrClass,
-        foundSingletons: List<IrClass>,
+    fun updateModuleCache(
+        modules: Collection<IrClass>,
+        foundSingletons: Map<IrType, List<IrClass>>,
         pluginContext: IrPluginContext,
     ) {
-        val oldCache = singletonsByModule[module.kotlinFqName].toSet()
-        val cachedSingletons = getCachedSingletons(module, pluginContext)
-        val allSingletons = (foundSingletons + cachedSingletons).distinctBy { it.kotlinFqName }
-        val newCache = allSingletons.map { it.kotlinFqName.asString() }
-        singletonsByModule[module.kotlinFqName] = newCache
-        changedSingletons.addAll((oldCache.filter { it !in newCache } + newCache.filter { it !in oldCache }).map { FqName(it) })
+        classifiersByModule.keys().forEach { fqName ->
+            val module = pluginContext.referenceClass(fqName)?.owner
+            if (module == null || !Annotations.isModule(module)) {
+                returnedTypesByModule[fqName].forEach { oldReturnedType ->
+                    dependencyByUsedType[FqName(oldReturnedType)].forEach { dependency ->
+                        pathByFqName[FqName(dependency)]?.let { path ->
+                            lookupHelper.recordLookup(path, fqName)
+                        }
+                    }
+                }
+                classifiersByModule.remove(fqName)
+                singletonsByModule.remove(fqName)
+                returnedTypesByModule.remove(fqName)
+            }
+        }
+        modules.forEach { module ->
+            val fqName = module.kotlinFqName
+            val oldModuleClassifiers = classifiersByModule[fqName].toSet()
+            val newClassifiers = getModuleClassifiers(module)
+            val functions = module.functions.filter { it.visibility.isVisibleOutside() }
+            val properties = module.properties.filter { it.visibility.isVisibleOutside() }
+
+            pathByFqName[fqName] = module.file.path
+            classifiersByModule[fqName] = newClassifiers
+            returnedTypesByModule[fqName] =
+                (functions.map { it.returnType } + properties.mapNotNull { it.getter?.returnType })
+                    .distinct()
+                    .mapNotNull { type -> type.classFqName?.asString() }
+                    .toSet()
+
+            (functions.filter { it.name.asString() !in oldModuleClassifiers }
+                .map { function -> function.returnType.classFqName!! to function.kotlinFqName } +
+                    properties.filter { it.name.asString() !in oldModuleClassifiers }
+                        .mapNotNull { property -> property.getter?.let { it.returnType.classFqName!! to property.fqNameWhenAvailable!! } })
+                .groupBy(keySelector = { it.first }, valueTransform = { it.second })
+                .forEach { (typeFq, classifiersFq) ->
+                    dependencyByUsedType[typeFq].forEach { dependency ->
+                        pathByFqName[FqName(dependency)]?.let { path ->
+                            classifiersFq.forEach { classifier ->
+                                lookupHelper.recordLookup(path, classifier)
+                            }
+                        }
+                    }
+                }
+        }
+
+        foundSingletons.forEach { (moduleType, foundModuleSingletons) ->
+            val module = moduleType.getClass()!!
+            val fqName = moduleType.classFqName!!
+            val oldSingletons = singletonsByModule[fqName].toSet()
+            pathByFqName[module.kotlinFqName]?.let { path ->
+                foundModuleSingletons.forEach { singleton ->
+                    if (singleton.kotlinFqName.asString() !in oldSingletons) {
+                        // recompile modules with new singletons and add lookup in case singleton changes
+                        lookupHelper.recordLookup(path, singleton.kotlinFqName)
+                        //TODO: this clearly doesn't work
+                    }
+                }
+            }
+
+            val cachedSingletons = getValidCachedSingletons(module, pluginContext)
+            val allSingletons = (foundModuleSingletons + cachedSingletons).distinctBy { it.kotlinFqName }
+            val newCache = allSingletons.map { it.kotlinFqName.asString() }
+            singletonsByModule[fqName] = newCache
+        }
     }
 
-    fun getCachedSingletons(
+    private fun getModuleClassifiers(module: IrClass): Set<String> {
+        return (module.properties.filter { it.visibility.isVisibleOutside() } +
+                module.functions.filter { it.visibility.isVisibleOutside() }).map { it.name.asString() }.toSet()
+    }
+
+    fun getValidCachedSingletons(
         module: IrClass,
         pluginContext: IrPluginContext
     ) = singletonsByModule[module.kotlinFqName].mapNotNull {
@@ -77,141 +138,75 @@ class IncrementalCompilationHelper(
             }
     }
 
-    fun recordExtensionDependency(extension: IrFunction, availableDependency: ModuleDependencies, usedDependency: ResolvedDependency?) {
-        val used = collectUsedDependency(listOfNotNull(usedDependency))
-
-        val fqName = extension.kotlinFqName
-        pathByFqName[fqName] = extension.file.path
-        availableDependency.getAllModules().forEach { module ->
-            functionsDependentOnModule.add(module.classFqName!!, fqName.asString())
-        }
-        used.singletons.forEach { singleton ->
-            functionsDependentSingletons.add(singleton.classFqName!!, fqName.asString())
-        }
-
-        used.constructors.forEach { type ->
-            lookupHelper.recordConstructorDependency(extension, type)
+    fun recordExtensionDependency(extension: IrFunction, usedDependency: ResolvedDependency?) {
+        val resolvedDependencies = registerDependencyLookups(extension, listOfNotNull(usedDependency))
+        val dependsOnTypes = resolvedDependencies.mapNotNull { it.id.type.classFqName }.toSet()
+        dependsOnTypes.forEach { type ->
+            dependencyByUsedType.add(type, extension.kotlinFqName.asString())
+            pathByFqName[extension.kotlinFqName] = extension.file.path
         }
     }
 
-    fun recordModuleDependency(module: IrClass, availableDependency: ModuleDependencies, usedDependency: List<ResolvedDependency>) {
-        val used = collectUsedDependency(usedDependency)
-
-        val fqName = module.kotlinFqName
-        pathByFqName[fqName] = module.file.path
-        availableDependency.getAllModules().forEach { module ->
-            modulesDependentOnModule.add(module.classFqName!!, fqName.asString())
-        }
-        used.singletons.forEach { singleton ->
-            modulesDependentOnSingletons.add(singleton.classFqName!!, fqName.asString())
-        }
-
-        used.constructors.forEach { type ->
-            lookupHelper.recordConstructorDependency(module, type)
+    fun recordModuleDependency(module: IrClass, usedDependency: List<ResolvedDependency>) {
+        val resolvedDependencies = registerDependencyLookups(module, usedDependency)
+        val dependsOnTypes = resolvedDependencies.mapNotNull { it.id.type.classFqName }.toSet()
+        dependsOnTypes.forEach { type ->
+            dependencyByUsedType.add(type, module.kotlinFqName.asString())
+            pathByFqName[module.kotlinFqName] = module.file.path
         }
     }
 
-    private fun collectUsedDependency(
+    private fun registerDependencyLookups(
+        from: IrDeclaration,
         usedDependency: List<ResolvedDependency>
-    ): UsedDependency {
-        val constructors = mutableListOf<IrType>()
-        val usedSingletons = mutableListOf<IrType>()
+    ): Set<Dependency> {
+        val dependencies = flattenDependency(usedDependency)
+        for (dependency in dependencies) {
+            when (dependency) {
+                is Dependency.Constructor -> lookupHelper.recordLookup(from.file.path, dependency.id.type.classFqName!!)
+                is Dependency.Function -> lookupHelper.recordLookup(from.file.path, dependency.function.kotlinFqName)
+                is Dependency.Property -> lookupHelper.recordLookup(
+                    from.file.path,
+                    dependency.property.fqNameWhenAvailable!!
+                )
+            }
+        }
+        return dependencies
+    }
 
-        val queue = LinkedList(usedDependency)
+    private fun flattenDependency(dependencies: List<ResolvedDependency>): Set<Dependency> {
+        val result = mutableSetOf<Dependency>()
+        val queue = LinkedList(dependencies)
         while (queue.isNotEmpty()) {
             val resolved = queue.pop()
-            when (val dependency = resolved.dependency) {
-                is Dependency.Constructor -> constructors.add(dependency.constructor.returnType)
-                is Dependency.Function -> {
-                    dependency.function
-                        .takeIf { Annotations.isSingleton(it) }
-                        ?.returnType?.getClass()
-                        ?.takeIf { Annotations.hasSingletonInAnnotation(it) }
-                        ?.let {
-                            usedSingletons.add(dependency.function.returnType)
-                        }
+            val dependency = resolved.dependency
+            if (dependency !is Dependency.Property && dependency !in result) {
+                result.add(dependency)
+                queue.addAll(resolved.params)
+
+                var nestedModule = resolved.nestedModulesChain
+                while (nestedModule != null && nestedModule.dependency !in result) {
+                    result.add(nestedModule.dependency)
+                    queue.addAll(nestedModule.params)
+                    nestedModule = nestedModule.nestedModulesChain
                 }
             }
-            queue.addAll(resolved.params)
         }
-
-        return UsedDependency(constructors.distinct(), usedSingletons.distinct())
+        return result
     }
 
-    fun markChangedDependenciesForRecompilation(
-        pluginContext: IrPluginContext,
-        visitedModules: Set<IrClass>
-    ) {
-        //TODO: filter only changed modules
-        visitedModules.forEach { module ->
-            val classes = modulesDependentOnModule[module.kotlinFqName]
-                .mapNotNull { pluginContext.referenceClass(FqName(it))?.owner }
-                .filter { Annotations.isModule(it) }
-            val functions = functionsDependentOnModule[module.kotlinFqName]
-                .flatMap { pluginContext.referenceFunctions(FqName(it)) }
-                .map { it.owner }
-                .filter { Annotations.isProvidedByDi(it) }
-
-            modulesDependentOnModule[module.kotlinFqName] = classes.map { it.kotlinFqName.asString() }.distinct()
-            functionsDependentOnModule[module.kotlinFqName] = functions.map { it.kotlinFqName.asString() }.distinct()
-
-            classes.forEach { clazz ->
-                pathByFqName[clazz.kotlinFqName]?.let { path ->
-                    lookupHelper.recordFullSignatureDependency(clazz, module, VisibilityChecker(clazz), path)
-                }
-            }
-            functions.forEach { func ->
-                pathByFqName[func.kotlinFqName]?.let { path ->
-                    lookupHelper.recordFullSignatureDependency(func, module, VisibilityChecker(func), path)
-                }
-            }
-        }
-        changedSingletons.forEach { singletonFqName ->
-            val singletonClass = pluginContext.referenceClass(singletonFqName)?.owner
-            if (singletonClass == null) {
-                functionsDependentSingletons.remove(singletonFqName)
-                modulesDependentOnSingletons.remove(singletonFqName)
-                return@forEach
-            }
-
-            val classes = modulesDependentOnSingletons[singletonFqName]
-                .mapNotNull { pluginContext.referenceClass(FqName(it))?.owner }
-                .filter { Annotations.isModule(it) }
-            val functions = functionsDependentSingletons[singletonFqName]
-                .flatMap { pluginContext.referenceFunctions(FqName(it)) }
-                .map { it.owner }
-                .filter { Annotations.isProvidedByDi(it) }
-
-            if (Annotations.hasSingletonInAnnotation(singletonClass)) {
-                modulesDependentOnSingletons[singletonFqName] = classes.map { it.kotlinFqName.asString() }.distinct()
-                functionsDependentSingletons[singletonFqName] = functions.map { it.kotlinFqName.asString() }.distinct()
-            } else {
-                modulesDependentOnSingletons.remove(singletonFqName)
-                functionsDependentSingletons.remove(singletonFqName)
-            }
-
-            classes.forEach { clazz ->
-                pathByFqName[clazz.kotlinFqName]?.let { path ->
-                    errorCollector.info("Recording constructor dependency $path to $singletonFqName")
-                    lookupHelper.recordConstructorDependency(clazz, singletonClass, path)
-                }
-            }
-            functions.forEach { func ->
-                pathByFqName[func.kotlinFqName]?.let { path ->
-                    errorCollector.info("Recording constructor dependency $path to $singletonFqName")
-                    lookupHelper.recordConstructorDependency(func, singletonClass, path)
-                }
-            }
-        }
+    fun getAvailableModulesList(): List<FqName> {
+        return classifiersByModule.keys()
     }
 
-    private class UsedDependency(
-        val constructors: List<IrType>,
-        val singletons: List<IrType>
-    )
+    private fun isBeingRecompiled(declaration: IrDeclaration): Boolean =
+        declaration.isInCurrentModule() // may not be the best way, but should work
 }
 
-fun incrementalHelper(configuration: CompilerConfiguration, errorCollector: ErrorCollector): IncrementalCompilationHelper? {
+fun incrementalHelper(
+    configuration: CompilerConfiguration,
+    errorCollector: ErrorCollector
+): IncrementalCompilationHelper? {
     val cache = configuration.get(DIKT_CACHE) ?: return null
     val lookupTracker = configuration.get(CommonConfigurationKeys.LOOKUP_TRACKER) ?: return null
     return IncrementalCompilationHelper(cache, lookupTracker, errorCollector)

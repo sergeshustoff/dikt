@@ -37,4 +37,6 @@ class ClassToStringsListMap(storageFile: File) : BasicStringMap<Collection<Strin
         val notRemoved = this[key].filter { it !in removed }
         this[key] = notRemoved
     }
+
+    fun keys() = storage.keys.map { FqName(it) }
 }

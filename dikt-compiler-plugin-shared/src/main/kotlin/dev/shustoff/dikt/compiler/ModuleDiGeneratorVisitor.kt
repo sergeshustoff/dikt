@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.ir.util.isInterface
 import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 
-class ModulesVisitor(
+class ModuleDiGeneratorVisitor(
     private val errorCollector: ErrorCollector,
     pluginContext: IrPluginContext,
     private val incrementalHelper: IncrementalCompilationHelper?,
@@ -49,7 +49,7 @@ class ModulesVisitor(
                     injectionBuilder.buildModuleFunctionInjections(declaration, function, dependency)
                 }
 
-                incrementalHelper?.recordModuleDependency(declaration, dependencies, diFunctions.mapNotNull { it.second })
+                incrementalHelper?.recordModuleDependency(declaration, diFunctions.mapNotNull { it.second })
                 RecursiveCallsDetector(errorCollector).checkForRecursiveCalls(declaration)
             }
         }

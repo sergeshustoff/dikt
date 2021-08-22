@@ -19,16 +19,17 @@ class DiktIrGenerationExtension(
         moduleFragment.files.forEach {
             info("Dikt processing file: ${it.name}")
         }
-        val singletonGenerator = ModuleSingletonGenerator(pluginContext, errorCollector, incrementalHelper)
-        val singletones = mutableMapOf<IrType, MutableList<IrClass>>()
-        val visitedModules = mutableSetOf<IrClass>()
-        moduleFragment.accept(ExternalSingletonDetector(errorCollector), singletones)
-        moduleFragment.acceptVoid(SingletonGeneratorVisitor(errorCollector, pluginContext, singletones, incrementalHelper, singletonGenerator, visitedModules))
-        moduleFragment.acceptVoid(ModulesVisitor(errorCollector, pluginContext, incrementalHelper, singletonGenerator))
-        moduleFragment.acceptVoid(ExtensionFunctionsVisitor(errorCollector, pluginContext, incrementalHelper, singletonGenerator))
+        val singletons = mutableMapOf<IrType, MutableList<IrClass>>()
+        moduleFragment.accept(SingletonDetector(errorCollector), singletons)
+        val modules = mutableSetOf<IrClass>()
+        moduleFragment.accept(ModuleDetector(), modules)
 
-        //TODO: don't call on full compilation
-        incrementalHelper?.markChangedDependenciesForRecompilation(pluginContext, visitedModules)
+        incrementalHelper?.updateModuleCache(modules, singletons, pluginContext)
+        val singletonGenerator = ModuleSingletonGenerator(pluginContext, errorCollector, incrementalHelper)
+        singletonGenerator.generateModuleSingletons(modules, singletons)
+
+        moduleFragment.acceptVoid(ModuleDiGeneratorVisitor(errorCollector, pluginContext, incrementalHelper, singletonGenerator))
+        moduleFragment.acceptVoid(ExtensionDiGeneratorVisitor(errorCollector, pluginContext, incrementalHelper, singletonGenerator))
 
         incrementalHelper?.flush()
     }

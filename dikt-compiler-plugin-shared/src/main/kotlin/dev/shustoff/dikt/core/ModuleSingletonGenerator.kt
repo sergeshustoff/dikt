@@ -9,16 +9,15 @@ import org.jetbrains.kotlin.ir.backend.js.utils.asString
 import org.jetbrains.kotlin.ir.builders.declarations.addFunction
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
-import org.jetbrains.kotlin.ir.util.defaultType
-import org.jetbrains.kotlin.ir.util.functions
-import org.jetbrains.kotlin.ir.util.primaryConstructor
-import org.jetbrains.kotlin.ir.util.properties
+import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.classFqName
+import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.name.Name
 
 class ModuleSingletonGenerator(
     private val pluginContext: IrPluginContext,
     errorCollector: ErrorCollector,
-    private val incrementalCompilationHelper: IncrementalCompilationHelper?
+    private val incrementalHelper: IncrementalCompilationHelper?
 ) : ErrorCollector by errorCollector {
 
     private val singletonAnnotationClass by lazy {
@@ -30,13 +29,33 @@ class ModuleSingletonGenerator(
     fun generateModuleSingletonsIfNotGeneratedYet(
         module: IrClass,
     ) {
-        if (module !in handledModules && incrementalCompilationHelper != null) {
-            val singletons = incrementalCompilationHelper.getCachedSingletons(module, pluginContext)
+        if (module !in handledModules && incrementalHelper != null) {
+            // should happen only with incremental compilation, needed to access generated methods from ir
+            val singletons = incrementalHelper.getValidCachedSingletons(module, pluginContext)
             generateModuleSingletons(module, singletons)
         }
     }
 
     fun generateModuleSingletons(
+        modules: Collection<IrClass>,
+        singletonsByModule: Map<IrType, List<IrClass>>
+    ) {
+        modules.forEach { module ->
+            val foundSingletons = singletonsByModule[module.defaultType].orEmpty()
+            val allSingletons = incrementalHelper?.getValidCachedSingletons(module, pluginContext) ?: foundSingletons
+            generateModuleSingletons(module, allSingletons)
+        }
+        val availableModules = incrementalHelper?.getAvailableModulesList() ?: modules.map { it.kotlinFqName }
+        singletonsByModule.forEach { (module, singletons) ->
+            if (module.classFqName !in availableModules) {
+                singletons.forEach { singleton ->
+                    singleton.error("Both singleton and di module should belong to the same kotlin module")
+                }
+            }
+        }
+    }
+
+    private fun generateModuleSingletons(
         module: IrClass,
         singletons: List<IrClass>
     ) {

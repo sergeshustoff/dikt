@@ -52,7 +52,7 @@ class DependencyCollector(
         while (modules.isNotEmpty()) {
             val module = modules.pop()
             moduleSingletonGenerator.generateModuleSingletonsIfNotGeneratedYet(module.clazz)
-            //TODO: cache module dependencies (calculate once per run for all things that depend on module)
+            //TODO:later cache module dependencies (calculate once per run for all things that depend on module)
             val dependencies = getModuleRawProperties(module, visibilityChecker) +
                     getModuleRawFunctions(module, visibilityChecker)
 
