@@ -16,7 +16,7 @@ publishing {
 
 kotlin {
     jvm()
-    js(IR) {
+    js {
         browser { }
     }
     mingwX64()
