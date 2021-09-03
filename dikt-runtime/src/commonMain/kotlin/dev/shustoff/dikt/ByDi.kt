@@ -1,5 +1,7 @@
 package dev.shustoff.dikt
 
 @Target(AnnotationTarget.FUNCTION)
-@Retention(AnnotationRetention.BINARY)
-annotation class ByDi
+@Retention(AnnotationRetention.SOURCE)
+annotation class ByDi(
+    val cached: Boolean = false
+)
