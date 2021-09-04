@@ -111,6 +111,23 @@ Doesn't call constructor.
         @Provided fun provideSomething(): Something
     }
 
+### @ProvidesByConstructor
+
+Dependencies of types listed in this annotation parameters will be provided by constructor when required.
+Might be applied to the whole module or to a single function
+
+#### Example:
+
+    class SomeDependency
+
+    class Something(val dependency: SomeDependency)
+
+    @DiModule
+    @ProvidesByConstructor(SomeDependency::class)
+    class MyModule {
+        @Create fun provideSomething(): Something
+    }
+
 ### @DiModule
 
 Tells compiler plugin to support @Create, @CreateCached and @Provided annotations in this class and to use methods and properties in this class as dependencies. 

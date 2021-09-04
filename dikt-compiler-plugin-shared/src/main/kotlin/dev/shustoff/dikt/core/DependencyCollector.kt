@@ -21,6 +21,7 @@ class DependencyCollector(
         params: List<IrValueParameter> = emptyList()
     ): ModuleDependencies {
         val fullDependencyMap: MutableMap<DependencyId, MutableList<Dependency>> = mutableMapOf()
+
         properties
             .forEach { property ->
                 val dependency = Dependency.Property(property, null)

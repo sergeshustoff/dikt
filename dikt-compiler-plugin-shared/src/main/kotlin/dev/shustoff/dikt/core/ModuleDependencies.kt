@@ -19,7 +19,8 @@ class ModuleDependencies(
 
     fun resolveDependency(
         type: IrType,
-        forFunction: IrFunction
+        forFunction: IrFunction,
+        providedByConstructor: List<IrType>
     ): ResolvedDependency? {
         val isProvider = Annotations.isProviderForExternalDependency(forFunction)
         val isCached = Annotations.isCached(forFunction)
@@ -30,7 +31,7 @@ class ModuleDependencies(
             ?.associate { Dependency.Parameter(it).let { it.id to it } }
             .orEmpty()
         return resolveDependencyInternal(DependencyId(type), Dependency.Function(forFunction, null), emptyList(), params,
-            useConstructor = !isProvider)
+            providedByConstructor = providedByConstructor + listOfNotNull(type.takeIf { !isProvider }))
     }
 
     private fun resolveDependencyInternal(
@@ -38,15 +39,15 @@ class ModuleDependencies(
         forDependency: Dependency,
         usedTypes: List<IrType>,
         providedParams: Map<DependencyId, Dependency>,
-        useConstructor: Boolean = false
+        providedByConstructor: List<IrType>
     ): ResolvedDependency? {
-        val dependency = providedParams[id]?.takeUnless { useConstructor }
-            ?: findDependency(id, forDependency, usedTypes, useConstructor)
+        val dependency = providedParams[id]
+            ?: findDependency(id, forDependency, usedTypes, providedByConstructor)
             ?: return null
         val params = dependency.getRequiredParams()
         val typeArgumentsMapping = buildTypeArgumentsMapping(id, dependency)
-        val resolvedParams = getResolveParams(params, forDependency, usedTypes + id.type, typeArgumentsMapping, providedParams)
-        val nestedChain = getResolveNestedChain(dependency, forDependency, usedTypes + id.type, typeArgumentsMapping, providedParams)
+        val resolvedParams = getResolveParams(params, forDependency, usedTypes + id.type, typeArgumentsMapping, providedParams, providedByConstructor)
+        val nestedChain = getResolveNestedChain(dependency, forDependency, usedTypes + id.type, typeArgumentsMapping, providedParams, providedByConstructor)
         return resolvedParams
             ?.let {
                 ResolvedDependency(dependency, nestedChain, it)
@@ -68,6 +69,7 @@ class ModuleDependencies(
         usedTypes: List<IrType> = emptyList(),
         typeArgumentsMapping: Map<IrType?, IrType?>,
         providedParams: Map<DependencyId, Dependency>,
+        providedByConstructor: List<IrType>,
     ): List<ResolvedDependency>? {
         return valueParameters
             .mapNotNull { param ->
@@ -76,6 +78,7 @@ class ModuleDependencies(
                     forDependency,
                     usedTypes,
                     providedParams,
+                    providedByConstructor = providedByConstructor,
                 )
             }
             .takeIf { it.size == valueParameters.size } // errors reported in findDependency
@@ -87,6 +90,7 @@ class ModuleDependencies(
         usedTypes: List<IrType> = emptyList(),
         typeArgumentsMapping: Map<IrType?, IrType?>,
         providedParams: Map<DependencyId, Dependency>,
+        providedByConstructor: List<IrType>,
     ): ResolvedDependency? {
         return dependency.fromNestedModule?.let {
             resolveDependencyInternal(
@@ -94,6 +98,7 @@ class ModuleDependencies(
                 forDependency,
                 usedTypes,
                 providedParams,
+                providedByConstructor = providedByConstructor,
             )
         }
     }
@@ -102,7 +107,7 @@ class ModuleDependencies(
         id: DependencyId,
         forDependency: Dependency,
         usedTypes: List<IrType> = emptyList(),
-        useConstructor: Boolean = false
+        providedByConstructor: List<IrType> = emptyList()
     ): Dependency? {
         if (id.type in usedTypes) {
             forDependency.irElement.error(
@@ -111,7 +116,7 @@ class ModuleDependencies(
             return null
         }
 
-        return if (useConstructor) {
+        return if (id.type in providedByConstructor) {
             getConstructorDependency(forDependency, id)
         } else {
             val dependencyOptions = dependencyMap[id].orEmpty() - forDependency

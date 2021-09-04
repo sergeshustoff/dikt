@@ -32,6 +32,7 @@ class ModuleDiGeneratorVisitor(
             } else if (!declaration.isFinalClass) {
                 declaration.error("Module should be final")
             } else {
+                val providedByConstructorInModule = Annotations.getProvidedByConstructor(declaration)
                 val dependencies = dependencyCollector.collectDependencies(
                     visibilityChecker = VisibilityChecker(declaration),
                     properties = declaration.properties,
@@ -39,7 +40,9 @@ class ModuleDiGeneratorVisitor(
                 )
                 val diFunctions = declaration.functions
                     .filter { function -> Annotations.isProvidedByDi(function) }
-                    .map { function -> function to dependencies.resolveDependency(function.returnType, function) }
+                    .map { function ->
+                        val providedByConstructor = providedByConstructorInModule + Annotations.getProvidedByConstructor(function)
+                        function to dependencies.resolveDependency(function.returnType, function, providedByConstructor) }
                     .toList()
 
                 diFunctions.forEach { (function, dependency) ->

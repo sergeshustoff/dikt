@@ -6,6 +6,8 @@ import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrClassReference
 import org.jetbrains.kotlin.ir.expressions.IrConst
+import org.jetbrains.kotlin.ir.expressions.IrVararg
+import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.getAnnotation
 import org.jetbrains.kotlin.ir.util.hasAnnotation
@@ -17,6 +19,7 @@ object Annotations {
     private val providedAnnotation = FqName("dev.shustoff.dikt.Provided")
     private val moduleAnnotation = FqName("dev.shustoff.dikt.DiModule")
     private val providesAllAnnotation = FqName("dev.shustoff.dikt.ProvidesAll")
+    private val provideByConstructorAnnotation = FqName("dev.shustoff.dikt.ProvidesByConstructor")
 
     fun isModule(declaration: IrClass) = declaration.annotations.hasAnnotation(moduleAnnotation)
 
@@ -48,5 +51,14 @@ object Annotations {
 
     fun isProviderForExternalDependency(descriptor: IrFunction): Boolean {
         return descriptor.hasAnnotation(providedAnnotation)
+    }
+
+    fun getProvidedByConstructor(descriptor: IrDeclarationWithName): List<IrType> {
+        val annotation = descriptor.getAnnotation(provideByConstructorAnnotation)
+
+        return (annotation?.getValueArgument(0) as? IrVararg)
+            ?.elements
+            ?.mapNotNull { (it as? IrClassReference)?.classType }
+            .orEmpty()
     }
 }
