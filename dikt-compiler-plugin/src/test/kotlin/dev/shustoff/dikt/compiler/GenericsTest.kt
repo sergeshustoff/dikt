@@ -21,7 +21,7 @@ class GenericsTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.ByDi
+            import dev.shustoff.dikt.Create
             import dev.shustoff.dikt.DiModule
 
             class Injectable(
@@ -31,7 +31,7 @@ class GenericsTest {
 
             @DiModule
             class MyModule {
-                @ByDi fun injectable(): Injectable
+                @Create fun injectable(): Injectable
                 
                 fun provideStrings(): List<String> {
                     return listOf()
@@ -55,7 +55,7 @@ class GenericsTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.ByDi
+            import dev.shustoff.dikt.Create
             import dev.shustoff.dikt.DiModule
 
             class Injectable<T>(
@@ -64,7 +64,7 @@ class GenericsTest {
 
             @DiModule
             class MyModule<T>(val value: T) {
-                @ByDi fun injectable(): Injectable<T>
+                @Create fun injectable(): Injectable<T>
             }
             """
             )
@@ -80,9 +80,9 @@ class GenericsTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.ByDi
+            import dev.shustoff.dikt.Create
             import dev.shustoff.dikt.DiModule
-            import dev.shustoff.dikt.ProvidesAllContent
+            import dev.shustoff.dikt.ProvidesAll
 
             class Injectable(
                 val value: String
@@ -92,8 +92,8 @@ class GenericsTest {
             class GenericModule<T>(val value: T)
 
             @DiModule
-            class MyModule(@ProvidesAllContent val module: GenericModule<String>) {
-                @ByDi fun injectable(): Injectable
+            class MyModule(@ProvidesAll val module: GenericModule<String>) {
+                @Create fun injectable(): Injectable
             }
             """
             )

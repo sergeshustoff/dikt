@@ -7,28 +7,29 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
-class ConstructorInjectionsTest {
+class ProvidedTest {
 
     @Rule
     @JvmField
     var folder: TemporaryFolder = TemporaryFolder()
 
     @Test
-    fun `compile for injection with empty constructor`() {
+    fun `can provide external dependency`() {
         val result = compile(
             folder.root,
             SourceFile.kotlin(
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.ByDi
-            import dev.shustoff.dikt.DiModule
+            import dev.shustoff.dikt.*
 
-            class Injectable
+            class Dependency
 
             @DiModule
-            class MyModule {
-                @ByDi fun injectable(): Injectable
+            class MyModule(val testArg: String) {
+                @Provided fun dependency(): Dependency
+                
+                fun createDependency(testArg: String) = Dependency()
             }
             """
             )
@@ -37,28 +38,25 @@ class ConstructorInjectionsTest {
     }
 
     @Test
-    fun `fail when dependency is missing`() {
+    fun `fail if no external dependency found`() {
         val result = compile(
             folder.root,
             SourceFile.kotlin(
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.ByDi
-            import dev.shustoff.dikt.DiModule
+            import dev.shustoff.dikt.*
 
-            class Dependency()
-            
-            class Injectable(val dependency: Dependency)
+            class Dependency
 
             @DiModule
-            class MyModule {
-                @ByDi fun injectable(): Injectable
+            class MyModule() {
+                @Provided fun dependency(): Dependency
             }
             """
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("MyModule.kt: (10, 10): Can't resolve dependency dev.shustoff.dikt.compiler.Dependency")
+        Truth.assertThat(result.messages).contains("MyModule.kt: (7, 14): Can't resolve dependency dev.shustoff.dikt.compiler.Dependency")
     }
 }

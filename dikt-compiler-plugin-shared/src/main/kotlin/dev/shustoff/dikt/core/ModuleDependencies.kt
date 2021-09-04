@@ -4,7 +4,6 @@ import dev.shustoff.dikt.dependency.Dependency
 import dev.shustoff.dikt.dependency.ResolvedDependency
 import dev.shustoff.dikt.message_collector.ErrorCollector
 import org.jetbrains.kotlin.ir.backend.js.utils.asString
-import org.jetbrains.kotlin.ir.declarations.IrConstructor
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrValueParameter
 import org.jetbrains.kotlin.ir.types.IrSimpleType
@@ -22,15 +21,16 @@ class ModuleDependencies(
         type: IrType,
         forFunction: IrFunction
     ): ResolvedDependency? {
+        val isProvider = Annotations.isProviderForExternalDependency(forFunction)
         val isCached = Annotations.isCached(forFunction)
         if (isCached && forFunction.valueParameters.isNotEmpty()) {
-            forFunction.error("Cached @ByDi functions should not have parameters")
+            forFunction.error("Cached @Create functions should not have parameters")
         }
         val params = forFunction.valueParameters.takeUnless { isCached }
             ?.associate { Dependency.Parameter(it).let { it.id to it } }
             .orEmpty()
         return resolveDependencyInternal(DependencyId(type), Dependency.Function(forFunction, null), emptyList(), params,
-            allowConstructorWithoutAnnotation = true)
+            useConstructor = !isProvider)
     }
 
     private fun resolveDependencyInternal(
@@ -38,10 +38,10 @@ class ModuleDependencies(
         forDependency: Dependency,
         usedTypes: List<IrType>,
         providedParams: Map<DependencyId, Dependency>,
-        allowConstructorWithoutAnnotation: Boolean = false
+        useConstructor: Boolean = false
     ): ResolvedDependency? {
-        val dependency = providedParams[id]
-            ?: findDependency(id, forDependency, usedTypes, allowConstructorWithoutAnnotation)
+        val dependency = providedParams[id]?.takeUnless { useConstructor }
+            ?: findDependency(id, forDependency, usedTypes, useConstructor)
             ?: return null
         val params = dependency.getRequiredParams()
         val typeArgumentsMapping = buildTypeArgumentsMapping(id, dependency)
@@ -102,7 +102,7 @@ class ModuleDependencies(
         id: DependencyId,
         forDependency: Dependency,
         usedTypes: List<IrType> = emptyList(),
-        allowConstructorWithoutAnnotation: Boolean = false
+        useConstructor: Boolean = false
     ): Dependency? {
         if (id.type in usedTypes) {
             forDependency.irElement.error(
@@ -111,20 +111,31 @@ class ModuleDependencies(
             return null
         }
 
-        val dependencyOptions = dependencyMap[id].orEmpty() - forDependency
-        // check local and nested in groups as well as parameterless and parameterized
-        return getDependencyFromGroup(forDependency, id, dependencyOptions.filter { it.fromNestedModule == null && it.getRequiredParams().isEmpty() })
-            ?: getDependencyFromGroup(forDependency, id, dependencyOptions.filter { it.fromNestedModule == null && it.getRequiredParams().isNotEmpty() })
-            ?: getDependencyFromGroup(forDependency, id, dependencyOptions.filter { it.fromNestedModule != null })
-            ?: getConstructorDependency(forDependency, id, allowConstructorWithoutAnnotation)
+        return if (useConstructor) {
+            getConstructorDependency(forDependency, id)
+        } else {
+            val dependencyOptions = dependencyMap[id].orEmpty() - forDependency
+            // check local and nested in groups as well as parameterless and parameterized
+            val result = getDependencyFromGroup(forDependency, id, dependencyOptions.filter { it.fromNestedModule == null && it.getRequiredParams().isEmpty() })
+                ?: getDependencyFromGroup(forDependency, id, dependencyOptions.filter { it.fromNestedModule == null && it.getRequiredParams().isNotEmpty() })
+                ?: getDependencyFromGroup(forDependency, id, dependencyOptions.filter { it.fromNestedModule != null })
+
+            if (result == null) {
+                forDependency.irElement.error(
+                    "Can't resolve dependency ${id.asErrorString()}",
+                )
+            }
+
+            result
+        }
     }
 
-    private fun getConstructorDependency(forDependency: Dependency, id: DependencyId, allowConstructorWithoutAnnotation: Boolean): Dependency? {
-        val constructor = findConstructorInjector(id, allowConstructorWithoutAnnotation)
+    private fun getConstructorDependency(forDependency: Dependency, id: DependencyId): Dependency? {
+        val constructor = id.type.getClass()?.primaryConstructor
 
         if (constructor == null || !visibilityChecker.isVisible(constructor)) {
             forDependency.irElement.error(
-                "Can't resolve dependency ${id.asErrorString()}",
+                "No visible constructor found for ${id.asErrorString()}",
             )
             return null
         }
@@ -141,11 +152,5 @@ class ModuleDependencies(
             return options.first()
         }
         return null
-    }
-
-    private fun findConstructorInjector(id: DependencyId, allowConstructorWithoutAnnotation: Boolean): IrConstructor? {
-        return id.type.getClass()
-            ?.takeIf { allowConstructorWithoutAnnotation }
-            ?.primaryConstructor
     }
 }

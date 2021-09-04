@@ -59,43 +59,61 @@ In gradle.properties disable incremental compilation, it's not supported yet:
 
 ## Usage
 
-Create module and declare provided dependencies. Use @ByDi to generate functions bodies for you.
+Create module and declare provided dependencies. Use @Create to generate functions bodies for you.
 
     @DiModule
     class CarModule(
-        @ProvidesAllContent
+        @ProvidesAll
         val externalDependency: Something,
     ) {
-        @ByDi(cached = true) val someSingleton(): SomeSingleton
-        @ByDi fun provideSomethingElse(): SomethingElse
+        @CreateCached val someSingleton(): SomeSingleton
+        @Create fun provideSomethingElse(): SomethingElse
     }
   
 Under the hood primary constructor will be called for SomethingElse and SomeSingleton. If constructor requires some parameters - they will be retrieved form this module or from nested modules properties and functions.
 
 ## Annotations
 
-### @ByDi
+### @Create
 
 Magical annotation that tells compiler plugin to generate method body using returned type's primary constructor.
-Function parameters are used as provided dependencies, as well as anything inside parameter of type annotated with @ProvidesAllContent or containing module.
+Function parameters are used as provided dependencies, as well as anything inside parameter of type annotated with @ProvidesAll or containing module.
 
 #### Example:
     
     class Something(val name: String)
 
-    @ByDi fun provideSomething(name: String): Something
+    @Create fun provideSomething(name: String): Something
 
 Code above will be transformed to
 
     fun provideSomething(name: String) = Something(name)
 
-#### cached = true
+### @CreateCached
 
-This parameter tells compiler plugin to create a lazy property and return value from it. Functions marked with @ByDi(cached=true) don't support parameters.
+Same as @Create, but creates a lazy property and return value from it. Functions marked with @CreateCached don't support parameters.
+
+### @Provided
+
+Tells compiler plugin to generate method body that returns value of specified type retrieved from dependencies. It's useful when we need to elevate dependencies from nested modules.
+Doesn't call constructor.
+
+#### Example:
+
+    class Something(val name: String)
+
+    class ExternalModule(
+        val something: Something
+    )
+
+    @DiModule
+    class MyModule(@ProvidesAll val external: ExternalModule) {
+        @Provided fun provideSomething(): Something
+    }
 
 ### @DiModule
 
-Tells compiler plugin that all @ByDi methods in this class may use its methods and properties as dependencies. 
+Tells compiler plugin to support @Create, @CreateCached and @Provided annotations in this class and to use methods and properties in this class as dependencies. 
  
 #### Example:
 
@@ -103,12 +121,12 @@ Tells compiler plugin that all @ByDi methods in this class may use its methods a
 
     @DiModule
     class MyModule(val somethingName: String) {
-        @ByDi fun provideSomething(): Something
+        @Create fun provideSomething(): Something
     }
 
 Example above will use somethingName property of MyModule to provide name parameter for Something constructor.
 
-### @ProvideAllContent
+### @ProvidesAll
 
 Tells compiler that dependency marked with this annotation might provide all its properties and functions as dependency.
 
@@ -122,8 +140,8 @@ This annotation doesn't work recursively.
 
     @DiModule
     class MyModule(
-        @ProvidesAllContent
+        @ProvidesAll
         private val external: ExternalModule
     ) {
-        @ByDi fun provideSomething(): Something // will call constructor using external.name as parameter
+        @Create fun provideSomething(): Something // will call constructor using external.name as parameter
     }

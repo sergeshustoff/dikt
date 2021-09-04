@@ -1,17 +1,18 @@
 package dev.shustoff.dikt.sample
 
-import dev.shustoff.dikt.ByDi
+import dev.shustoff.dikt.Create
+import dev.shustoff.dikt.CreateCached
 import dev.shustoff.dikt.DiModule
-import dev.shustoff.dikt.ProvidesAllContent
+import dev.shustoff.dikt.ProvidesAll
 
 @DiModule
 class CarModule(
-    @ProvidesAllContent val engineModule: EngineModule,
+    @ProvidesAll val engineModule: EngineModule,
 ) {
-    @ByDi(cached = true)
+    @CreateCached
     fun owner(): CarOwner
 
-    @ByDi fun car(): Car
+    @Create fun car(): Car
 
-    @ByDi fun getGarage(): Garage
+    @Create fun getGarage(): Garage
 }

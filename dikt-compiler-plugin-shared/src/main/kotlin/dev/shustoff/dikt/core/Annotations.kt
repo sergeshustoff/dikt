@@ -12,31 +12,41 @@ import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.name.FqName
 
 object Annotations {
-    private val byDiAnnotation = FqName("dev.shustoff.dikt.ByDi")
+    private val createAnnotation = FqName("dev.shustoff.dikt.Create")
+    private val cachedAnnotation = FqName("dev.shustoff.dikt.CreateCached")
+    private val providedAnnotation = FqName("dev.shustoff.dikt.Provided")
     private val moduleAnnotation = FqName("dev.shustoff.dikt.DiModule")
-    private val providesAllAnnotation = FqName("dev.shustoff.dikt.ProvidesAllContent")
+    private val providesAllAnnotation = FqName("dev.shustoff.dikt.ProvidesAll")
 
     fun isModule(declaration: IrClass) = declaration.annotations.hasAnnotation(moduleAnnotation)
 
-    fun doesProvideContent(descriptor: IrDeclarationWithName) = descriptor.annotations.hasAnnotation(providesAllAnnotation)
+    fun doesProvideContent(descriptor: IrDeclarationWithName) =
+        descriptor.annotations.hasAnnotation(providesAllAnnotation)
 
     fun isProvidedByDi(descriptor: CallableMemberDescriptor): Boolean {
         val containingDeclaration = descriptor.containingDeclaration
         return descriptor is FunctionDescriptor
-                && descriptor.annotations.hasAnnotation(byDiAnnotation)
+                && (descriptor.annotations.hasAnnotation(createAnnotation)
+                || descriptor.annotations.hasAnnotation(cachedAnnotation)
+                || descriptor.annotations.hasAnnotation(providedAnnotation))
                 && containingDeclaration is ClassDescriptor
                 && containingDeclaration.annotations.hasAnnotation(moduleAnnotation)
     }
 
     fun isProvidedByDi(descriptor: IrFunction): Boolean {
         val containingDeclaration = descriptor.parent
-        return descriptor.annotations.hasAnnotation(byDiAnnotation)
+        return (descriptor.annotations.hasAnnotation(createAnnotation)
+                || descriptor.annotations.hasAnnotation(cachedAnnotation)
+                || descriptor.annotations.hasAnnotation(providedAnnotation))
                 && containingDeclaration is IrClass
                 && containingDeclaration.annotations.hasAnnotation(moduleAnnotation)
     }
 
     fun isCached(descriptor: IrFunction): Boolean {
-        val annotation = descriptor.getAnnotation(byDiAnnotation)
-        return (annotation?.getValueArgument(0) as? IrConst<Boolean>)?.value == true
+        return descriptor.hasAnnotation(cachedAnnotation)
+    }
+
+    fun isProviderForExternalDependency(descriptor: IrFunction): Boolean {
+        return descriptor.hasAnnotation(providedAnnotation)
     }
 }

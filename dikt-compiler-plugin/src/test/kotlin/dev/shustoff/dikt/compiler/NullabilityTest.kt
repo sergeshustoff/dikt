@@ -20,7 +20,7 @@ class NullabilityTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.ByDi
+            import dev.shustoff.dikt.Create
             import dev.shustoff.dikt.DiModule
 
             class Injectable(
@@ -31,13 +31,13 @@ class NullabilityTest {
             class MyModule(
                 val dependency: String?
             ) {
-                @ByDi fun injectable(): Injectable
+                @Create fun injectable(): Injectable
             }
             """
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("MyModule.kt: (12, 10): Can't resolve dependency kotlin.String")
+        Truth.assertThat(result.messages).contains("MyModule.kt: (12, 12): Can't resolve dependency kotlin.String")
     }
 
     @Test
@@ -48,7 +48,7 @@ class NullabilityTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.ByDi
+            import dev.shustoff.dikt.Create
             import dev.shustoff.dikt.DiModule
 
             class Injectable(
@@ -59,7 +59,7 @@ class NullabilityTest {
             class MyModule(
                 val dependency: String?
             ) {
-                @ByDi fun injectable(): Injectable
+                @Create fun injectable(): Injectable
             }
             """
             )

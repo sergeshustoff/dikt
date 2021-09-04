@@ -3,26 +3,25 @@ package dev.shustoff.dikt.compiler
 import com.google.common.truth.Truth
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
-class FunctionDependencyTest {
+class CreatorTest {
 
     @Rule
     @JvmField
     var folder: TemporaryFolder = TemporaryFolder()
 
     @Test
-    fun `allow module functions for dependency resolution`() {
+    fun `compile with dependency in constructor`() {
         val result = compile(
             folder.root,
             SourceFile.kotlin(
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.ByDi
+            import dev.shustoff.dikt.Create
             import dev.shustoff.dikt.DiModule
 
             class Dependency
@@ -30,12 +29,8 @@ class FunctionDependencyTest {
             class Injectable(val dependency: Dependency)
 
             @DiModule
-            class MyModule {
-                @ByDi fun injectable(): Injectable
-
-                private fun provideDependency(): Dependency {
-                    return Dependency()
-                }
+            class MyModule(val dependency: Dependency) {
+                @Create fun injectable(): Injectable
             }
             """
             )
@@ -44,7 +39,56 @@ class FunctionDependencyTest {
     }
 
     @Test
-    fun `function may provide dependency with params`() {
+    fun `compile for injection with empty constructor`() {
+        val result = compile(
+            folder.root,
+            SourceFile.kotlin(
+                "MyModule.kt",
+                """
+            package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.Create
+            import dev.shustoff.dikt.DiModule
+
+            class Injectable
+
+            @DiModule
+            class MyModule {
+                @Create fun injectable(): Injectable
+            }
+            """
+            )
+        )
+        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+    }
+
+    @Test
+    fun `fail when dependency is missing`() {
+        val result = compile(
+            folder.root,
+            SourceFile.kotlin(
+                "MyModule.kt",
+                """
+            package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.Create
+            import dev.shustoff.dikt.DiModule
+
+            class Dependency()
+            
+            class Injectable(val dependency: Dependency)
+
+            @DiModule
+            class MyModule {
+                @Create fun injectable(): Injectable
+            }
+            """
+            )
+        )
+        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
+        Truth.assertThat(result.messages).contains("MyModule.kt: (10, 12): Can't resolve dependency dev.shustoff.dikt.compiler.Dependency")
+    }
+
+    @Test
+    fun `function may use dependency from params`() {
         val result = compile(
             folder.root,
             SourceFile.kotlin(
@@ -59,7 +103,7 @@ class FunctionDependencyTest {
 
             @DiModule
             class MyModule {
-                @ByDi fun injectable(dependency: Dependency): Injectable
+                @Create fun injectable(dependency: Dependency): Injectable
             }
             """
             )
@@ -68,7 +112,7 @@ class FunctionDependencyTest {
     }
 
     @Test
-    fun `function may provide singleton dependency`() {
+    fun `can compile cached injectable`() {
         val result = compile(
             folder.root,
             SourceFile.kotlin(
@@ -81,7 +125,7 @@ class FunctionDependencyTest {
 
             @DiModule
             class MyModule {
-                @ByDi(cached = true) fun injectable(): Injectable
+                @CreateCached fun injectable(): Injectable
             }
             """
             )
@@ -90,7 +134,7 @@ class FunctionDependencyTest {
     }
 
     @Test
-    fun `parameters for singletons not supported`() {
+    fun `parameters for cached injectable not supported`() {
         val result = compile(
             folder.root,
             SourceFile.kotlin(
@@ -103,7 +147,7 @@ class FunctionDependencyTest {
 
             @DiModule
             class MyModule {
-                @ByDi(cached = true) fun injectable(name: String): Injectable
+                @CreateCached fun injectable(name: String): Injectable
             }
             """
             )
