@@ -3,7 +3,6 @@ package dev.shustoff.dikt.compiler
 import com.google.common.truth.Truth
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -23,16 +22,13 @@ class RecursiveDependencyTest {
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.ByDi
-            import dev.shustoff.dikt.Module
-            import dev.shustoff.dikt.Inject
+            import dev.shustoff.dikt.DiModule
 
-            @Inject
             class Dependency(val injectable: Injectable)
 
-            @Inject
             class Injectable(val dependency: Dependency)
 
-            @Module
+            @DiModule
             class MyModule {
                 @ByDi fun injectable(): Injectable
                 @ByDi fun dependency(): Dependency
@@ -41,8 +37,8 @@ class RecursiveDependencyTest {
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("MyModule.kt: (13, 10): Recursive dependency detected")
-        Truth.assertThat(result.messages).contains("MyModule.kt: (14, 10): Recursive dependency detected")
+        Truth.assertThat(result.messages).contains("MyModule.kt: (10, 10): Recursive dependency detected")
+        Truth.assertThat(result.messages).contains("MyModule.kt: (11, 10): Recursive dependency detected")
     }
 
     @Test
@@ -54,13 +50,11 @@ class RecursiveDependencyTest {
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.ByDi
-            import dev.shustoff.dikt.Inject
-            import dev.shustoff.dikt.Module
+            import dev.shustoff.dikt.DiModule
 
-            @Inject
             class Injectable(val injectable: Injectable)
 
-            @Module
+            @DiModule
             class MyModule {
                 @ByDi fun injectable(): Injectable
             }
@@ -68,7 +62,7 @@ class RecursiveDependencyTest {
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("MyModule.kt: (10, 10): Recursive dependency: dev.shustoff.dikt.compiler.Injectable")
+        Truth.assertThat(result.messages).contains("MyModule.kt: (8, 10): Recursive dependency: dev.shustoff.dikt.compiler.Injectable")
     }
 
     @Test
@@ -80,38 +74,13 @@ class RecursiveDependencyTest {
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.ByDi
-            import dev.shustoff.dikt.Inject
-            import dev.shustoff.dikt.Module
-
-            class Injectable(val injectable: Injectable)
-
-            @Module
-            class MyModule {
-                @ByDi fun injectable(): Injectable
-                fun injectable(injectable: Injectable) = Injectable(injectable)
-            }
-            """
-            )
-        )
-        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("MyModule.kt: (9, 10): Recursive dependency: dev.shustoff.dikt.compiler.Injectable")
-
-        val result2 = compile(
-            folder.root,
-            SourceFile.kotlin(
-                "MyModule.kt",
-                """
-            package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.ByDi
-            import dev.shustoff.dikt.Inject
-            import dev.shustoff.dikt.Module
+            import dev.shustoff.dikt.DiModule
 
             class Dependency()
             
-            @Inject
             class Injectable(val dependency: Dependency)
 
-            @Module
+            @DiModule
             class MyModule {
                 @ByDi fun injectable(): Injectable
                 fun dependency(dependency: Dependency) = Dependency()
@@ -119,8 +88,8 @@ class RecursiveDependencyTest {
             """
             )
         )
-        Truth.assertThat(result2.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result2.messages).contains("MyModule.kt: (12, 10): Recursive dependency: dev.shustoff.dikt.compiler.Injectable -> dev.shustoff.dikt.compiler.Dependency")
+        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
+        Truth.assertThat(result.messages).contains("MyModule.kt: (10, 10): Recursive dependency: dev.shustoff.dikt.compiler.Injectable -> dev.shustoff.dikt.compiler.Dependency")
     }
 
     @Test
@@ -131,16 +100,13 @@ class RecursiveDependencyTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.Module
-            import dev.shustoff.dikt.Inject
+            import dev.shustoff.dikt.DiModule
 
-            @Inject
             class Dependency(val injectable: Injectable)
 
-            @Inject
             class Injectable(val dependency: Dependency)
 
-            @Module
+            @DiModule
             class MyModule {
                 val injectable: Injectable by lazy { Injectable(dependency) }
                 val dependency: Dependency = Dependency(injectable)
@@ -149,8 +115,8 @@ class RecursiveDependencyTest {
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("MyModule.kt: (12, 4): Recursive dependency detected")
-        Truth.assertThat(result.messages).contains("MyModule.kt: (13, 4): Recursive dependency detected")
+        Truth.assertThat(result.messages).contains("MyModule.kt: (9, 4): Recursive dependency detected")
+        Truth.assertThat(result.messages).contains("MyModule.kt: (10, 4): Recursive dependency detected")
     }
 
     @Test
@@ -162,16 +128,14 @@ class RecursiveDependencyTest {
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.ByDi
-            import dev.shustoff.dikt.Module
-            import dev.shustoff.dikt.Inject
+            import dev.shustoff.dikt.DiModule
 
             class Dependency1()
             class Dependency2()
 
-            @Inject
             class Injectable(val dependency: Dependency1)
 
-            @Module
+            @DiModule
             class MyModule {
                 @ByDi fun injectable(): Injectable
                 
@@ -189,8 +153,8 @@ class RecursiveDependencyTest {
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("MyModule.kt: (15, 4): Recursive dependency detected")
-        Truth.assertThat(result.messages).contains("MyModule.kt: (20, 4): Recursive dependency detected")
+        Truth.assertThat(result.messages).contains("MyModule.kt: (13, 4): Recursive dependency detected")
+        Truth.assertThat(result.messages).contains("MyModule.kt: (18, 4): Recursive dependency detected")
     }
 
     @Test
@@ -202,13 +166,12 @@ class RecursiveDependencyTest {
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.ByDi
-            import dev.shustoff.dikt.Module
-            import dev.shustoff.dikt.Inject
+            import dev.shustoff.dikt.DiModule
 
 
             class Injectable()
 
-            @Module
+            @DiModule
             class MyModule {
                 @ByDi fun injectable(): Injectable
                 
@@ -220,8 +183,8 @@ class RecursiveDependencyTest {
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("MyModule.kt: (10, 10): Recursive dependency detected")
-        Truth.assertThat(result.messages).contains("MyModule.kt: (12, 4): Recursive dependency detected")
+        Truth.assertThat(result.messages).contains("MyModule.kt: (9, 10): Recursive dependency detected")
+        Truth.assertThat(result.messages).contains("MyModule.kt: (11, 4): Recursive dependency detected")
     }
 
 }

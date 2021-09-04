@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.ir.declarations.IrValueParameter
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.getClass
-import org.jetbrains.kotlin.ir.util.*
+import org.jetbrains.kotlin.ir.util.primaryConstructor
 
 class ModuleDependencies(
     errorCollector: ErrorCollector,
@@ -18,17 +18,17 @@ class ModuleDependencies(
     private val dependencyMap: Map<DependencyId, List<Dependency>>,
 ) : ErrorCollector by errorCollector {
 
-    fun getAllModules(): List<IrType> {
-        return dependencyMap.keys.mapNotNull {
-            it.type.takeIf { it.getClass()?.let { Annotations.isModule(it) } == true }
-        }
-    }
-
     fun resolveDependency(
         type: IrType,
         forFunction: IrFunction
     ): ResolvedDependency? {
-        val params = forFunction.valueParameters.associate { Dependency.Parameter(it).let { it.id to it } }
+        val isCached = Annotations.isCached(forFunction)
+        if (isCached && forFunction.valueParameters.isNotEmpty()) {
+            forFunction.error("Cached @ByDi functions should not have parameters")
+        }
+        val params = forFunction.valueParameters.takeUnless { isCached }
+            ?.associate { Dependency.Parameter(it).let { it.id to it } }
+            .orEmpty()
         return resolveDependencyInternal(DependencyId(type), Dependency.Function(forFunction, null), emptyList(), params,
             allowConstructorWithoutAnnotation = true)
     }
@@ -72,8 +72,7 @@ class ModuleDependencies(
         return valueParameters
             .mapNotNull { param ->
                 resolveDependencyInternal(
-                    DependencyId(typeArgumentsMapping[param.type] ?: param.type,
-                        Annotations.getAnnotatedName(param).orEmpty()),
+                    DependencyId(typeArgumentsMapping[param.type] ?: param.type),
                     forDependency,
                     usedTypes,
                     providedParams,
@@ -128,12 +127,6 @@ class ModuleDependencies(
                 "Can't resolve dependency ${id.asErrorString()}",
             )
             return null
-        } else {
-            val targetClass = constructor.parentAsClass
-            val module = Annotations.getSingletonModule(targetClass)
-            if (module != null && (forDependency.id != id || module != forDependency.irElement.parentAsClass.defaultType)) {
-                forDependency.irElement.error("Can't provide singleton of type ${id.type.asString()} bound to module ${module.asString()}")
-            }
         }
         return Dependency.Constructor(constructor)
     }
@@ -151,10 +144,8 @@ class ModuleDependencies(
     }
 
     private fun findConstructorInjector(id: DependencyId, allowConstructorWithoutAnnotation: Boolean): IrConstructor? {
-        return id.type.takeIf { id.name.isEmpty() }?.getClass()
-            ?.let { clazz ->
-                clazz.constructors.firstOrNull { it.hasAnnotation(Annotations.injectAnnotation) }
-                    ?: clazz.takeIf { it.hasAnnotation(Annotations.injectAnnotation) || allowConstructorWithoutAnnotation }?.primaryConstructor
-            }
+        return id.type.getClass()
+            ?.takeIf { allowConstructorWithoutAnnotation }
+            ?.primaryConstructor
     }
 }

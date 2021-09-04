@@ -2,7 +2,6 @@ package dev.shustoff.dikt.core
 
 import dev.shustoff.dikt.dependency.Dependency
 import dev.shustoff.dikt.dependency.ResolvedDependency
-import dev.shustoff.dikt.incremental.IncrementalCompilationHelper
 import dev.shustoff.dikt.message_collector.ErrorCollector
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
@@ -38,19 +37,11 @@ class InjectionBuilder(
         dependency: ResolvedDependency?
     ) {
         function.info("generating function body for ${function.kotlinFqName.asString()}")
-        function.body = if (Annotations.isSingleton(function)) {
+        function.body = if (Annotations.isCached(function)) {
             createSingletonBody(function, dependency, module)
         } else {
             createFactoryBody(function, dependency, module)
         }
-    }
-
-    fun buildExtensionInjection(
-        function: IrFunction,
-        dependency: ResolvedDependency?
-    ) {
-        function.info("generating function body for ${function.kotlinFqName.asString()}")
-        function.body = createFactoryBody(function, dependency, null)
     }
 
     private fun createSingletonBody(

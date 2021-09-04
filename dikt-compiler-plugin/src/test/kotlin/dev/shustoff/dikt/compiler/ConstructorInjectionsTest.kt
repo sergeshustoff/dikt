@@ -3,7 +3,6 @@ package dev.shustoff.dikt.compiler
 import com.google.common.truth.Truth
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -15,60 +14,6 @@ class ConstructorInjectionsTest {
     var folder: TemporaryFolder = TemporaryFolder()
 
     @Test
-    fun `compile with multiple dependencies marked with @Named`() {
-        val result = compile(
-            folder.root,
-            SourceFile.kotlin(
-                "MyModule.kt",
-                """
-            package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
-
-            class Dependency
-
-            class Injectable @Inject constructor(@InjectNamed("first") val dependency: Dependency)
-
-            @Module
-            class MyModule(
-                @Named("first") val dependency1: Dependency,
-                @Named("second") val dependency2: Dependency
-            ) {
-                @ByDi fun injectable(): Injectable
-            }
-            """
-            )
-        )
-        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
-    }
-
-    @Test
-    fun `allow nested injections with inject annotation`() {
-        val result = compile(
-            folder.root,
-            SourceFile.kotlin(
-                "MyModule.kt",
-                """
-            package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.ByDi
-            import dev.shustoff.dikt.Module
-            import dev.shustoff.dikt.Inject
-
-            class Dependency
-
-            class Injectable @Inject constructor(val dependency: Dependency)
-
-            @Module
-            class MyModule {
-                @ByDi fun injectable(): Injectable
-                fun dependency(): Dependency = Dependency()
-            }
-            """
-            )
-        )
-        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
-    }
-
-    @Test
     fun `compile for injection with empty constructor`() {
         val result = compile(
             folder.root,
@@ -77,13 +22,11 @@ class ConstructorInjectionsTest {
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.ByDi
-            import dev.shustoff.dikt.Module
-            import dev.shustoff.dikt.Inject
+            import dev.shustoff.dikt.DiModule
 
-            @Inject
             class Injectable
 
-            @Module
+            @DiModule
             class MyModule {
                 @ByDi fun injectable(): Injectable
             }
@@ -94,7 +37,7 @@ class ConstructorInjectionsTest {
     }
 
     @Test
-    fun `don't require inject annotation for direct dependency constructors`() {
+    fun `fail when dependency is missing`() {
         val result = compile(
             folder.root,
             SourceFile.kotlin(
@@ -102,42 +45,13 @@ class ConstructorInjectionsTest {
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.ByDi
-            import dev.shustoff.dikt.Inject
-            import dev.shustoff.dikt.Module
+            import dev.shustoff.dikt.DiModule
 
-            @Inject
             class Dependency()
             
             class Injectable(val dependency: Dependency)
 
-            @Module
-            class MyModule {
-                @ByDi fun injectable(): Injectable
-            }
-            """
-            )
-        )
-        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
-    }
-
-    @Test
-    fun `require inject annotation in nested dependency`() {
-        val result = compile(
-            folder.root,
-            SourceFile.kotlin(
-                "MyModule.kt",
-                """
-            package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.ByDi
-            import dev.shustoff.dikt.Inject
-            import dev.shustoff.dikt.Module
-
-            class Dependency()
-            
-            @Inject
-            class Injectable(val dependency: Dependency)
-
-            @Module
+            @DiModule
             class MyModule {
                 @ByDi fun injectable(): Injectable
             }
@@ -145,6 +59,6 @@ class ConstructorInjectionsTest {
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("MyModule.kt: (12, 10): Can't resolve dependency dev.shustoff.dikt.compiler.Dependency")
+        Truth.assertThat(result.messages).contains("MyModule.kt: (10, 10): Can't resolve dependency dev.shustoff.dikt.compiler.Dependency")
     }
 }

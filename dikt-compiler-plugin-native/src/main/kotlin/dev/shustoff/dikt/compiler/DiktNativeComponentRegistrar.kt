@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.extensions.StorageComponentContainerContributor
 class DiktNativeComponentRegistrar : ComponentRegistrar {
     override fun registerProjectComponents(project: MockProject, configuration: CompilerConfiguration) {
         val errorCollector = errorCollector(configuration)
-        val incrementalCache = incrementalHelper(configuration, errorCollector)
+        val incrementalCache = incrementalHelper(configuration)
         StorageComponentContainerContributor.registerExtension(project, DiktStorageComponentContainerContributor())
         IrGenerationExtension.registerExtension(project, DiktIrGenerationExtension(errorCollector, incrementalCache))
     }

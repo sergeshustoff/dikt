@@ -15,11 +15,10 @@ import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 class ModuleDiGeneratorVisitor(
     private val errorCollector: ErrorCollector,
     pluginContext: IrPluginContext,
-    private val incrementalHelper: IncrementalCompilationHelper?,
-    singletonGenerator: ModuleSingletonGenerator
+    private val incrementalHelper: IncrementalCompilationHelper?
 ) : IrElementVisitorVoid, ErrorCollector by errorCollector {
 
-    private val dependencyCollector = DependencyCollector(this, singletonGenerator)
+    private val dependencyCollector = DependencyCollector(this)
     private val injectionBuilder = InjectionBuilder(pluginContext, errorCollector)
 
     override fun visitElement(element: IrElement) {
@@ -29,9 +28,7 @@ class ModuleDiGeneratorVisitor(
     override fun visitClass(declaration: IrClass) {
         if (Annotations.isModule(declaration)) {
             if (declaration.isInterface) {
-                if (declaration.functions.any { Annotations.isProvidedByDi(it) }) {
-                    declaration.error("Interface module should not have @ByDi methods")
-                }
+                declaration.error("Interface modules not supported")
             } else if (!declaration.isFinalClass) {
                 declaration.error("Module should be final")
             } else {

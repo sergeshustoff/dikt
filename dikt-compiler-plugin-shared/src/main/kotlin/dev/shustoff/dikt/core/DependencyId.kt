@@ -5,12 +5,7 @@ import org.jetbrains.kotlin.ir.types.IrType
 
 data class DependencyId(
     val type: IrType,
-    val name: String = ""
 ) {
 
-    fun asErrorString() = if (name.isEmpty()) {
-        type.asString()
-    } else {
-        "${type.asString()} (with name $name)"
-    }
+    fun asErrorString() = type.asString()
 }

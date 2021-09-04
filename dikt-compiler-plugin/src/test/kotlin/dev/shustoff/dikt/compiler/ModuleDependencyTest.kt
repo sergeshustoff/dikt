@@ -22,19 +22,18 @@ class ModuleDependencyTest {
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.ByDi
-            import dev.shustoff.dikt.Module
-            import dev.shustoff.dikt.Inject
+            import dev.shustoff.dikt.DiModule
+            import dev.shustoff.dikt.ProvidesAllContent
 
             class Dependency
 
-            @Inject
             class Injectable(val dependency: Dependency)
 
-            @Module
+            @DiModule
             class NestedModule(val dependency: Dependency)
 
-            @Module
-            class MyModule(val nested: NestedModule) {
+            @DiModule
+            class MyModule(@ProvidesAllContent val nested: NestedModule) {
                 @ByDi fun injectable(): Injectable
             }
             """
@@ -44,7 +43,7 @@ class ModuleDependencyTest {
     }
 
     @Test
-    fun `compile with dependency depp in nested module`() {
+    fun `fail with dependency deep in nested module`() {
         val result = compile(
             folder.root,
             SourceFile.kotlin(
@@ -52,28 +51,28 @@ class ModuleDependencyTest {
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.ByDi
-            import dev.shustoff.dikt.Module
-            import dev.shustoff.dikt.Inject
+            import dev.shustoff.dikt.DiModule
+            import dev.shustoff.dikt.ProvidesAllContent
 
             class Dependency
 
-            @Inject
             class Injectable(val dependency: Dependency)
 
-            @Module
+            @DiModule
             class NestedModule2(val dependency: Dependency)
 
-            @Module
-            class NestedModule(val nested: NestedModule2)
+            @DiModule
+            class NestedModule(@ProvidesAllContent val nested: NestedModule2)
 
-            @Module
-            class MyModule(val nested: NestedModule) {
+            @DiModule
+            class MyModule(@ProvidesAllContent val nested: NestedModule) {
                 @ByDi fun injectable(): Injectable
             }
             """
             )
         )
-        assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+        assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
+        assertThat(result.messages).contains("MyModule.kt: (17, 10): Can't resolve dependency dev.shustoff.dikt.compiler.Dependency")
     }
 
     @Test
@@ -85,15 +84,13 @@ class ModuleDependencyTest {
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.ByDi
-import dev.shustoff.dikt.Module
-            import dev.shustoff.dikt.Inject
+            import dev.shustoff.dikt.DiModule
 
             class Dependency
 
-            @Inject
             class Injectable(val dependency: Dependency)
 
-            @Module
+            @DiModule
             class MyModule(
                 val dependency1: Dependency,
                 val dependency2: Dependency
@@ -104,7 +101,7 @@ import dev.shustoff.dikt.Module
             )
         )
         assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        assertThat(result.messages).contains("MyModule.kt: (15, 22): Multiple dependencies provided with type dev.shustoff.dikt.compiler.Dependency: dependency1, dependency2")
+        assertThat(result.messages).contains("MyModule.kt: (13, 10): Multiple dependencies provided with type dev.shustoff.dikt.compiler.Dependency: dependency1, dependency2")
     }
 
     @Test
@@ -116,15 +113,13 @@ import dev.shustoff.dikt.Module
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.ByDi
-            import dev.shustoff.dikt.Module
-            import dev.shustoff.dikt.Inject
+            import dev.shustoff.dikt.DiModule
 
             class Dependency
 
-            @Inject
             class Injectable(val dependency: Dependency)
 
-            @Module
+            @DiModule
             class MyModule {
                 @ByDi fun injectable(): Injectable
 
@@ -135,7 +130,7 @@ import dev.shustoff.dikt.Module
             )
         )
         assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        assertThat(result.messages).contains("MyModule.kt: (12, 10): Multiple dependencies provided with type dev.shustoff.dikt.compiler.Dependency: provide1, provide2")
+        assertThat(result.messages).contains("MyModule.kt: (10, 10): Multiple dependencies provided with type dev.shustoff.dikt.compiler.Dependency: provide1, provide2")
     }
 
     @Test
@@ -147,28 +142,27 @@ import dev.shustoff.dikt.Module
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.ByDi
-            import dev.shustoff.dikt.Module
-            import dev.shustoff.dikt.Inject
+            import dev.shustoff.dikt.DiModule
+            import dev.shustoff.dikt.ProvidesAllContent
 
             class Dependency
 
-            @Inject
             class Injectable(val dependency: Dependency)
 
-            @Module
+            @DiModule
             class Module1 {
                 fun dependency() = Dependency()
             }
 
-            @Module
+            @DiModule
             class Module2 {
                 fun dependency() = Dependency()            
             }
 
-            @Module
+            @DiModule
             class MyModule(
-                val module1: Module1,
-                val module2: Module2
+                @ProvidesAllContent val module1: Module1,
+                @ProvidesAllContent val module2: Module2
             ) {
                 @ByDi fun injectable(): Injectable
             }
@@ -176,7 +170,7 @@ import dev.shustoff.dikt.Module
             )
         )
         assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        assertThat(result.messages).contains("MyModule.kt: (25, 10): Multiple dependencies provided with type dev.shustoff.dikt.compiler.Dependency: module1.dependency, module2.dependency")
+        assertThat(result.messages).contains("MyModule.kt: (24, 10): Multiple dependencies provided with type dev.shustoff.dikt.compiler.Dependency: module1.dependency, module2.dependency")
     }
 
     @Test
@@ -188,15 +182,13 @@ import dev.shustoff.dikt.Module
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.ByDi
-            import dev.shustoff.dikt.Module
-            import dev.shustoff.dikt.Inject
+            import dev.shustoff.dikt.DiModule
 
             class Dependency
 
-            @Inject
             class Injectable(val dependency: Dependency)
 
-            @Module
+            @DiModule
             class MyModule(val dependency: Dependency) {
                 @ByDi fun injectable(): Injectable
             }
@@ -215,21 +207,19 @@ import dev.shustoff.dikt.Module
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.ByDi
-            import dev.shustoff.dikt.Module
-            import dev.shustoff.dikt.Inject
+            import dev.shustoff.dikt.DiModule
+            import dev.shustoff.dikt.ProvidesAllContent
 
             class Dependency
 
-            @Inject
             class Injectable(val dependency: Dependency)
             
-            @Module
             interface OtherModule {
                 val dependency: Dependency
             }
     
-            @Module
-            class MyModule(val other: OtherModule) {
+            @DiModule
+            class MyModule(@ProvidesAllContent val other: OtherModule) {
                 @ByDi fun injectable(): Injectable
             }
             """
@@ -239,7 +229,7 @@ import dev.shustoff.dikt.Module
     }
 
     @Test
-    fun `cant module can't have @ByDi methods`() {
+    fun `interface module can't have @ByDi methods`() {
         val result = compile(
             folder.root,
             SourceFile.kotlin(
@@ -247,15 +237,13 @@ import dev.shustoff.dikt.Module
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.ByDi
-            import dev.shustoff.dikt.Module
-            import dev.shustoff.dikt.Inject
+            import dev.shustoff.dikt.DiModule
 
             class Dependency
 
-            @Inject
             class Injectable(val dependency: Dependency)
             
-            @Module
+            @DiModule
             interface Module {
                 val dependency: Dependency
                 @ByDi fun injectable(): Injectable            

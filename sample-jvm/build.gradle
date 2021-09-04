@@ -1,7 +1,6 @@
 plugins {
     id 'application'
     id 'kotlin'
-    id 'com.github.sergeshustoff.dikt'
 }
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {

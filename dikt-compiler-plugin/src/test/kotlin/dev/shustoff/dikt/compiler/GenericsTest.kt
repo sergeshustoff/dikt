@@ -22,16 +22,14 @@ class GenericsTest {
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.ByDi
-            import dev.shustoff.dikt.Module
-            import dev.shustoff.dikt.Inject
+            import dev.shustoff.dikt.DiModule
 
-            @Inject
             class Injectable(
                 val strings: List<String>,
                 val numbers: List<Int>
             )
 
-            @Module
+            @DiModule
             class MyModule {
                 @ByDi fun injectable(): Injectable
                 
@@ -58,15 +56,13 @@ class GenericsTest {
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.ByDi
-            import dev.shustoff.dikt.Module
-            import dev.shustoff.dikt.Inject
+            import dev.shustoff.dikt.DiModule
 
-            @Inject
             class Injectable<T>(
                 val value: T
             )
 
-            @Module
+            @DiModule
             class MyModule<T>(val value: T) {
                 @ByDi fun injectable(): Injectable<T>
             }
@@ -85,19 +81,18 @@ class GenericsTest {
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.ByDi
-            import dev.shustoff.dikt.Module
-            import dev.shustoff.dikt.Inject
+            import dev.shustoff.dikt.DiModule
+            import dev.shustoff.dikt.ProvidesAllContent
 
-            @Inject
             class Injectable(
                 val value: String
             )
 
-            @Module
+            @DiModule
             class GenericModule<T>(val value: T)
 
-            @Module
-            class MyModule(val module: GenericModule<String>) {
+            @DiModule
+            class MyModule(@ProvidesAllContent val module: GenericModule<String>) {
                 @ByDi fun injectable(): Injectable
             }
             """

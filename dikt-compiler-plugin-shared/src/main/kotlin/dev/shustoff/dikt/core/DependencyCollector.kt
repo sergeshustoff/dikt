@@ -1,9 +1,7 @@
 package dev.shustoff.dikt.core
 
 import dev.shustoff.dikt.dependency.Dependency
-import dev.shustoff.dikt.incremental.IncrementalCompilationHelper
 import dev.shustoff.dikt.message_collector.ErrorCollector
-import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
@@ -12,11 +10,9 @@ import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.properties
-import java.util.*
 
 class DependencyCollector(
-    private val errorCollector: ErrorCollector,
-    private val moduleSingletonGenerator: ModuleSingletonGenerator
+    private val errorCollector: ErrorCollector
 ) {
     fun collectDependencies(
         visibilityChecker: VisibilityChecker,
@@ -26,13 +22,13 @@ class DependencyCollector(
     ): ModuleDependencies {
         val fullDependencyMap: MutableMap<DependencyId, MutableList<Dependency>> = mutableMapOf()
         properties
-            .forEach {
-                val dependency = Dependency.Property(it, null)
+            .forEach { property ->
+                val dependency = Dependency.Property(property, null)
                 fullDependencyMap.getOrPut(dependency.id) { mutableListOf() }.add(dependency)
             }
 
-        functions.forEach {
-            createFunctionDependency(it)?.let { dependency ->
+        functions.forEach { function ->
+            createFunctionDependency(function)?.let { dependency ->
                 fullDependencyMap.getOrPut(dependency.id) { mutableListOf() }.add(dependency)
             }
         }
@@ -41,36 +37,23 @@ class DependencyCollector(
             fullDependencyMap.getOrPut(dependency.id) { mutableListOf() }.add(dependency)
         }
 
-        val modules = LinkedList(fullDependencyMap.values.flatten()
+        fullDependencyMap.values.flatten()
             .mapNotNull {
                 getModuleClassDescriptor(it)
                     ?.let { classDescriptor -> Module(it, classDescriptor) }
             }
-            .toList()
-        )
+            .forEach { module ->
+                val dependencies = getModuleRawProperties(module, visibilityChecker) +
+                        getModuleRawFunctions(module, visibilityChecker)
 
-        while (modules.isNotEmpty()) {
-            val module = modules.pop()
-            moduleSingletonGenerator.generateModuleSingletonsIfNotGeneratedYet(module.clazz)
-            //TODO:later cache module dependencies (calculate once per run for all things that depend on module)
-            val dependencies = getModuleRawProperties(module, visibilityChecker) +
-                    getModuleRawFunctions(module, visibilityChecker)
+                val withoutDuplicates = dependencies
+                    .filter { fullDependencyMap[it.id]?.any { it.isInNestedModulePath(module.path) } != true }
+                    .toList()
 
-            val withoutDuplicates = dependencies
-                .filter { fullDependencyMap[it.id]?.any { it.isInNestedModulePath(module.path) } != true }
-                .toList()
-
-            withoutDuplicates.forEach { dependency ->
-                fullDependencyMap.getOrPut(dependency.id) { mutableListOf() }.add(dependency)
+                withoutDuplicates.forEach { dependency ->
+                    fullDependencyMap.getOrPut(dependency.id) { mutableListOf() }.add(dependency)
+                }
             }
-
-            modules.addAll(
-                withoutDuplicates.mapNotNull {
-                    getModuleClassDescriptor(it)
-                        ?.let { classDescriptor -> Module(it, classDescriptor) }
-                }.toList()
-            )
-        }
 
         return ModuleDependencies(
             errorCollector,
@@ -108,7 +91,7 @@ class DependencyCollector(
         !it.isFakeOverride && !it.isOperator && !it.isSuspend && !it.isInfix && !it.returnType.isUnit() && !it.returnType.isNothing()
 
     private fun getModuleClassDescriptor(dependency: Dependency) =
-        dependency.id.type.getClass()?.takeIf { Annotations.isModule(it) }
+        dependency.id.type.takeIf { Annotations.doesProvideContent(dependency.irElement) }?.getClass()
 
     private data class Module(
         val path: Dependency,

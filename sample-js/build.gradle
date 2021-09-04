@@ -1,6 +1,5 @@
 plugins {
     id('org.jetbrains.kotlin.js')
-    id('com.github.sergeshustoff.dikt')
 }
 
 version 'unspecified'

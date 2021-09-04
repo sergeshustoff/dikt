@@ -42,7 +42,7 @@ sealed class Dependency {
     data class Parameter(
         val parameter: IrValueParameter
     ) : Dependency() {
-        override val id: DependencyId = DependencyId(parameter.type, Annotations.getAnnotatedName(parameter).orEmpty())
+        override val id: DependencyId = DependencyId(parameter.type)
         override val irElement: IrDeclarationWithName = parameter
         override val name: String = parameter.name.asString()
 
@@ -54,7 +54,7 @@ sealed class Dependency {
         override val fromNestedModule: Dependency?,
         val returnType: IrType = property.getter!!.returnType
     ) : Dependency() {
-        override val id: DependencyId = DependencyId(returnType, Annotations.getAnnotatedName(property).orEmpty())
+        override val id: DependencyId = DependencyId(returnType)
         override val irElement: IrDeclarationWithName = property
         override val name: String = property.name.asString()
 
@@ -64,7 +64,7 @@ sealed class Dependency {
     data class Constructor(
         val constructor: IrConstructor,
     ) : Dependency() {
-        override val id: DependencyId = DependencyId(constructor.returnType, "")
+        override val id: DependencyId = DependencyId(constructor.returnType)
         override val irElement: IrDeclarationWithName = constructor
         override val name: String = constructor.name.asString()
         override fun getRequiredParams(): List<IrValueParameter> = constructor.valueParameters
@@ -75,7 +75,7 @@ sealed class Dependency {
         override val fromNestedModule: Dependency?,
         val returnType: IrType = function.returnType
     ) : Dependency() {
-        override val id: DependencyId = DependencyId(returnType, Annotations.getAnnotatedName(function).orEmpty())
+        override val id: DependencyId = DependencyId(returnType)
         override val irElement: IrDeclarationWithName = function
         override val name: String = function.name.asString()
         override fun getRequiredParams(): List<IrValueParameter> = function.valueParameters

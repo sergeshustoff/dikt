@@ -1,15 +1,15 @@
 package dev.shustoff.dikt.sample
 
-import dev.shustoff.dikt.InjectNamed
-import dev.shustoff.dikt.Module
-import dev.shustoff.dikt.Named
+import dev.shustoff.dikt.ByDi
+import dev.shustoff.dikt.DiModule
+import dev.shustoff.dikt.ProvidesAllContent
 
-@Module
+@DiModule
 class EngineModule(
-    val engineNameModule: EngineNameModule<String>
+    @ProvidesAllContent
+    private val engineNameModule: EngineNameModule<String>
 ) {
 
-    fun buildEngine(@InjectNamed("engineName") name: String): Engine {
-        return Engine(name)
-    }
+    @ByDi
+    fun buildEngine(): Engine
 }
