@@ -11,7 +11,7 @@ In settings.gradle add:
         resolutionStrategy {
             eachPlugin {
                 if (requested.id.toString() == "com.github.sergeshustoff.dikt") {
-                    useModule("com.github.sergeshustoff.dikt:dikt-gradle-plugin:1.0.0-alpha2")
+                    useModule("com.github.sergeshustoff.dikt:dikt-gradle-plugin:1.0.0-alpha3")
                 }
             }
         }
@@ -48,7 +48,7 @@ If you use multiplatform plugin also add dependency for annotations:
     sourceSets {
         commonMain {
             dependencies {
-                implementation 'com.github.sergeshustoff.dikt:dikt-runtime:1.0.0-alpha2'
+                implementation 'com.github.sergeshustoff.dikt:dikt-runtime:1.0.0-alpha3'
             }
         }
     }

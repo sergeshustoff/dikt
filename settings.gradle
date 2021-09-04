@@ -21,7 +21,7 @@ include ':dikt-compiler-plugin'
 include ':dikt-idea-plugin'
 
 //comment samples to publish version to local maven
-//include ':sample-jvm'
-//include ':sample-js'
-//include ':sample-multiplatform'
+include ':sample-jvm'
+include ':sample-js'
+include ':sample-multiplatform'
 //include ':sample-native'
