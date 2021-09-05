@@ -3,44 +3,14 @@ Simple DI for kotlin multiplatform
 
 ## Installation
 
-Early alpha builds are published with jitpack.io
-
-In settings.gradle add:
-
-    pluginManagement {
-        resolutionStrategy {
-            eachPlugin {
-                if (requested.id.toString() == "io.github.sergeshustoff.dikt") {
-                    useModule("io.github.sergeshustoff.dikt:dikt-gradle-plugin:1.0.0-alpha4")
-                }
-            }
-        }
-        repositories {
-            gradlePluginPortal()
-            maven { url "https://jitpack.io" }
-        }
-    }
+### publishing to gradle plugins portal is in progress...
 
 In module that you wish to use DI.kt add plugin:
 
     plugins {
         ...
-        id 'io.github.sergeshustoff.dikt'
+        id 'io.github.sergeshustoff.dikt' version '1.0.0-aplha4'
     }
-
-If you use multiplatform plugin also add dependency for annotations:
-
-    sourceSets {
-        commonMain {
-            dependencies {
-                implementation 'io.github.sergeshustoff.dikt:dikt-runtime:1.0.0-alpha4'
-            }
-        }
-    }
-
-In gradle.properties disable incremental compilation, it's not supported yet:
-
-    kotlin.incremental=false
 
 ## Usage
 

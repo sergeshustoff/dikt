@@ -1,19 +1,22 @@
 buildscript {
     repositories {
+//        mavenLocal()
         mavenCentral()
         jcenter()
-        mavenLocal()
+        maven { url "https://plugins.gradle.org/m2/" }
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'com.github.jengelman.gradle.plugins:shadow:5.0.0'
         classpath 'com.vanniktech:gradle-maven-publish-plugin:0.17.0'
+        classpath 'com.gradle.publish:plugin-publish-plugin:0.15.0'
+        classpath "io.github.sergeshustoff.dikt:dikt-gradle-plugin:$dikt_sample_version"
     }
 }
 allprojects {
     repositories {
         mavenCentral()
         jcenter()
-        mavenLocal()
+//        mavenLocal()
     }
 }
