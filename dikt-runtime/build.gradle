@@ -3,17 +3,22 @@ apply plugin: "com.vanniktech.maven.publish"
 
 kotlin {
     jvm()
-    js {
-        browser { }
-    }
+    js()
     mingwX64()
     linuxX64()
+    linuxArm32Hfp()
+    linuxMips32()
     macosX64()
-    // For ARM, should be changed to iosArm32 or iosArm64
-    // For Linux, should be changed to e.g. linuxX64
-    // For MacOS, should be changed to e.g. macosX64
-    // For Windows, should be changed to e.g. mingwX64
-    // mingwX64("mingw")
+    iosArm32()
+    iosArm64()
+    iosX64()
+    watchosArm32()
+    watchosArm64()
+    watchosX86()
+    watchosX64()
+    tvosArm64()
+    tvosX64()
+
     sourceSets {
         commonMain {
             dependencies {

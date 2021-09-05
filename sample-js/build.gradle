@@ -4,11 +4,6 @@ plugins {
 
 version 'unspecified'
 
-repositories {
-    mavenCentral()
-    mavenLocal()
-}
-
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-js"
     implementation project(':sample-multiplatform')
