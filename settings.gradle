@@ -1,8 +1,8 @@
 pluginManagement {
     resolutionStrategy {
         eachPlugin {
-            if (requested.id.toString() == "com.github.sergeshustoff.dikt") {
-                useModule("com.github.sergeshustoff.dikt:dikt-gradle-plugin:$dikt_sample_version")
+            if (requested.id.toString() == "io.github.sergeshustoff.dikt") {
+                useModule("io.github.sergeshustoff.dikt:dikt-gradle-plugin:$dikt_sample_version")
             }
         }
     }
@@ -24,4 +24,4 @@ include ':dikt-idea-plugin'
 include ':sample-jvm'
 include ':sample-js'
 include ':sample-multiplatform'
-//include ':sample-native'
+include ':sample-native'

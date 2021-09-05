@@ -1,18 +1,5 @@
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
-apply plugin: 'maven-publish'
-
-group = "com.github.sergeshustoff.dikt"
-archivesBaseName = "dikt-runtime"
-version = "$dikt_version"
-publishing {
-    publications {
-        kotlinMultiplatform {
-            groupId = "com.github.sergeshustoff.dikt"
-            artifactId = archivesBaseName
-            version = "$dikt_version"
-        }
-    }
-}
+apply plugin: "com.vanniktech.maven.publish"
 
 kotlin {
     jvm()
@@ -27,7 +14,6 @@ kotlin {
     // For MacOS, should be changed to e.g. macosX64
     // For Windows, should be changed to e.g. mingwX64
     // mingwX64("mingw")
-
     sourceSets {
         commonMain {
             dependencies {

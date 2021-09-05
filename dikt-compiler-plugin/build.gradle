@@ -1,16 +1,5 @@
 apply plugin: "org.jetbrains.kotlin.jvm"
-apply plugin: "maven"
-
-group = "com.github.sergeshustoff.dikt"
-archivesBaseName = "dikt-compiler-plugin"
-version = "$dikt_version"
-
-install {
-    dependsOn(':dikt-compiler-plugin-shared:install')
-    repositories.mavenInstaller {
-        pom.artifactId = archivesBaseName
-    }
-}
+apply plugin: "com.vanniktech.maven.publish"
 
 dependencies {
     compile project(':dikt-compiler-plugin-shared')

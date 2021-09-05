@@ -1,32 +1,7 @@
-buildscript {
-    repositories {
-        jcenter()
-    }
-    dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath 'com.github.jengelman.gradle.plugins:shadow:5.0.0'
-    }
-
-    allprojects {
-        repositories {
-            mavenLocal()
-            jcenter()
-        }
-    }
-}
-
 apply plugin: "org.jetbrains.kotlin.jvm"
-apply plugin: "maven"
 apply plugin: 'com.github.johnrengelman.shadow'
-apply plugin: 'maven-publish'
+apply plugin: "com.vanniktech.maven.publish"
 
-group = "com.github.sergeshustoff.dikt"
-archivesBaseName = "dikt-compiler-plugin-native"
-version = "$dikt_version"
-
-repositories {
-    mavenLocal()
-}
 compileKotlin {
     kotlinOptions.jvmTarget = "1.8"
 }
@@ -66,12 +41,6 @@ publishing {
     }
 }
 
-install {
-    dependsOn(shadowJar)
-    dependsOn ':dikt-compiler-plugin-shared:install'
-    finalizedBy(publishToMavenLocal)
-}
-
-build{
+build {
     dependsOn(shadowJar)
 }

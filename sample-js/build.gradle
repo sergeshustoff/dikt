@@ -5,8 +5,8 @@ plugins {
 version 'unspecified'
 
 repositories {
-    mavenLocal()
     mavenCentral()
+    mavenLocal()
 }
 
 dependencies {

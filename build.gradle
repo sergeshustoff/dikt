@@ -1,20 +1,19 @@
 buildscript {
     repositories {
-        mavenLocal()
         mavenCentral()
         jcenter()
-        maven { url 'https://jitpack.io' }
+        mavenLocal()
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'com.github.jengelman.gradle.plugins:shadow:5.0.0'
+        classpath 'com.vanniktech:gradle-maven-publish-plugin:0.17.0'
     }
 }
 allprojects {
     repositories {
-        mavenLocal()
         mavenCentral()
         jcenter()
-        maven { url 'https://jitpack.io' }
+        mavenLocal()
     }
 }

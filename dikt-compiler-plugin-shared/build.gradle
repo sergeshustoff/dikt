@@ -1,15 +1,5 @@
 apply plugin: "org.jetbrains.kotlin.jvm"
-apply plugin: "maven"
-
-group = "com.github.sergeshustoff.dikt"
-archivesBaseName = "dikt-compiler-plugin-shared"
-version = "$dikt_version"
-install {
-    dependsOn ':dikt-runtime:publishToMavenLocal'
-    repositories.mavenInstaller {
-        pom.artifactId = archivesBaseName
-    }
-}
+apply plugin: "com.vanniktech.maven.publish"
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"

@@ -10,8 +10,8 @@ In settings.gradle add:
     pluginManagement {
         resolutionStrategy {
             eachPlugin {
-                if (requested.id.toString() == "com.github.sergeshustoff.dikt") {
-                    useModule("com.github.sergeshustoff.dikt:dikt-gradle-plugin:1.0.0-alpha3")
+                if (requested.id.toString() == "io.github.sergeshustoff.dikt") {
+                    useModule("io.github.sergeshustoff.dikt:dikt-gradle-plugin:1.0.0-alpha4")
                 }
             }
         }
@@ -21,26 +21,11 @@ In settings.gradle add:
         }
     }
 
-In build.gradle add jitpack repository to buildscript and allprojects:
-
-    buildscript {
-        repositories {
-            ...
-            maven { url 'https://jitpack.io' }
-        }
-    }
-    allprojects {
-        repositories {
-            ...
-            maven { url 'https://jitpack.io' }
-        }
-    }
-
 In module that you wish to use DI.kt add plugin:
 
     plugins {
         ...
-        id 'com.github.sergeshustoff.dikt'
+        id 'io.github.sergeshustoff.dikt'
     }
 
 If you use multiplatform plugin also add dependency for annotations:
@@ -48,7 +33,7 @@ If you use multiplatform plugin also add dependency for annotations:
     sourceSets {
         commonMain {
             dependencies {
-                implementation 'com.github.sergeshustoff.dikt:dikt-runtime:1.0.0-alpha3'
+                implementation 'io.github.sergeshustoff.dikt:dikt-runtime:1.0.0-alpha4'
             }
         }
     }
