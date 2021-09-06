@@ -29,11 +29,11 @@ private class ErrorCollectorImpl(
     }
 
     override fun IrDeclarationWithName?.info(text: String) {
-        messageCollector.report(CompilerMessageSeverity.WARNING, text, location())
+        messageCollector.report(CompilerMessageSeverity.INFO, text, location())
     }
 
     override fun info(text: String) {
-        messageCollector.report(CompilerMessageSeverity.WARNING, text)
+        messageCollector.report(CompilerMessageSeverity.INFO, text)
     }
 
     private fun IrDeclarationWithName?.location() = this?.let {
