@@ -2,7 +2,6 @@ package dev.shustoff.dikt.core
 
 import dev.shustoff.dikt.dependency.Dependency
 import dev.shustoff.dikt.message_collector.ErrorCollector
-import org.jetbrains.kotlin.backend.jvm.ir.eraseTypeParameters
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
@@ -11,6 +10,7 @@ import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.properties
+import java.util.*
 
 class DependencyCollector(
     private val errorCollector: ErrorCollector
@@ -43,23 +43,34 @@ class DependencyCollector(
             fullDependencyMap.getOrPut(dependency.id) { mutableListOf() }.add(dependency)
         }
 
-        fullDependencyMap.values.flatten()
+        val modules = LinkedList(fullDependencyMap.values.flatten()
             .mapNotNull {
                 getModuleClassDescriptor(it, moduleTypes)
                     ?.let { classDescriptor -> Module(it, classDescriptor) }
             }
-            .forEach { module ->
-                val dependencies = getModuleRawProperties(module, visibilityChecker) +
-                        getModuleRawFunctions(module, visibilityChecker)
+            .toList()
+        )
 
-                val withoutDuplicates = dependencies
-                    .filter { fullDependencyMap[it.id]?.any { it.isInNestedModulePath(module.path) } != true }
-                    .toList()
+        while (modules.isNotEmpty()) {
+            val module = modules.pop()
+            val dependencies = getModuleRawProperties(module, visibilityChecker) +
+                    getModuleRawFunctions(module, visibilityChecker)
 
-                withoutDuplicates.forEach { dependency ->
-                    fullDependencyMap.getOrPut(dependency.id) { mutableListOf() }.add(dependency)
-                }
+            val withoutDuplicates = dependencies
+                .filter { fullDependencyMap[it.id]?.any { it.isInNestedModulePath(module.path) } != true }
+                .toList()
+
+            withoutDuplicates.forEach { dependency ->
+                fullDependencyMap.getOrPut(dependency.id) { mutableListOf() }.add(dependency)
             }
+
+            modules.addAll(
+                withoutDuplicates.mapNotNull {
+                    getModuleClassDescriptor(it, moduleTypes)
+                        ?.let { classDescriptor -> Module(it, classDescriptor) }
+                }.toList()
+            )
+        }
 
         return ModuleDependencies(
             errorCollector,
