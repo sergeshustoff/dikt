@@ -2,11 +2,11 @@ package dev.shustoff.dikt.sample
 
 import dev.shustoff.dikt.Create
 import dev.shustoff.dikt.DiModule
-import dev.shustoff.dikt.ProvidesAll
+import dev.shustoff.dikt.WithModules
 
 @DiModule
+@WithModules(EngineNameModule::class)
 class EngineModule(
-    @ProvidesAll
     private val engineNameModule: EngineNameModule<String>
 ) {
 

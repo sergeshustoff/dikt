@@ -7,7 +7,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
-class ExternalDependencyTest {
+class ExternalModulesTest {
 
     @Rule
     @JvmField
@@ -23,7 +23,7 @@ class ExternalDependencyTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
             import dev.shustoff.dikt.DiModule
-            import dev.shustoff.dikt.ProvidesAll
+            import dev.shustoff.dikt.WithModules
 
             class Dependency
 
@@ -33,7 +33,8 @@ class ExternalDependencyTest {
             class NestedModule(val dependency: Dependency)
 
             @DiModule
-            class MyModule(@ProvidesAll val nested: NestedModule) {
+            @WithModules(NestedModule::class)
+            class MyModule(val nested: NestedModule) {
                 @Create fun injectable(): Injectable
             }
             """
@@ -52,27 +53,28 @@ class ExternalDependencyTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
             import dev.shustoff.dikt.DiModule
-            import dev.shustoff.dikt.ProvidesAll
+            import dev.shustoff.dikt.WithModules
 
             class Dependency
 
             class Injectable(val dependency: Dependency)
 
-            @DiModule
             class NestedModule2(val dependency: Dependency)
 
             @DiModule
-            class NestedModule(@ProvidesAll val nested: NestedModule2)
+            @WithModules(NestedModule2::class)
+            class NestedModule(val nested: NestedModule2)
 
             @DiModule
-            class MyModule(@ProvidesAll val nested: NestedModule) {
+            @WithModules(NestedModule::class)
+            class MyModule(val nested: NestedModule) {
                 @Create fun injectable(): Injectable
             }
             """
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("MyModule.kt: (17, 12): Can't resolve dependency dev.shustoff.dikt.compiler.Dependency")
+        Truth.assertThat(result.messages).contains("MyModule.kt: (18, 12): Can't resolve dependency dev.shustoff.dikt.compiler.Dependency")
     }
 
     @Test
@@ -85,26 +87,25 @@ class ExternalDependencyTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
             import dev.shustoff.dikt.DiModule
-            import dev.shustoff.dikt.ProvidesAll
+            import dev.shustoff.dikt.WithModules
 
             class Dependency
 
             class Injectable(val dependency: Dependency)
 
-            @DiModule
             class Module1 {
                 fun dependency() = Dependency()
             }
 
-            @DiModule
             class Module2 {
                 fun dependency() = Dependency()            
             }
 
             @DiModule
+            @WithModules(Module1::class, Module2::class)
             class MyModule(
-                @ProvidesAll val module1: Module1,
-                @ProvidesAll val module2: Module2
+                val module1: Module1,
+                val module2: Module2
             ) {
                 @Create fun injectable(): Injectable
             }
@@ -112,7 +113,7 @@ class ExternalDependencyTest {
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("MyModule.kt: (24, 12): Multiple dependencies provided with type dev.shustoff.dikt.compiler.Dependency: module1.dependency, module2.dependency")
+        Truth.assertThat(result.messages).contains("MyModule.kt: (23, 12): Multiple dependencies provided with type dev.shustoff.dikt.compiler.Dependency: module1.dependency, module2.dependency")
     }
 
 
@@ -126,7 +127,7 @@ class ExternalDependencyTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
             import dev.shustoff.dikt.DiModule
-            import dev.shustoff.dikt.ProvidesAll
+            import dev.shustoff.dikt.WithModules
 
             class Dependency
 
@@ -137,7 +138,8 @@ class ExternalDependencyTest {
             }
     
             @DiModule
-            class MyModule(@ProvidesAll val other: OtherModule) {
+            @WithModules(OtherModule::class)
+            class MyModule(val other: OtherModule) {
                 @Create fun injectable(): Injectable
             }
             """

@@ -34,6 +34,7 @@ class ModuleDiGeneratorVisitor(
             } else {
                 val providedByConstructorInModule = Annotations.getProvidedByConstructor(declaration)
                 val dependencies = dependencyCollector.collectDependencies(
+                    module = declaration,
                     visibilityChecker = VisibilityChecker(declaration),
                     properties = declaration.properties,
                     functions = declaration.functions

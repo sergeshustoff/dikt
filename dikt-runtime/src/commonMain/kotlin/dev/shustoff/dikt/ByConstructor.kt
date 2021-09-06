@@ -4,6 +4,6 @@ import kotlin.reflect.KClass
 
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.SOURCE)
-annotation class ProvidesByConstructor(
+annotation class ByConstructor(
     vararg val types: KClass<*>
 )

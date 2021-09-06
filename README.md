@@ -18,7 +18,6 @@ Create module and declare provided dependencies. Use @Create to generate functio
 
     @DiModule
     class CarModule(
-        @ProvidesAll
         val externalDependency: Something,
     ) {
         @CreateCached val someSingleton(): SomeSingleton
@@ -32,7 +31,7 @@ Under the hood primary constructor will be called for SomethingElse and SomeSing
 ### @Create
 
 Magical annotation that tells compiler plugin to generate method body using returned type's primary constructor.
-Function parameters are used as provided dependencies, as well as anything inside parameter of type annotated with @ProvidesAll or containing module.
+Function parameters are used as provided dependencies, as well as anything inside parameters of types provided in @WithModules annotation and anything inside containing module.
 
 #### Example:
     
@@ -62,25 +61,9 @@ Doesn't call constructor.
     )
 
     @DiModule
-    class MyModule(@ProvidesAll val external: ExternalModule) {
+    @WithModules(ExternalModule::class)
+    class MyModule(val external: ExternalModule) {
         @Provided fun provideSomething(): Something
-    }
-
-### @ProvidesByConstructor
-
-Dependencies of types listed in this annotation parameters will be provided by constructor when required.
-Might be applied to the whole module or to a single function
-
-#### Example:
-
-    class SomeDependency
-
-    class Something(val dependency: SomeDependency)
-
-    @DiModule
-    @ProvidesByConstructor(SomeDependency::class)
-    class MyModule {
-        @Create fun provideSomething(): Something
     }
 
 ### @DiModule
@@ -98,11 +81,30 @@ Tells compiler plugin to support @Create, @CreateCached and @Provided annotation
 
 Example above will use somethingName property of MyModule to provide name parameter for Something constructor.
 
-### @ProvidesAll
+### @ByConstructor
 
-Tells compiler that dependency marked with this annotation might provide all its properties and functions as dependency.
+Dependencies of types listed in this annotation parameters will be provided by constructor when required.
+Might be applied to the whole module or to a single function.
 
-This annotation doesn't work recursively.
+#### Example:
+
+    class SomeDependency
+
+    class Something(val dependency: SomeDependency)
+
+    @DiModule
+    @ByConstructor(SomeDependency::class)
+    class MyModule {
+        @Create fun provideSomething(): Something
+    }
+
+### @WithModules
+
+When applied to module all dependencies of types listed in this annotation parameters will provide all its type visible properties and functions as dependency.
+Dependencies of listed types should be available in module.
+Arguments of @WithModules annotations don't have to be marked with @DiModule annotation, any type might provide all its content.
+
+WARNING: This annotation doesn't work recursively.
 
 #### Example:
 
@@ -111,8 +113,8 @@ This annotation doesn't work recursively.
     class Something(val name: String)
 
     @DiModule
+    @WithModules(ExternalModule::class)
     class MyModule(
-        @ProvidesAll
         private val external: ExternalModule
     ) {
         @Create fun provideSomething(): Something // will call constructor using external.name as parameter

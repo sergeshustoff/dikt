@@ -2,6 +2,7 @@ package dev.shustoff.dikt.core
 
 import dev.shustoff.dikt.dependency.Dependency
 import dev.shustoff.dikt.message_collector.ErrorCollector
+import org.jetbrains.kotlin.backend.jvm.ir.eraseTypeParameters
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
@@ -15,12 +16,16 @@ class DependencyCollector(
     private val errorCollector: ErrorCollector
 ) {
     fun collectDependencies(
+        module: IrClass,
         visibilityChecker: VisibilityChecker,
         properties: Sequence<IrProperty> = emptySequence(),
         functions: Sequence<IrSimpleFunction> = emptySequence(),
         params: List<IrValueParameter> = emptyList()
     ): ModuleDependencies {
         val fullDependencyMap: MutableMap<DependencyId, MutableList<Dependency>> = mutableMapOf()
+        val moduleTypes = Annotations.getUsedModules(module)
+            .mapNotNull { it.classOrNull?.defaultType } // for generics
+            .toSet()
 
         properties
             .forEach { property ->
@@ -40,7 +45,7 @@ class DependencyCollector(
 
         fullDependencyMap.values.flatten()
             .mapNotNull {
-                getModuleClassDescriptor(it)
+                getModuleClassDescriptor(it, moduleTypes)
                     ?.let { classDescriptor -> Module(it, classDescriptor) }
             }
             .forEach { module ->
@@ -91,8 +96,8 @@ class DependencyCollector(
     private fun isDependencyFunction(it: IrSimpleFunction) =
         !it.isFakeOverride && !it.isOperator && !it.isSuspend && !it.isInfix && !it.returnType.isUnit() && !it.returnType.isNothing()
 
-    private fun getModuleClassDescriptor(dependency: Dependency) =
-        dependency.id.type.takeIf { Annotations.doesProvideContent(dependency.irElement) }?.getClass()
+    private fun getModuleClassDescriptor(dependency: Dependency, moduleTypes: Set<IrType>) =
+        dependency.id.type.takeIf { it.classOrNull?.defaultType in moduleTypes }?.getClass()
 
     private data class Module(
         val path: Dependency,

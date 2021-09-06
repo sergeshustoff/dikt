@@ -1,13 +1,10 @@
 package dev.shustoff.dikt.core
 
-import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.IrDeclarationWithName
+import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.expressions.IrClassReference
-import org.jetbrains.kotlin.ir.expressions.IrConst
 import org.jetbrains.kotlin.ir.expressions.IrVararg
-import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.getAnnotation
 import org.jetbrains.kotlin.ir.util.hasAnnotation
@@ -18,22 +15,18 @@ object Annotations {
     private val cachedAnnotation = FqName("dev.shustoff.dikt.CreateCached")
     private val providedAnnotation = FqName("dev.shustoff.dikt.Provided")
     private val moduleAnnotation = FqName("dev.shustoff.dikt.DiModule")
-    private val providesAllAnnotation = FqName("dev.shustoff.dikt.ProvidesAll")
-    private val provideByConstructorAnnotation = FqName("dev.shustoff.dikt.ProvidesByConstructor")
+    private val withModulesAnnotation = FqName("dev.shustoff.dikt.WithModules")
+    private val provideByConstructorAnnotation = FqName("dev.shustoff.dikt.ByConstructor")
 
     fun isModule(declaration: IrClass) = declaration.annotations.hasAnnotation(moduleAnnotation)
 
-    fun doesProvideContent(descriptor: IrDeclarationWithName) =
-        descriptor.annotations.hasAnnotation(providesAllAnnotation)
+    fun getUsedModules(descriptor: IrDeclarationWithName): List<IrType> {
+        val annotation = descriptor.getAnnotation(withModulesAnnotation)
 
-    fun isProvidedByDi(descriptor: CallableMemberDescriptor): Boolean {
-        val containingDeclaration = descriptor.containingDeclaration
-        return descriptor is FunctionDescriptor
-                && (descriptor.annotations.hasAnnotation(createAnnotation)
-                || descriptor.annotations.hasAnnotation(cachedAnnotation)
-                || descriptor.annotations.hasAnnotation(providedAnnotation))
-                && containingDeclaration is ClassDescriptor
-                && containingDeclaration.annotations.hasAnnotation(moduleAnnotation)
+        return (annotation?.getValueArgument(0) as? IrVararg)
+            ?.elements
+            ?.mapNotNull { (it as? IrClassReference)?.classType }
+            .orEmpty()
     }
 
     fun isProvidedByDi(descriptor: IrFunction): Boolean {
