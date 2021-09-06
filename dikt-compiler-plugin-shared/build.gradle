@@ -4,6 +4,8 @@ apply plugin: "com.vanniktech.maven.publish"
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     compileOnly "org.jetbrains.kotlin:kotlin-compiler-embeddable:$kotlin_version"
+
+    api project(":dikt-compiler-plugin-analysis")
     implementation project(":dikt-runtime")
 }
 

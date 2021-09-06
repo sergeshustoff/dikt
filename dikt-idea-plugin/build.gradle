@@ -10,7 +10,7 @@ repositories {
 }
 
 dependencies {
-    compile project(':dikt-compiler-plugin-shared')
+    compile project(':dikt-compiler-plugin-analysis')
 }
 
 intellij {

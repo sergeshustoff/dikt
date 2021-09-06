@@ -1,0 +1,11 @@
+apply plugin: "org.jetbrains.kotlin.jvm"
+
+dependencies {
+    compileOnly "org.jetbrains.kotlin:kotlin-compiler-embeddable"
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
