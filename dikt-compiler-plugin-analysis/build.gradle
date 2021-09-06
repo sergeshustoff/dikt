@@ -1,11 +1,6 @@
 apply plugin: "org.jetbrains.kotlin.jvm"
+apply plugin: "com.vanniktech.maven.publish"
 
 dependencies {
     compileOnly "org.jetbrains.kotlin:kotlin-compiler-embeddable"
-}
-
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
 }

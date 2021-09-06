@@ -3,7 +3,10 @@ apply plugin: "com.vanniktech.maven.publish"
 
 kotlin {
     jvm()
-    js()
+    js {
+        browser()
+        nodejs()
+    }
     mingwX64()
     linuxX64()
     linuxArm32Hfp()
@@ -18,12 +21,4 @@ kotlin {
     watchosX64()
     tvosArm64()
     tvosX64()
-
-    sourceSets {
-        commonMain {
-            dependencies {
-                implementation "org.jetbrains.kotlin:kotlin-stdlib"
-            }
-        }
-    }
 }

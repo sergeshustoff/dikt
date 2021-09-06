@@ -2,12 +2,8 @@ apply plugin: "org.jetbrains.kotlin.jvm"
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: "com.vanniktech.maven.publish"
 
-compileKotlin {
-    kotlinOptions.jvmTarget = "1.8"
-}
 dependencies {
-    compile project(':dikt-compiler-plugin-shared')
-    implementation "org.jetbrains.kotlin:kotlin-stdlib"
+    implementation project(':dikt-compiler-plugin-shared')
     compileOnly "org.jetbrains.kotlin:kotlin-compiler"
 }
 

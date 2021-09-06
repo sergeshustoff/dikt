@@ -2,15 +2,6 @@ apply plugin: "org.jetbrains.kotlin.jvm"
 apply plugin: "com.vanniktech.maven.publish"
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    compileOnly "org.jetbrains.kotlin:kotlin-compiler-embeddable:$kotlin_version"
-
+    compileOnly "org.jetbrains.kotlin:kotlin-compiler-embeddable"
     api project(":dikt-compiler-plugin-analysis")
-    implementation project(":dikt-runtime")
-}
-
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
 }
