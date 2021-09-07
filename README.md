@@ -17,6 +17,13 @@ In module that you wish to use DI.kt add plugin:
 
 Install [idea plugin](https://plugins.jetbrains.com/plugin/17533-di-kt) for better support, it will remove errors from ide for methods with generated body.
 
+If runtime library isn't added to dependency by plugin ([bug](https://github.com/sergeshustoff/dikt/issues/2)), then add it manually:
+
+    dependencies {
+        ...
+        implementation "com.github.sergeshustoff.dikt:dikt-runtime:1.0.0-alpha5"
+    }
+
 ## Usage
 
 Create module and declare provided dependencies. Use @Create to generate functions bodies for you.
