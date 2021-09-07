@@ -21,7 +21,7 @@ If runtime library isn't added to dependency by plugin ([bug](https://github.com
 
     dependencies {
         ...
-        implementation "com.github.sergeshustoff.dikt:dikt-runtime:1.0.0-alpha5"
+        implementation "com.github.sergeshustoff.dikt:dikt-annotations:1.0.0-alpha6"
     }
 
 ## Usage
