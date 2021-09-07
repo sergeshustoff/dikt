@@ -7,7 +7,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
-class ExternalModulesTest {
+class UseModulesTest {
 
     @Rule
     @JvmField
@@ -23,7 +23,7 @@ class ExternalModulesTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
             import dev.shustoff.dikt.DiModule
-            import dev.shustoff.dikt.WithModules
+            import dev.shustoff.dikt.UseModules
 
             class Dependency
 
@@ -33,7 +33,7 @@ class ExternalModulesTest {
             class NestedModule(val dependency: Dependency)
 
             @DiModule
-            @WithModules(NestedModule::class)
+            @UseModules(NestedModule::class)
             class MyModule(val nested: NestedModule) {
                 @Create fun injectable(): Injectable
             }
@@ -53,7 +53,7 @@ class ExternalModulesTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
             import dev.shustoff.dikt.DiModule
-            import dev.shustoff.dikt.WithModules
+            import dev.shustoff.dikt.UseModules
 
             class Dependency
 
@@ -62,11 +62,11 @@ class ExternalModulesTest {
             class NestedModule2(val dependency: Dependency)
 
             @DiModule
-            @WithModules(NestedModule2::class)
+            @UseModules(NestedModule2::class)
             class NestedModule(val nested: NestedModule2)
 
             @DiModule
-            @WithModules(NestedModule::class)
+            @UseModules(NestedModule::class)
             class MyModule(val nested: NestedModule) {
                 @Create fun injectable(): Injectable
             }
@@ -87,7 +87,7 @@ class ExternalModulesTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
             import dev.shustoff.dikt.DiModule
-            import dev.shustoff.dikt.WithModules
+            import dev.shustoff.dikt.UseModules
 
             class Dependency
 
@@ -102,7 +102,7 @@ class ExternalModulesTest {
             }
 
             @DiModule
-            @WithModules(Module1::class, Module2::class)
+            @UseModules(Module1::class, Module2::class)
             class MyModule(
                 val module1: Module1,
                 val module2: Module2
@@ -127,7 +127,7 @@ class ExternalModulesTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
             import dev.shustoff.dikt.DiModule
-            import dev.shustoff.dikt.WithModules
+            import dev.shustoff.dikt.UseModules
 
             class Dependency
 
@@ -138,7 +138,7 @@ class ExternalModulesTest {
             }
     
             @DiModule
-            @WithModules(OtherModule::class)
+            @UseModules(OtherModule::class)
             class MyModule(val other: OtherModule) {
                 @Create fun injectable(): Injectable
             }

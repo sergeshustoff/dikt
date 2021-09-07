@@ -43,7 +43,7 @@ Under the hood primary constructor will be called for SomethingElse and SomeSing
 ### @Create
 
 Magical annotation that tells compiler plugin to generate method body using returned type's primary constructor.
-Function parameters are used as provided dependencies, as well as anything inside parameters of types provided in @WithModules annotation and anything inside containing module.
+Function parameters are used as provided dependencies, as well as anything inside parameters of types provided in @UseModules annotation and anything inside containing module.
 
 #### Example:
     
@@ -73,7 +73,7 @@ Doesn't call constructor.
     )
 
     @DiModule
-    @WithModules(ExternalModule::class)
+    @UseModules(ExternalModule::class)
     class MyModule(val external: ExternalModule) {
         @Provided fun provideSomething(): Something
     }
@@ -110,11 +110,11 @@ Might be applied to the whole module or to a single function.
         @Create fun provideSomething(): Something
     }
 
-### @WithModules
+### @UseModules
 
 When applied to module all dependencies of types listed in this annotation parameters will provide all its type visible properties and functions as dependency.
 Dependencies of listed types should be available in module.
-Arguments of @WithModules annotations don't have to be marked with @DiModule annotation, any type might provide all its content.
+Arguments of @UseModules annotations don't have to be marked with @DiModule annotation, any type might provide all its content.
 
 WARNING: This annotation doesn't work recursively.
 
@@ -125,7 +125,7 @@ WARNING: This annotation doesn't work recursively.
     class Something(val name: String)
 
     @DiModule
-    @WithModules(ExternalModule::class)
+    @UseModules(ExternalModule::class)
     class MyModule(
         private val external: ExternalModule
     ) {

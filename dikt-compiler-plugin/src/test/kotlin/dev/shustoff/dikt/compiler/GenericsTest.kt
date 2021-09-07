@@ -82,7 +82,7 @@ class GenericsTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
             import dev.shustoff.dikt.DiModule
-            import dev.shustoff.dikt.WithModules
+            import dev.shustoff.dikt.UseModules
 
             class Injectable(
                 val value: String
@@ -91,7 +91,7 @@ class GenericsTest {
             class GenericModule<T>(val value: T)
 
             @DiModule
-            @WithModules(GenericModule::class)
+            @UseModules(GenericModule::class)
             class MyModule(val module: GenericModule<String>) {
                 @Create fun injectable(): Injectable
             }
