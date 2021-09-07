@@ -16,11 +16,6 @@ kotlin {
     // mingwX64("mingw")
 
     sourceSets {
-        commonMain {
-            dependencies {
-                implementation "io.github.sergeshustoff.dikt:dikt-runtime:$dikt_sample_version"
-            }
-        }
         jvmTest {
             dependencies {
                 implementation "junit:junit:4.13"
