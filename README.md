@@ -4,7 +4,7 @@
 
 
 # DI.kt
-Simple DI for kotlin multiplatform
+Simple DI with compile-time dependency graph validation for kotlin multiplatform
 
 ## Installation
 
