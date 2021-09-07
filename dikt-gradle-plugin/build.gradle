@@ -1,17 +1,6 @@
 apply plugin: "java-gradle-plugin"
 apply plugin: "org.jetbrains.kotlin.jvm"
-apply plugin: "maven"
-apply plugin: 'com.gradle.plugin-publish'
-
-group = "io.github.sergeshustoff.dikt"
-archivesBaseName = "dikt-gradle-plugin"
-version = "$dikt_version"
-
-install {
-    repositories.mavenInstaller {
-        pom.artifactId = archivesBaseName
-    }
-}
+apply plugin: "com.vanniktech.maven.publish"
 
 gradlePlugin {
     plugins {
@@ -23,13 +12,6 @@ gradlePlugin {
         }
     }
 }
-
-pluginBundle {
-    website = 'https://github.com/sergeshustoff/dikt'
-    vcsUrl = 'https://github.com/sergeshustoff/dikt'
-    tags = ['tags', 'kotlin', 'multiplatform', 'DI']
-}
-
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-gradle-plugin-api"
     compileOnly "org.jetbrains.kotlin:kotlin-gradle-plugin"
