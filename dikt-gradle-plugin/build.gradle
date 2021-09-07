@@ -18,7 +18,7 @@ gradlePlugin {
         diktPlugin {
             id = "io.github.sergeshustoff.dikt"
             displayName = 'DI.kt'
-            description = 'Simple kotlin DI'
+            description = 'Simple DI for kotlin multiplatform with depdendency graph validation in compile-time.'
             implementationClass = "dev.shustoff.dikt.gradle.DiktGradlePlugin"
         }
     }
@@ -27,7 +27,7 @@ gradlePlugin {
 pluginBundle {
     website = 'https://github.com/sergeshustoff/dikt'
     vcsUrl = 'https://github.com/sergeshustoff/dikt'
-    description = 'Simple kotlin DI'
+    description = 'Simple DI for kotlin multiplatform with depdendency graph validation in compile-time.'
     tags = ['tags', 'kotlin', 'multiplatform', 'DI']
 
     plugins {
