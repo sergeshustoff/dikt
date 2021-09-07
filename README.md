@@ -1,5 +1,7 @@
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.github.sergeshustoff.dikt/dikt-compiler-plugin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.github.sergeshustoff.dikt/dikt-compiler-plugin)
-[![gradle](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/io/github/sergeshustoff/dikt/dikt-gradle-plugin/maven-metadata.xml.svg?label=gradle)](https://plugins.gradle.org/plugin/io.github.sergeshustoff.dikt)
+[![gradle plugin](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/io/github/sergeshustoff/dikt/dikt-gradle-plugin/maven-metadata.xml.svg?label=gradle%20plugin)](https://plugins.gradle.org/plugin/io.github.sergeshustoff.dikt)
+[![IDEA plugin](https://img.shields.io/jetbrains/plugin/v/17533-di-kt.svg)](https://plugins.jetbrains.com/plugin/17533-di-kt)
+
 
 # DI.kt
 Simple DI for kotlin multiplatform
@@ -12,6 +14,8 @@ In module that you wish to use DI.kt add plugin:
         ...
         id 'io.github.sergeshustoff.dikt' version '1.0.0-aplha5'
     }
+
+Install [idea plugin](https://plugins.jetbrains.com/plugin/17533-di-kt) for better support, it will remove errors from ide for methods with generated body.
 
 ## Usage
 
