@@ -16,7 +16,7 @@ object Annotations {
     private val providedAnnotation = FqName("dev.shustoff.dikt.Provided")
     private val moduleAnnotation = FqName("dev.shustoff.dikt.DiModule")
     private val withModulesAnnotation = FqName("dev.shustoff.dikt.WithModules")
-    private val provideByConstructorAnnotation = FqName("dev.shustoff.dikt.ByConstructor")
+    private val provideByConstructorAnnotation = FqName("dev.shustoff.dikt.UseConstructors")
 
     fun isModule(declaration: IrClass) = declaration.annotations.hasAnnotation(moduleAnnotation)
 

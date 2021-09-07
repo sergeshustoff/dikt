@@ -7,7 +7,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
-class ByConstructorsTest {
+class UseConstructorsTest {
 
     @Rule
     @JvmField
@@ -23,13 +23,13 @@ class ByConstructorsTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
             import dev.shustoff.dikt.DiModule
-            import dev.shustoff.dikt.ByConstructor
+            import dev.shustoff.dikt.UseConstructors
 
             class Dependency
 
             class Injectable(val dependency: Dependency)
 
-            @ByConstructor(Dependency::class)
+            @UseConstructors(Dependency::class)
             @DiModule
             class MyModule {
                 @Create fun injectable(): Injectable
@@ -50,7 +50,7 @@ class ByConstructorsTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
             import dev.shustoff.dikt.DiModule
-            import dev.shustoff.dikt.ByConstructor
+            import dev.shustoff.dikt.UseConstructors
 
             class Dependency
 
@@ -59,7 +59,7 @@ class ByConstructorsTest {
             @DiModule
             class MyModule {
 
-                @ByConstructor(Dependency::class)
+                @UseConstructors(Dependency::class)
                 @Create fun injectable(): Injectable
             }
             """

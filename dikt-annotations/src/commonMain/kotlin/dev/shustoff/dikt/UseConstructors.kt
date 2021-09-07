@@ -2,8 +2,8 @@ package dev.shustoff.dikt
 
 import kotlin.reflect.KClass
 
-@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
+@Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS, AnnotationTarget.FILE)
 @Retention(AnnotationRetention.SOURCE)
-annotation class ByConstructor(
+annotation class UseConstructors(
     vararg val types: KClass<*>
 )

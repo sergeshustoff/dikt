@@ -93,7 +93,7 @@ Tells compiler plugin to support @Create, @CreateCached and @Provided annotation
 
 Example above will use somethingName property of MyModule to provide name parameter for Something constructor.
 
-### @ByConstructor
+### @UseConstructors
 
 Dependencies of types listed in this annotation parameters will be provided by constructor when required.
 Might be applied to the whole module or to a single function.
@@ -105,7 +105,7 @@ Might be applied to the whole module or to a single function.
     class Something(val dependency: SomeDependency)
 
     @DiModule
-    @ByConstructor(SomeDependency::class)
+    @UseConstructors(SomeDependency::class)
     class MyModule {
         @Create fun provideSomething(): Something
     }
