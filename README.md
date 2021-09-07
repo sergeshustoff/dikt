@@ -1,15 +1,15 @@
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.github.sergeshustoff.dikt/dikt-gradle-plugin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.github.sergeshustoff.dikt/dikt-gradle-plugin)
+
 # DI.kt
 Simple DI for kotlin multiplatform
 
 ## Installation
 
-### publishing to gradle plugins portal is in progress...
-
 In module that you wish to use DI.kt add plugin:
 
     plugins {
         ...
-        id 'io.github.sergeshustoff.dikt' version '1.0.0-aplha4'
+        id 'io.github.sergeshustoff.dikt' version '1.0.0-aplha5'
     }
 
 ## Usage
@@ -20,7 +20,7 @@ Create module and declare provided dependencies. Use @Create to generate functio
     class CarModule(
         val externalDependency: Something,
     ) {
-        @CreateCached val someSingleton(): SomeSingleton
+        @CreateCached fun someSingleton(): SomeSingleton
         @Create fun provideSomethingElse(): SomethingElse
     }
   

@@ -5,10 +5,6 @@ plugins {
 
 version dikt_version
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     compile project(':dikt-compiler-plugin-analysis')
 }
