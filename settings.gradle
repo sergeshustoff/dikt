@@ -1,4 +1,4 @@
-include ':dikt-runtime'
+include ':dikt-annotations'
 include ':dikt-gradle-plugin'
 include ':dikt-compiler-plugin-shared'
 include ':dikt-compiler-plugin-native'
