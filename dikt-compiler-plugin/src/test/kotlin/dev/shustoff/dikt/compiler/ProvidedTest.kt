@@ -37,6 +37,29 @@ class ProvidedTest {
     }
 
     @Test
+    fun `can provide cached external dependency`() {
+        val result = compile(
+            folder.root,
+            SourceFile.kotlin(
+                "MyModule.kt",
+                """
+            package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.*
+
+            class Dependency
+
+            class MyModule(val testArg: String) {
+                @ProvidedCached fun dependency(): Dependency
+                
+                fun createDependency(testArg: String) = Dependency()
+            }
+            """
+            )
+        )
+        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+    }
+
+    @Test
     fun `fail if no external dependency found`() {
         val result = compile(
             folder.root,
@@ -56,5 +79,27 @@ class ProvidedTest {
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
         Truth.assertThat(result.messages).contains("Can't resolve dependency dev.shustoff.dikt.compiler.Dependency")
+    }
+
+    @Test
+    fun `fail on parameters in provided cached function`() {
+        val result = compile(
+            folder.root,
+            SourceFile.kotlin(
+                "MyModule.kt",
+                """
+            package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.*
+
+            class Injectable(val name: String)
+
+            class MyModule {
+                @ProvidedCached fun injectable(name: String): Injectable
+            }
+            """
+            )
+        )
+        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
+        Truth.assertThat(result.messages).contains("@CreateCached and @ProvidedCached functions can't have parameters")
     }
 }
