@@ -153,5 +153,6 @@ class CreatorTest {
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
+        Truth.assertThat(result.messages).contains("Cached @Create functions should not have parameters")
     }
 }
