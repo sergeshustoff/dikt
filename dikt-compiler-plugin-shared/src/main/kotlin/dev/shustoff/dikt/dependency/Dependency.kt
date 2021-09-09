@@ -37,6 +37,8 @@ sealed class Dependency {
 
     abstract fun getRequiredParams(): List<IrValueParameter>
 
+    abstract fun getRequiredExtensionReceiver(): IrValueParameter?
+
     data class Parameter(
         val parameter: IrValueParameter
     ) : Dependency() {
@@ -45,6 +47,8 @@ sealed class Dependency {
         override val name: String = parameter.name.asString()
 
         override fun getRequiredParams(): List<IrValueParameter> = emptyList()
+
+        override fun getRequiredExtensionReceiver(): IrValueParameter? = null
     }
 
     data class Property(
@@ -57,6 +61,7 @@ sealed class Dependency {
         override val name: String = property.name.asString()
 
         override fun getRequiredParams(): List<IrValueParameter> = emptyList()
+        override fun getRequiredExtensionReceiver(): IrValueParameter? = property.getter?.extensionReceiverParameter
     }
 
     data class Constructor(
@@ -66,6 +71,7 @@ sealed class Dependency {
         override val irElement: IrDeclarationWithName = constructor
         override val name: String = constructor.name.asString()
         override fun getRequiredParams(): List<IrValueParameter> = constructor.valueParameters
+        override fun getRequiredExtensionReceiver(): IrValueParameter? = null
     }
 
     data class Function(
@@ -77,5 +83,6 @@ sealed class Dependency {
         override val irElement: IrDeclarationWithName = function
         override val name: String = function.name.asString()
         override fun getRequiredParams(): List<IrValueParameter> = function.valueParameters
+        override fun getRequiredExtensionReceiver(): IrValueParameter? = function.extensionReceiverParameter
     }
 }

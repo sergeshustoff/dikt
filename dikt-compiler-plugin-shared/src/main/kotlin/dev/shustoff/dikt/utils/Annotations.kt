@@ -37,7 +37,7 @@ object Annotations {
         return descriptor.hasAnnotation(cachedAnnotation)
     }
 
-    fun isProviderForExternalDependency(descriptor: IrFunction): Boolean {
+    fun isProvided(descriptor: IrFunction): Boolean {
         return descriptor.hasAnnotation(providedAnnotation)
     }
 

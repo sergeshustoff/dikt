@@ -8,21 +8,22 @@ import dev.shustoff.dikt.utils.Annotations
 import dev.shustoff.dikt.utils.Utils
 import dev.shustoff.dikt.utils.VisibilityChecker
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
-import org.jetbrains.kotlin.backend.common.ir.isFinalClass
+import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrFunction
+import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.file
 import org.jetbrains.kotlin.ir.util.functions
-import org.jetbrains.kotlin.ir.util.isInterface
+import org.jetbrains.kotlin.ir.util.parentClassOrNull
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 
 class DiFunctionGenerator(
     private val errorCollector: ErrorCollector,
     pluginContext: IrPluginContext,
-    private val incrementalHelper: IncrementalCompilationHelper?
+    private val incrementalHelper: IncrementalCompilationHelper?,
 ) : IrElementVisitorVoid, ErrorCollector by errorCollector {
 
     private val dependencyCollector = DependencyCollector(this)
@@ -36,27 +37,38 @@ class DiFunctionGenerator(
         element.acceptChildren(this, null)
     }
 
-    override fun visitClass(module: IrClass) {
-        val diFunctions = module.functions.filter { Annotations.isByDi(it) }.toList()
-        if (diFunctions.isNotEmpty()) {
-            if (module.isInterface) {
-                module.error("Interface modules not supported")
-            } else if (!module.isFinalClass) {
-                module.error("Module should be final")
-            } else {
-                diFunctions.forEach { function ->
-                    buildFunctionBody(module, function)
+    override fun visitClass(declaration: IrClass) {
+        val diFunctions = declaration.functions.filter { Annotations.isCached(it) }.toList()
+        diFunctions.forEach { function ->
+            buildFunctionBody(declaration, function)
+        }
+        super.visitClass(declaration)
+    }
+
+    override fun visitFunction(declaration: IrFunction) {
+        if (Annotations.isByDi(declaration)) {
+            if (Annotations.isCached(declaration)) {
+                // cached functions handled in visitClass
+                if (declaration.parentClassOrNull == null) {
+                    declaration.error("Cached @Create functions without parent class not supported")
                 }
+            } else {
+                buildFunctionBody(declaration.parentClassOrNull, declaration)
             }
         }
-        super.visitClass(module)
+
+        super.visitFunction(declaration)
     }
 
     private fun buildFunctionBody(
-        module: IrClass,
+        module: IrClass?,
         function: IrFunction
     ) {
-        val dependencies = if (function.valueParameters.isEmpty() && Annotations.getUsedModules(function).isEmpty()) {
+        if ((function as? IrSimpleFunction)?.modality != Modality.FINAL) {
+            function.error("Only final functions can have generated body")
+            return
+        }
+        val dependencies = if (module != null && function.valueParameters.isEmpty() && Annotations.getUsedModules(function).isEmpty()) {
             // in most cases we don't need to resolve dependencies again
             dependencyByModuleCache.getOrPut(module) {
                 dependencyCollector.collectDependencies(module, function)

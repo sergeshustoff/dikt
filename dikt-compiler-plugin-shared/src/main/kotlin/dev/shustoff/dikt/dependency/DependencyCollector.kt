@@ -16,16 +16,17 @@ class DependencyCollector(
     private val errorCollector: ErrorCollector
 ) : ErrorCollector by errorCollector {
 
-    fun collectDependencies(module: IrClass, function: IrFunction): AvailableDependencies {
+    fun collectDependencies(module: IrClass?, function: IrFunction): AvailableDependencies {
         val isCached = Annotations.isCached(function)
-        if (isCached && function.valueParameters.isNotEmpty()) {
+        val functionParams = function.valueParameters + listOfNotNull(function.extensionReceiverParameter)
+        if (isCached && functionParams.isNotEmpty()) {
             function.error("Cached @Create functions should not have parameters")
         }
         return collectDependencies(
-            visibilityChecker = VisibilityChecker(module),
-            properties = module.properties,
-            functions = module.functions,
-            params = function.valueParameters.takeUnless { isCached }.orEmpty(),
+            visibilityChecker = module?.let { VisibilityChecker(module) } ?: VisibilityChecker(function),
+            properties = module?.properties.orEmpty(),
+            functions = module?.functions.orEmpty(),
+            params = functionParams.takeUnless { isCached }.orEmpty(),
             moduleTypes = getAllUseModulesTypes(function),
         )
     }

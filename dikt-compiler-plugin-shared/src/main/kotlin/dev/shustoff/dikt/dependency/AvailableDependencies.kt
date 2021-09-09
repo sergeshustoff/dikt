@@ -23,7 +23,7 @@ data class AvailableDependencies(
         forFunction: IrFunction,
         providedByConstructor: Set<IrType>
     ): ResolvedDependency? {
-        val isProvider = Annotations.isProviderForExternalDependency(forFunction)
+        val isProvider = Annotations.isProvided(forFunction)
         return resolveDependencyInternal(
             DependencyId(type), Dependency.Function(forFunction, null), emptyList(),
             providedByConstructor = providedByConstructor + setOfNotNull(type.takeIf { !isProvider })
@@ -39,12 +39,16 @@ data class AvailableDependencies(
         val dependency = findDependency(id, forDependency, usedTypes, providedByConstructor)
             ?: return null
         val params = dependency.getRequiredParams()
+        val extensionParam = dependency.getRequiredExtensionReceiver()
         val typeArgumentsMapping = buildTypeArgumentsMapping(id, dependency)
         val resolvedParams = getResolveParams(params, forDependency, usedTypes + id.type, typeArgumentsMapping, providedByConstructor)
+        val resolvedExtensionParam = extensionParam?.let {
+            getResolveParams(listOf(extensionParam), forDependency, usedTypes, typeArgumentsMapping, providedByConstructor)
+        }
         val nestedChain = getResolveNestedChain(dependency, forDependency, usedTypes + id.type, typeArgumentsMapping, providedByConstructor)
         return resolvedParams
             ?.let {
-                ResolvedDependency(dependency, nestedChain, it)
+                ResolvedDependency(dependency, nestedChain, it, resolvedExtensionParam?.firstOrNull())
             }
     }
 
@@ -111,8 +115,8 @@ data class AvailableDependencies(
         } else {
             val dependencyOptions = dependencyMap[id].orEmpty() - forDependency
             // check local and nested in groups as well as parameterless and parameterized
-            val result = getDependencyFromGroup(forDependency, id, dependencyOptions.filter { it.fromNestedModule == null && it.getRequiredParams().isEmpty() })
-                ?: getDependencyFromGroup(forDependency, id, dependencyOptions.filter { it.fromNestedModule == null && it.getRequiredParams().isNotEmpty() })
+            val result = getDependencyFromGroup(forDependency, id, dependencyOptions.filter { it.fromNestedModule == null && it.getRequiredParams().isEmpty() && it.getRequiredExtensionReceiver() == null })
+                ?: getDependencyFromGroup(forDependency, id, dependencyOptions.filter { it.fromNestedModule == null && (it.getRequiredParams().isNotEmpty() || it.getRequiredExtensionReceiver() != null) })
                 ?: getDependencyFromGroup(forDependency, id, dependencyOptions.filter { it.fromNestedModule != null })
 
             if (result == null) {

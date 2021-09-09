@@ -89,7 +89,7 @@ class ModuleTest {
             )
         )
         assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        assertThat(result.messages).contains("MyModule.kt: Interface modules not supported")
+        assertThat(result.messages).contains("Only final functions can have generated body")
     }
 
     @Test
@@ -110,6 +110,33 @@ class ModuleTest {
                 @Create fun injectable(): Injectable
 
                 private fun provideDependency(): Dependency {
+                    return Dependency()
+                }
+            }
+            """
+            )
+        )
+        assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+    }
+
+    @Test
+    fun `allow module extension function for dependency resolution`() {
+        val result = compile(
+            folder.root,
+            SourceFile.kotlin(
+                "MyModule.kt",
+                """
+            package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.Create
+
+            class Dependency
+
+            class Injectable(val dependency: Dependency)
+
+            class MyModule {
+                @Create fun injectable(name: String): Injectable
+
+                private fun String.provideDependency(): Dependency {
                     return Dependency()
                 }
             }

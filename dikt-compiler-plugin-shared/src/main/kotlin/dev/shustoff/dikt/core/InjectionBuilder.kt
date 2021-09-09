@@ -33,12 +33,12 @@ class InjectionBuilder(
     }
 
     fun buildModuleFunctionInjections(
-        module: IrClass,
+        module: IrClass?,
         function: IrFunction,
         dependency: ResolvedDependency?
     ) {
         function.info("generating function body for ${function.kotlinFqName.asString()}")
-        function.body = if (Annotations.isCached(function)) {
+        function.body = if (Annotations.isCached(function) && module != null) {
             createSingletonBody(function, dependency, module)
         } else {
             createFactoryBody(function, dependency, module)
@@ -143,10 +143,17 @@ class InjectionBuilder(
                 dependency.dependency,
                 receiverParameter,
                 dependency.params,
+                dependency.extensionParam,
                 dependency.nestedModulesChain,
                 forDiFunction
             )
-            is Dependency.Property -> makePropertyDependencyCall(dependency.dependency, receiverParameter, dependency.nestedModulesChain, forDiFunction)
+            is Dependency.Property -> makePropertyDependencyCall(
+                dependency.dependency,
+                receiverParameter,
+                dependency.extensionParam,
+                dependency.nestedModulesChain,
+                forDiFunction
+            )
             is Dependency.Parameter -> makeParameterCall(dependency.dependency)
         }
     }
@@ -172,6 +179,7 @@ class InjectionBuilder(
         dependency: Dependency.Function,
         receiverParameter: IrValueParameter?,
         params: List<ResolvedDependency>,
+        extensionParam: ResolvedDependency?,
         nestedModulesChain: ResolvedDependency?,
         forDiFunction: IrFunction
     ): IrFunctionAccessExpression {
@@ -180,6 +188,7 @@ class InjectionBuilder(
                 it.putValueArgument(index, makeDependencyCall(resolved, receiverParameter, forDiFunction))
             }
         }
+        call.extensionReceiver = extensionParam?.let { makeDependencyCall(it, receiverParameter, forDiFunction) }
         call.dispatchReceiver = nestedModulesChain?.let {
             makeDependencyCall(nestedModulesChain, receiverParameter, forDiFunction)
         } ?: IrGetValueImpl(startOffset, endOffset, receiverParameter!!.symbol)
@@ -189,12 +198,14 @@ class InjectionBuilder(
     private fun IrBlockBodyBuilder.makePropertyDependencyCall(
         dependency: Dependency.Property,
         receiverParameter: IrValueParameter?,
+        extensionParam: ResolvedDependency?,
         nestedModulesChain: ResolvedDependency?,
         forDiFunction: IrFunction
     ): IrFunctionAccessExpression {
         val call = irCall(dependency.property.getter!!.symbol, dependency.returnType)
         val parentCall = nestedModulesChain?.let { makeDependencyCall(it, receiverParameter, forDiFunction) }
         call.dispatchReceiver = parentCall ?: IrGetValueImpl(startOffset, endOffset, receiverParameter!!.symbol)
+        call.extensionReceiver = extensionParam?.let { makeDependencyCall(it, receiverParameter, forDiFunction) }
 
         return call
     }
