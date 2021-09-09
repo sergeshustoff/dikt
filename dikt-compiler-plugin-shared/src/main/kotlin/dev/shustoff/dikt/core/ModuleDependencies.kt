@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.ir.declarations.IrValueParameter
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.getClass
+import org.jetbrains.kotlin.ir.util.constructors
 import org.jetbrains.kotlin.ir.util.primaryConstructor
 
 class ModuleDependencies(
@@ -136,15 +137,22 @@ class ModuleDependencies(
     }
 
     private fun getConstructorDependency(forDependency: Dependency, id: DependencyId): Dependency? {
-        val constructor = id.type.getClass()?.primaryConstructor
+        val clazz = id.type.getClass()
+        val constructors = clazz?.primaryConstructor?.let { listOf(it) }
+            ?: clazz?.constructors?.filter { visibilityChecker.isVisible(it) }.orEmpty().toList()
 
-        if (constructor == null || !visibilityChecker.isVisible(constructor)) {
+        if (constructors.isEmpty() || (constructors.size == 1 && !visibilityChecker.isVisible(constructors.first()))) {
             forDependency.irElement.error(
                 "No visible constructor found for ${id.asErrorString()}",
             )
             return null
+        } else if (constructors.size > 1) {
+            forDependency.irElement.error(
+                "Multiple visible constructors found for ${id.asErrorString()}",
+            )
+            return null
         }
-        return Dependency.Constructor(constructor)
+        return Dependency.Constructor(constructors.first())
     }
 
     private fun getDependencyFromGroup(forDependency: Dependency, id: DependencyId, options: List<Dependency>): Dependency? {
