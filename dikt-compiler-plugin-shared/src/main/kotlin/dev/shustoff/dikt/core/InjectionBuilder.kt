@@ -3,6 +3,7 @@ package dev.shustoff.dikt.core
 import dev.shustoff.dikt.dependency.Dependency
 import dev.shustoff.dikt.dependency.ResolvedDependency
 import dev.shustoff.dikt.message_collector.ErrorCollector
+import dev.shustoff.dikt.utils.Annotations
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.backend.common.lower.irThrow
@@ -33,7 +34,7 @@ class InjectionBuilder(
 
     fun buildModuleFunctionInjections(
         module: IrClass,
-        function: IrSimpleFunction,
+        function: IrFunction,
         dependency: ResolvedDependency?
     ) {
         function.info("generating function body for ${function.kotlinFqName.asString()}")
@@ -45,7 +46,7 @@ class InjectionBuilder(
     }
 
     private fun createSingletonBody(
-        function: IrSimpleFunction,
+        function: IrFunction,
         dependency: ResolvedDependency?,
         module: IrClass,
     ): IrBlockBody {
@@ -61,7 +62,7 @@ class InjectionBuilder(
     }
 
     private fun createLazyFieldForSingleton(
-        function: IrSimpleFunction,
+        function: IrFunction,
         module: IrClass,
         dependency: ResolvedDependency?,
     ): IrField {

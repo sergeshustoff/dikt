@@ -1,7 +1,7 @@
-package dev.shustoff.dikt.core
+package dev.shustoff.dikt.dependency
 
-import dev.shustoff.dikt.dependency.Dependency
-import dev.shustoff.dikt.dependency.ResolvedDependency
+import dev.shustoff.dikt.utils.Annotations
+import dev.shustoff.dikt.utils.VisibilityChecker
 import dev.shustoff.dikt.message_collector.ErrorCollector
 import org.jetbrains.kotlin.ir.backend.js.utils.asString
 import org.jetbrains.kotlin.ir.declarations.IrFunction
@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.util.constructors
 import org.jetbrains.kotlin.ir.util.primaryConstructor
 
-class ModuleDependencies(
+class AvailableDependencies(
     errorCollector: ErrorCollector,
     private val visibilityChecker: VisibilityChecker,
     private val dependencyMap: Map<DependencyId, List<Dependency>>,
@@ -24,14 +24,8 @@ class ModuleDependencies(
         providedByConstructor: Set<IrType>
     ): ResolvedDependency? {
         val isProvider = Annotations.isProviderForExternalDependency(forFunction)
-        val isCached = Annotations.isCached(forFunction)
-        if (isCached && forFunction.valueParameters.isNotEmpty()) {
-            forFunction.error("Cached @Create functions should not have parameters")
-        }
-        val params = forFunction.valueParameters.takeUnless { isCached }
-            ?.associate { Dependency.Parameter(it).let { it.id to it } }
-            .orEmpty()
-        return resolveDependencyInternal(DependencyId(type), Dependency.Function(forFunction, null), emptyList(), params,
+        return resolveDependencyInternal(
+            DependencyId(type), Dependency.Function(forFunction, null), emptyList(),
             providedByConstructor = providedByConstructor + setOfNotNull(type.takeIf { !isProvider })
         )
     }
@@ -40,16 +34,14 @@ class ModuleDependencies(
         id: DependencyId,
         forDependency: Dependency,
         usedTypes: List<IrType>,
-        providedParams: Map<DependencyId, Dependency>,
         providedByConstructor: Set<IrType>
     ): ResolvedDependency? {
-        val dependency = providedParams[id]
-            ?: findDependency(id, forDependency, usedTypes, providedByConstructor)
+        val dependency = findDependency(id, forDependency, usedTypes, providedByConstructor)
             ?: return null
         val params = dependency.getRequiredParams()
         val typeArgumentsMapping = buildTypeArgumentsMapping(id, dependency)
-        val resolvedParams = getResolveParams(params, forDependency, usedTypes + id.type, typeArgumentsMapping, providedParams, providedByConstructor)
-        val nestedChain = getResolveNestedChain(dependency, forDependency, usedTypes + id.type, typeArgumentsMapping, providedParams, providedByConstructor)
+        val resolvedParams = getResolveParams(params, forDependency, usedTypes + id.type, typeArgumentsMapping, providedByConstructor)
+        val nestedChain = getResolveNestedChain(dependency, forDependency, usedTypes + id.type, typeArgumentsMapping, providedByConstructor)
         return resolvedParams
             ?.let {
                 ResolvedDependency(dependency, nestedChain, it)
@@ -70,7 +62,6 @@ class ModuleDependencies(
         forDependency: Dependency,
         usedTypes: List<IrType> = emptyList(),
         typeArgumentsMapping: Map<IrType?, IrType?>,
-        providedParams: Map<DependencyId, Dependency>,
         providedByConstructor: Set<IrType>,
     ): List<ResolvedDependency>? {
         return valueParameters
@@ -79,7 +70,6 @@ class ModuleDependencies(
                     DependencyId(typeArgumentsMapping[param.type] ?: param.type),
                     forDependency,
                     usedTypes,
-                    providedParams,
                     providedByConstructor = providedByConstructor,
                 )
             }
@@ -91,7 +81,6 @@ class ModuleDependencies(
         forDependency: Dependency,
         usedTypes: List<IrType> = emptyList(),
         typeArgumentsMapping: Map<IrType?, IrType?>,
-        providedParams: Map<DependencyId, Dependency>,
         providedByConstructor: Set<IrType>,
     ): ResolvedDependency? {
         return dependency.fromNestedModule?.let {
@@ -99,7 +88,6 @@ class ModuleDependencies(
                 DependencyId(typeArgumentsMapping[it.id.type] ?: it.id.type),
                 forDependency,
                 usedTypes,
-                providedParams,
                 providedByConstructor = providedByConstructor,
             )
         }

@@ -1,32 +1,43 @@
-package dev.shustoff.dikt.core
+package dev.shustoff.dikt.dependency
 
-import dev.shustoff.dikt.dependency.Dependency
 import dev.shustoff.dikt.message_collector.ErrorCollector
-import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.declarations.IrProperty
-import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
-import org.jetbrains.kotlin.ir.declarations.IrValueParameter
+import dev.shustoff.dikt.utils.Annotations
+import dev.shustoff.dikt.utils.Utils
+import dev.shustoff.dikt.utils.VisibilityChecker
+import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.defaultType
+import org.jetbrains.kotlin.ir.util.file
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.properties
 import java.util.*
 
 class DependencyCollector(
     private val errorCollector: ErrorCollector
-) {
-    fun collectDependencies(
-        module: IrClass,
+) : ErrorCollector by errorCollector {
+
+    fun collectDependencies(module: IrClass, function: IrFunction): AvailableDependencies {
+        val isCached = Annotations.isCached(function)
+        if (isCached && function.valueParameters.isNotEmpty()) {
+            function.error("Cached @Create functions should not have parameters")
+        }
+        return collectDependencies(
+            visibilityChecker = VisibilityChecker(function),
+            properties = module.properties,
+            functions = module.functions,
+            params = function.valueParameters.takeUnless { isCached }.orEmpty(),
+            moduleTypes = getAllUseModulesTypes(function),
+        )
+    }
+
+    private fun collectDependencies(
         visibilityChecker: VisibilityChecker,
         properties: Sequence<IrProperty> = emptySequence(),
         functions: Sequence<IrSimpleFunction> = emptySequence(),
-        params: List<IrValueParameter> = emptyList()
-    ): ModuleDependencies {
+        params: List<IrValueParameter> = emptyList(),
+        moduleTypes: Set<IrType> = emptySet()
+    ): AvailableDependencies {
         val fullDependencyMap: MutableMap<DependencyId, MutableList<Dependency>> = mutableMapOf()
-        val moduleTypes = Annotations.getUsedModules(module)
-            .mapNotNull { it.classOrNull?.defaultType } // for generics
-            .toSet()
-
         properties
             .forEach { property ->
                 val dependency = Dependency.Property(property, null)
@@ -72,7 +83,7 @@ class DependencyCollector(
             )
         }
 
-        return ModuleDependencies(
+        return AvailableDependencies(
             errorCollector,
             visibilityChecker,
             fullDependencyMap,
@@ -118,6 +129,18 @@ class DependencyCollector(
             val typeArguments = (path.id.type as? IrSimpleType)?.arguments?.map { it as? IrType }
             val dependencyTypeArguments = (clazz.defaultType as? IrSimpleType)?.arguments?.map { it as? IrType }
             dependencyTypeArguments?.zip(typeArguments.orEmpty())?.toMap().orEmpty()
+        }
+    }
+
+    companion object {
+        private fun getAllUseModulesTypes(function: IrFunction): Set<IrType> {
+            val classes =  Utils.getParentClasses(function)
+            val fromClasses = classes.flatMap { Annotations.getUsedModules(it) }
+            val fromFile = Annotations.getUsedModules(function.file)
+            val fromFunction = Annotations.getUsedModules(function)
+            return (fromFile + fromClasses + fromFunction)
+                .mapNotNull { it.classOrNull?.defaultType } // for generics
+                .toSet()
         }
     }
 }

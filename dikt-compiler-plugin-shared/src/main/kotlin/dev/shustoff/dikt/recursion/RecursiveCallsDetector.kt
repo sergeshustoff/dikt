@@ -1,22 +1,31 @@
-package dev.shustoff.dikt.core
+package dev.shustoff.dikt.recursion
 
-import dev.shustoff.dikt.compiler.FullCodeDependencyCollector
 import dev.shustoff.dikt.message_collector.ErrorCollector
+import dev.shustoff.dikt.utils.Annotations
+import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationWithName
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.properties
+import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import java.util.*
 
 class RecursiveCallsDetector(
     private val errorCollector: ErrorCollector
-) : ErrorCollector by errorCollector {
+) : IrElementVisitorVoid, ErrorCollector by errorCollector {
 
-    fun checkForRecursiveCalls(module: IrClass) {
-        val dependencyMap = collectDependencyMap(module)
+    override fun visitElement(element: IrElement) {
+        element.acceptChildren(this, null)
+    }
 
-        findRecursiveCalls(dependencyMap, module)
+    override fun visitClass(declaration: IrClass) {
+        super.visitClass(declaration)
+
+        if (Annotations.isModule(declaration) || declaration.functions.any { Annotations.isByDi(it) }) {
+            val dependencyMap = collectDependencyMap(declaration)
+            findRecursiveCalls(dependencyMap, declaration)
+        }
     }
 
     private fun findRecursiveCalls(

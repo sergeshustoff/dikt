@@ -1,4 +1,4 @@
-package dev.shustoff.dikt.core
+package dev.shustoff.dikt.utils
 
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.ir.declarations.*

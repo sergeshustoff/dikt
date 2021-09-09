@@ -1,4 +1,4 @@
-package dev.shustoff.dikt.core
+package dev.shustoff.dikt.utils
 
 import org.jetbrains.kotlin.ir.declarations.IrAnnotationContainer
 import org.jetbrains.kotlin.ir.declarations.IrClass
@@ -21,7 +21,7 @@ object Annotations {
 
     fun isModule(declaration: IrClass) = declaration.annotations.hasAnnotation(moduleAnnotation)
 
-    fun getUsedModules(descriptor: IrDeclarationWithName): List<IrType> {
+    fun getUsedModules(descriptor: IrAnnotationContainer): List<IrType> {
         val annotation = descriptor.getAnnotation(withModulesAnnotation)
 
         return (annotation?.getValueArgument(0) as? IrVararg)
@@ -30,7 +30,7 @@ object Annotations {
             .orEmpty()
     }
 
-    fun isProvidedByDi(descriptor: IrFunction): Boolean {
+    fun isByDi(descriptor: IrFunction): Boolean {
         val containingDeclaration = descriptor.parent
         return (descriptor.annotations.hasAnnotation(createAnnotation)
                 || descriptor.annotations.hasAnnotation(cachedAnnotation)

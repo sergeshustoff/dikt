@@ -1,4 +1,4 @@
-package dev.shustoff.dikt.compiler
+package dev.shustoff.dikt.recursion
 
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationWithName

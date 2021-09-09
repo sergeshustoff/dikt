@@ -1,7 +1,5 @@
 package dev.shustoff.dikt.dependency
 
-import dev.shustoff.dikt.core.Annotations
-import dev.shustoff.dikt.core.DependencyId
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.types.IrType
 import java.util.*

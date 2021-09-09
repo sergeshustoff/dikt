@@ -5,7 +5,7 @@ import dev.shustoff.dikt.dependency.ResolvedDependency
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.incremental.components.LookupTracker
-import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
 import org.jetbrains.kotlin.ir.util.kotlinFqName
@@ -16,8 +16,8 @@ class IncrementalCompilationHelper(
 ) {
     private val lookupHelper = LookupHelper(lookupTracker)
 
-    fun recordModuleDependency(from: IrClass, usedDependency: List<ResolvedDependency>) {
-        val dependencies = flattenDependency(usedDependency)
+    fun recordFunctionDependency(from: IrFunction, usedDependency: ResolvedDependency?) {
+        val dependencies = flattenDependency(listOfNotNull(usedDependency))
         for (dependency in dependencies) {
             when (dependency) {
                 is Dependency.Constructor -> lookupHelper.recordLookup(from, dependency.id.type.classFqName!!)
