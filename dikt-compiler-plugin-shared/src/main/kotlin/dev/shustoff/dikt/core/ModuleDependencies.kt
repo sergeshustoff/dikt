@@ -21,7 +21,7 @@ class ModuleDependencies(
     fun resolveDependency(
         type: IrType,
         forFunction: IrFunction,
-        providedByConstructor: List<IrType>
+        providedByConstructor: Set<IrType>
     ): ResolvedDependency? {
         val isProvider = Annotations.isProviderForExternalDependency(forFunction)
         val isCached = Annotations.isCached(forFunction)
@@ -32,7 +32,8 @@ class ModuleDependencies(
             ?.associate { Dependency.Parameter(it).let { it.id to it } }
             .orEmpty()
         return resolveDependencyInternal(DependencyId(type), Dependency.Function(forFunction, null), emptyList(), params,
-            providedByConstructor = providedByConstructor + listOfNotNull(type.takeIf { !isProvider }))
+            providedByConstructor = providedByConstructor + setOfNotNull(type.takeIf { !isProvider })
+        )
     }
 
     private fun resolveDependencyInternal(
@@ -40,7 +41,7 @@ class ModuleDependencies(
         forDependency: Dependency,
         usedTypes: List<IrType>,
         providedParams: Map<DependencyId, Dependency>,
-        providedByConstructor: List<IrType>
+        providedByConstructor: Set<IrType>
     ): ResolvedDependency? {
         val dependency = providedParams[id]
             ?: findDependency(id, forDependency, usedTypes, providedByConstructor)
@@ -70,7 +71,7 @@ class ModuleDependencies(
         usedTypes: List<IrType> = emptyList(),
         typeArgumentsMapping: Map<IrType?, IrType?>,
         providedParams: Map<DependencyId, Dependency>,
-        providedByConstructor: List<IrType>,
+        providedByConstructor: Set<IrType>,
     ): List<ResolvedDependency>? {
         return valueParameters
             .mapNotNull { param ->
@@ -91,7 +92,7 @@ class ModuleDependencies(
         usedTypes: List<IrType> = emptyList(),
         typeArgumentsMapping: Map<IrType?, IrType?>,
         providedParams: Map<DependencyId, Dependency>,
-        providedByConstructor: List<IrType>,
+        providedByConstructor: Set<IrType>,
     ): ResolvedDependency? {
         return dependency.fromNestedModule?.let {
             resolveDependencyInternal(
@@ -108,7 +109,7 @@ class ModuleDependencies(
         id: DependencyId,
         forDependency: Dependency,
         usedTypes: List<IrType> = emptyList(),
-        providedByConstructor: List<IrType> = emptyList()
+        providedByConstructor: Set<IrType> = emptySet()
     ): Dependency? {
         if (id.type in usedTypes) {
             forDependency.irElement.error(

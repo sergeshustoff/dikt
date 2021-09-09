@@ -1,5 +1,6 @@
 package dev.shustoff.dikt.core
 
+import org.jetbrains.kotlin.ir.declarations.IrAnnotationContainer
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationWithName
 import org.jetbrains.kotlin.ir.declarations.IrFunction
@@ -46,7 +47,7 @@ object Annotations {
         return descriptor.hasAnnotation(providedAnnotation)
     }
 
-    fun getProvidedByConstructor(descriptor: IrDeclarationWithName): List<IrType> {
+    fun getProvidedByConstructor(descriptor: IrAnnotationContainer): List<IrType> {
         val annotation = descriptor.getAnnotation(provideByConstructorAnnotation)
 
         return (annotation?.getValueArgument(0) as? IrVararg)

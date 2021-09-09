@@ -134,7 +134,7 @@ class CreatorTest {
     }
 
     @Test
-    fun `parameters for cached injectable not supported`() {
+    fun `fail on parameters in cached injectable`() {
         val result = compile(
             folder.root,
             SourceFile.kotlin(

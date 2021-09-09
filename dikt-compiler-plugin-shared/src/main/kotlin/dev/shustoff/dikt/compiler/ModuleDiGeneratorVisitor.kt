@@ -7,10 +7,12 @@ import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.ir.isFinalClass
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.util.functions
-import org.jetbrains.kotlin.ir.util.isInterface
-import org.jetbrains.kotlin.ir.util.properties
+import org.jetbrains.kotlin.ir.declarations.IrFile
+import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
+import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
+import java.util.*
 
 class ModuleDiGeneratorVisitor(
     private val errorCollector: ErrorCollector,
@@ -20,6 +22,9 @@ class ModuleDiGeneratorVisitor(
 
     private val dependencyCollector = DependencyCollector(this)
     private val injectionBuilder = InjectionBuilder(pluginContext, errorCollector)
+
+    private val providedByConstructorInClassCache = mutableMapOf<IrClass, List<IrType>>()
+    private val providedByConstructorInFileCache = mutableMapOf<IrFile, List<IrType>>()
 
     override fun visitElement(element: IrElement) {
         element.acceptChildren(this, null)
@@ -32,7 +37,6 @@ class ModuleDiGeneratorVisitor(
             } else if (!declaration.isFinalClass) {
                 declaration.error("Module should be final")
             } else {
-                val providedByConstructorInModule = Annotations.getProvidedByConstructor(declaration)
                 val dependencies = dependencyCollector.collectDependencies(
                     module = declaration,
                     visibilityChecker = VisibilityChecker(declaration),
@@ -42,7 +46,7 @@ class ModuleDiGeneratorVisitor(
                 val diFunctions = declaration.functions
                     .filter { function -> Annotations.isProvidedByDi(function) }
                     .map { function ->
-                        val providedByConstructor = providedByConstructorInModule + Annotations.getProvidedByConstructor(function)
+                        val providedByConstructor = getProvidedByConstructor(function)
                         function to dependencies.resolveDependency(function.returnType, function, providedByConstructor) }
                     .toList()
 
@@ -55,5 +59,26 @@ class ModuleDiGeneratorVisitor(
             }
         }
         super.visitClass(declaration)
+    }
+
+    private fun getProvidedByConstructor(function: IrSimpleFunction): Set<IrType> {
+        val inFunction = Annotations.getProvidedByConstructor(function)
+        val inParentClasses = getParentClasses(function).flatMap { clazz ->
+            providedByConstructorInClassCache.getOrPut(clazz) {
+                Annotations.getProvidedByConstructor(clazz)
+            }
+        }
+        val inFile = providedByConstructorInFileCache.getOrPut(function.file) {
+            Annotations.getProvidedByConstructor(function.file)
+        }
+        return (inFile + inParentClasses + inFunction).toSet()
+    }
+
+    private fun getParentClasses(function: IrSimpleFunction): List<IrClass> {
+        val parent = function.parentClassOrNull ?: return emptyList()
+        val result = mutableListOf<IrClass>(parent)
+        while (true) {
+            result.add(result.lastOrNull()?.parentClassOrNull ?: return result)
+        }
     }
 }

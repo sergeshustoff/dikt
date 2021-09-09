@@ -14,7 +14,7 @@ class UseConstructorsTest {
     var folder: TemporaryFolder = TemporaryFolder()
 
     @Test
-    fun `allow constructor calls defined in module`() {
+    fun `allow constructor calls defined in containing class`() {
         val result = compile(
             folder.root,
             SourceFile.kotlin(
@@ -60,6 +60,34 @@ class UseConstructorsTest {
             class MyModule {
 
                 @UseConstructors(Dependency::class)
+                @Create fun injectable(): Injectable
+            }
+            """
+            )
+        )
+        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+    }
+
+    @Test
+    fun `allow constructor calls defined in file`() {
+        val result = compile(
+            folder.root,
+            SourceFile.kotlin(
+                "MyModule.kt",
+                """
+            @file:UseConstructors(Dependency::class)
+            package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.Create
+            import dev.shustoff.dikt.DiModule
+            import dev.shustoff.dikt.UseConstructors
+
+            class Dependency
+
+            class Injectable(val dependency: Dependency)
+
+            @DiModule
+            class MyModule {
+
                 @Create fun injectable(): Injectable
             }
             """
