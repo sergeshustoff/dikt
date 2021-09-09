@@ -20,7 +20,7 @@ class DependencyCollector(
         val isCached = Annotations.isCached(function)
         val functionParams = function.valueParameters + listOfNotNull(function.extensionReceiverParameter)
         if (isCached && functionParams.isNotEmpty()) {
-            function.error("@CreateCached and @ProvidedCached functions can't have parameters")
+            function.error("@CreateSingle and @ProvideSingle functions can't have parameters")
         }
         return collectDependencies(
             visibilityChecker = module?.let { VisibilityChecker(module) } ?: VisibilityChecker(function),

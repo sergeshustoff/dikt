@@ -50,7 +50,7 @@ class DiFunctionGenerator(
             if (Annotations.isCached(declaration)) {
                 // cached functions handled in visitClass
                 if (declaration.parentClassOrNull == null) {
-                    declaration.error("@CreateCached and @ProvidedCached functions can't have parameters")
+                    declaration.error("@CreateSingle and @ProvideSingle functions can't have parameters")
                 }
             } else {
                 buildFunctionBody(declaration.parentClassOrNull, declaration)

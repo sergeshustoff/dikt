@@ -117,7 +117,7 @@ class CreatorTest {
             class Injectable
 
             class MyModule {
-                @CreateCached fun injectable(): Injectable
+                @CreateSingle fun injectable(): Injectable
             }
             """
             )
@@ -138,13 +138,13 @@ class CreatorTest {
             class Injectable(val name: String)
 
             class MyModule {
-                @CreateCached fun injectable(name: String): Injectable
+                @CreateSingle fun injectable(name: String): Injectable
             }
             """
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("@CreateCached and @ProvidedCached functions can't have parameters")
+        Truth.assertThat(result.messages).contains("@CreateSingle and @ProvideSingle functions can't have parameters")
     }
 
     @Test
@@ -219,7 +219,7 @@ class CreatorTest {
 
             class Injectable(val name: String)
 
-            @CreateCached fun String.injectable(): Injectable
+            @CreateSingle fun String.injectable(): Injectable
             """
             )
         )

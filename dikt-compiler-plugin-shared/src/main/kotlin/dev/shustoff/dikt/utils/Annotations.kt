@@ -11,9 +11,9 @@ import org.jetbrains.kotlin.name.FqName
 
 object Annotations {
     private val createAnnotation = FqName("dev.shustoff.dikt.Create")
-    private val createCachedAnnotation = FqName("dev.shustoff.dikt.CreateCached")
-    private val providedAnnotation = FqName("dev.shustoff.dikt.Provided")
-    private val providedCachedAnnotation = FqName("dev.shustoff.dikt.ProvidedCached")
+    private val CreateSingleAnnotation = FqName("dev.shustoff.dikt.CreateSingle")
+    private val providedAnnotation = FqName("dev.shustoff.dikt.Provide")
+    private val ProvideSingleAnnotation = FqName("dev.shustoff.dikt.ProvideSingle")
     private val useModulesAnnotation = FqName("dev.shustoff.dikt.UseModules")
     private val useConstructorsAnnotation = FqName("dev.shustoff.dikt.UseConstructors")
 
@@ -28,19 +28,19 @@ object Annotations {
 
     fun isByDi(descriptor: IrFunction): Boolean {
         return descriptor.annotations.hasAnnotation(createAnnotation)
-                || descriptor.annotations.hasAnnotation(createCachedAnnotation)
+                || descriptor.annotations.hasAnnotation(CreateSingleAnnotation)
                 || descriptor.annotations.hasAnnotation(providedAnnotation)
-                || descriptor.annotations.hasAnnotation(providedCachedAnnotation)
+                || descriptor.annotations.hasAnnotation(ProvideSingleAnnotation)
     }
 
     fun isCached(descriptor: IrFunction): Boolean {
-        return descriptor.hasAnnotation(createCachedAnnotation)
-                || descriptor.annotations.hasAnnotation(providedCachedAnnotation)
+        return descriptor.hasAnnotation(CreateSingleAnnotation)
+                || descriptor.annotations.hasAnnotation(ProvideSingleAnnotation)
     }
 
     fun isProvided(descriptor: IrFunction): Boolean {
         return descriptor.hasAnnotation(providedAnnotation)
-                || descriptor.annotations.hasAnnotation(providedCachedAnnotation)
+                || descriptor.annotations.hasAnnotation(ProvideSingleAnnotation)
     }
 
     fun getProvidedByConstructor(descriptor: IrAnnotationContainer): List<IrType> {

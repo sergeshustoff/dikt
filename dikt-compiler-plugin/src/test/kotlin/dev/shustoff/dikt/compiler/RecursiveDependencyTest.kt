@@ -131,13 +131,13 @@ class RecursiveDependencyTest {
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
-            import dev.shustoff.dikt.Provided
+            import dev.shustoff.dikt.Provide
 
 
             class Injectable()
 
             class MyModule {
-                @Provided fun injectable(): Injectable
+                @Provide fun injectable(): Injectable
                 
                 fun provideInjectable(): Injectable {
                     return injectable()

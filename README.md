@@ -26,12 +26,12 @@ If runtime library isn't added to dependency by plugin ([bug](https://github.com
 
 ## Usage
 
-Create module and declare provided dependencies. Use @Create to generate functions bodies for you.
+Create module provided and declare provided dependencies. Use @Create, @Provide, @CreateSingle and @ProvideSingle to generate functions bodies for you. Use @UseModules and @UseConstructors to control how dependencies are provided and what classes can be created by constructors.
 
-    class CarModule(
+    class SomethingModule(
         val externalDependency: Something,
     ) {
-        @CreateCached fun someSingleton(): SomeSingleton
+        @CreateSingle fun someSingleton(): SomeSingleton
         @Create fun provideSomethingElse(): SomethingElse
     }
   
@@ -42,7 +42,7 @@ Under the hood primary constructor will be called for SomethingElse and SomeSing
 ### @Create
 
 Magical annotation that tells compiler plugin to generate method body using returned type's primary constructor.
-Function parameters are used as provided dependencies, as well as anything inside parameters of types provided in @UseModules annotation and anything inside containing module.
+Function parameters are used as provided dependencies, as well as anything inside parameters of types provided in @UseModules annotation and anything inside containing class.
 
 #### Example:
     
@@ -54,14 +54,10 @@ Code above will be transformed to
 
     fun provideSomething(name: String) = Something(name)
 
-### @CreateCached
-
-Same as @Create, but creates a lazy property and return value from it. Functions marked with @CreateCached don't support parameters.
-
-### @Provided
+### @Provide
 
 Tells compiler plugin to generate method body that returns value of specified type retrieved from dependencies. It's useful when we need to elevate dependencies from nested modules.
-Doesn't call constructor.
+Doesn't call constructor for returned type (unless listed in @UseConstructors).
 
 #### Example:
 
@@ -73,8 +69,12 @@ Doesn't call constructor.
 
     @UseModules(ExternalModule::class)
     class MyModule(val external: ExternalModule) {
-        @Provided fun provideSomething(): Something
+        @Provide fun provideSomething(): Something
     }
+
+### @CreateSingle and @ProvideSingle
+
+Same as @Create and @Provide, but creates a lazy property and return value from it. Functions marked with @CreateSingle and @ProvideSingle don't support parameters.
 
 ### @UseConstructors
 

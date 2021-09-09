@@ -7,7 +7,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
-class ProvidedTest {
+class ProviderTest {
 
     @Rule
     @JvmField
@@ -26,7 +26,7 @@ class ProvidedTest {
             class Dependency
 
             class MyModule(val testArg: String) {
-                @Provided fun dependency(): Dependency
+                @Provide fun dependency(): Dependency
                 
                 fun createDependency(testArg: String) = Dependency()
             }
@@ -49,7 +49,7 @@ class ProvidedTest {
             class Dependency
 
             class MyModule(val testArg: String) {
-                @ProvidedCached fun dependency(): Dependency
+                @ProvideSingle fun dependency(): Dependency
                 
                 fun createDependency(testArg: String) = Dependency()
             }
@@ -72,7 +72,7 @@ class ProvidedTest {
             class Dependency
 
             class MyModule() {
-                @Provided fun dependency(): Dependency
+                @Provide fun dependency(): Dependency
             }
             """
             )
@@ -94,12 +94,12 @@ class ProvidedTest {
             class Injectable(val name: String)
 
             class MyModule {
-                @ProvidedCached fun injectable(name: String): Injectable
+                @ProvideSingle fun injectable(name: String): Injectable
             }
             """
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("@CreateCached and @ProvidedCached functions can't have parameters")
+        Truth.assertThat(result.messages).contains("@CreateSingle and @ProvideSingle functions can't have parameters")
     }
 }
