@@ -22,7 +22,7 @@ class DependencyCollector(
             function.error("Cached @Create functions should not have parameters")
         }
         return collectDependencies(
-            visibilityChecker = VisibilityChecker(function),
+            visibilityChecker = VisibilityChecker(module),
             properties = module.properties,
             functions = module.functions,
             params = function.valueParameters.takeUnless { isCached }.orEmpty(),

@@ -12,8 +12,8 @@ import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.util.constructors
 import org.jetbrains.kotlin.ir.util.primaryConstructor
 
-class AvailableDependencies(
-    errorCollector: ErrorCollector,
+data class AvailableDependencies(
+    private val errorCollector: ErrorCollector,
     private val visibilityChecker: VisibilityChecker,
     private val dependencyMap: Map<DependencyId, List<Dependency>>,
 ) : ErrorCollector by errorCollector {
