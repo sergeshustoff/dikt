@@ -22,7 +22,6 @@ class UseModulesTest {
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
-            import dev.shustoff.dikt.DiModule
             import dev.shustoff.dikt.UseModules
 
             class Dependency
@@ -31,7 +30,6 @@ class UseModulesTest {
 
             class NestedModule(val dependency: Dependency)
 
-            @DiModule
             @UseModules(NestedModule::class)
             class MyModule(val nested: NestedModule) {
                 @Create fun injectable(): Injectable
@@ -52,7 +50,6 @@ class UseModulesTest {
             @file:UseModules(NestedModule::class)
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
-            import dev.shustoff.dikt.DiModule
             import dev.shustoff.dikt.UseModules
 
             class Dependency
@@ -61,7 +58,6 @@ class UseModulesTest {
 
             class NestedModule(val dependency: Dependency)
 
-            @DiModule
             class MyModule(val nested: NestedModule) {
                 @Create fun injectable(): Injectable
             }
@@ -80,7 +76,6 @@ class UseModulesTest {
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
-            import dev.shustoff.dikt.DiModule
             import dev.shustoff.dikt.UseModules
 
             class Dependency
@@ -89,7 +84,6 @@ class UseModulesTest {
 
             class NestedModule(val dependency: Dependency)
 
-            @DiModule
             class MyModule() {
                 @UseModules(NestedModule::class)
                 @Create fun injectable(nested: NestedModule): Injectable
@@ -109,7 +103,6 @@ class UseModulesTest {
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
-            import dev.shustoff.dikt.DiModule
             import dev.shustoff.dikt.UseModules
 
             class Dependency
@@ -118,7 +111,6 @@ class UseModulesTest {
 
             class NestedModule(val dependency: Dependency)
 
-            @DiModule
             class MyModule(val nested: NestedModule) {
                 @UseModules(NestedModule::class)
                 @Create fun injectable(): Injectable
@@ -138,7 +130,6 @@ class UseModulesTest {
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
-            import dev.shustoff.dikt.DiModule
             import dev.shustoff.dikt.UseModules
 
             class Dependency
@@ -147,11 +138,9 @@ class UseModulesTest {
 
             class NestedModule2(val dependency: Dependency)
 
-            @DiModule
             @UseModules(NestedModule2::class)
             class NestedModule(val nested: NestedModule2)
 
-            @DiModule
             @UseModules(NestedModule::class)
             class MyModule(val nested: NestedModule) {
                 @Create fun injectable(): Injectable
@@ -161,7 +150,7 @@ class UseModulesTest {
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
         Truth.assertThat(result.messages)
-            .contains("MyModule.kt: (18, 12): Can't resolve dependency dev.shustoff.dikt.compiler.Dependency")
+            .contains("Can't resolve dependency dev.shustoff.dikt.compiler.Dependency")
     }
 
     @Test
@@ -173,7 +162,6 @@ class UseModulesTest {
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
-            import dev.shustoff.dikt.DiModule
             import dev.shustoff.dikt.UseModules
 
             class Dependency
@@ -188,7 +176,6 @@ class UseModulesTest {
                 fun dependency() = Dependency()            
             }
 
-            @DiModule
             @UseModules(Module1::class, Module2::class)
             class MyModule(
                 val module1: Module1,
@@ -201,7 +188,7 @@ class UseModulesTest {
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
         Truth.assertThat(result.messages)
-            .contains("MyModule.kt: (23, 12): Multiple dependencies provided with type dev.shustoff.dikt.compiler.Dependency: module1.dependency, module2.dependency")
+            .contains("Multiple dependencies provided with type dev.shustoff.dikt.compiler.Dependency: module1.dependency, module2.dependency")
     }
 
 
@@ -214,7 +201,6 @@ class UseModulesTest {
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
-            import dev.shustoff.dikt.DiModule
             import dev.shustoff.dikt.UseModules
 
             class Dependency
@@ -225,7 +211,6 @@ class UseModulesTest {
                 val dependency: Dependency
             }
     
-            @DiModule
             @UseModules(OtherModule::class)
             class MyModule(val other: OtherModule) {
                 @Create fun injectable(): Injectable
@@ -268,10 +253,8 @@ class UseModulesTest {
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
-            import dev.shustoff.dikt.DiModule
             import dev.shustoff.dikt.UseModules
 
-            @DiModule
             @UseModules(OtherModule::class)
             class MyModule(val other: OtherModule, val param: Int) {
                 @Create fun injectable(): Injectable

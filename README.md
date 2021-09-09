@@ -28,7 +28,6 @@ If runtime library isn't added to dependency by plugin ([bug](https://github.com
 
 Create module and declare provided dependencies. Use @Create to generate functions bodies for you.
 
-    @DiModule
     class CarModule(
         val externalDependency: Something,
     ) {
@@ -72,26 +71,10 @@ Doesn't call constructor.
         val something: Something
     )
 
-    @DiModule
     @UseModules(ExternalModule::class)
     class MyModule(val external: ExternalModule) {
         @Provided fun provideSomething(): Something
     }
-
-### @DiModule
-
-Tells compiler plugin to support @Create, @CreateCached and @Provided annotations in this class and to use methods and properties in this class as dependencies. 
- 
-#### Example:
-
-    class Something(val name: String)
-
-    @DiModule
-    class MyModule(val somethingName: String) {
-        @Create fun provideSomething(): Something
-    }
-
-Example above will use somethingName property of MyModule to provide name parameter for Something constructor.
 
 ### @UseConstructors
 
@@ -104,7 +87,6 @@ Might be applied to the whole module or to a single function.
 
     class Something(val dependency: SomeDependency)
 
-    @DiModule
     @UseConstructors(SomeDependency::class)
     class MyModule {
         @Create fun provideSomething(): Something
@@ -114,7 +96,6 @@ Might be applied to the whole module or to a single function.
 
 When applied to module all dependencies of types listed in this annotation parameters will provide all its type visible properties and functions as dependency.
 Dependencies of listed types should be available in module.
-Arguments of @UseModules annotations don't have to be marked with @DiModule annotation, any type might provide all its content.
 
 WARNING: This annotation doesn't work recursively.
 
@@ -124,7 +105,6 @@ WARNING: This annotation doesn't work recursively.
 
     class Something(val name: String)
 
-    @DiModule
     @UseModules(ExternalModule::class)
     class MyModule(
         private val external: ExternalModule

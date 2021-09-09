@@ -15,11 +15,8 @@ object Annotations {
     private val createAnnotation = FqName("dev.shustoff.dikt.Create")
     private val cachedAnnotation = FqName("dev.shustoff.dikt.CreateCached")
     private val providedAnnotation = FqName("dev.shustoff.dikt.Provided")
-    private val moduleAnnotation = FqName("dev.shustoff.dikt.DiModule")
     private val withModulesAnnotation = FqName("dev.shustoff.dikt.UseModules")
     private val provideByConstructorAnnotation = FqName("dev.shustoff.dikt.UseConstructors")
-
-    fun isModule(declaration: IrClass) = declaration.annotations.hasAnnotation(moduleAnnotation)
 
     fun getUsedModules(descriptor: IrAnnotationContainer): List<IrType> {
         val annotation = descriptor.getAnnotation(withModulesAnnotation)
@@ -31,12 +28,9 @@ object Annotations {
     }
 
     fun isByDi(descriptor: IrFunction): Boolean {
-        val containingDeclaration = descriptor.parent
-        return (descriptor.annotations.hasAnnotation(createAnnotation)
+        return descriptor.annotations.hasAnnotation(createAnnotation)
                 || descriptor.annotations.hasAnnotation(cachedAnnotation)
-                || descriptor.annotations.hasAnnotation(providedAnnotation))
-                && containingDeclaration is IrClass
-                && containingDeclaration.annotations.hasAnnotation(moduleAnnotation)
+                || descriptor.annotations.hasAnnotation(providedAnnotation)
     }
 
     fun isCached(descriptor: IrFunction): Boolean {

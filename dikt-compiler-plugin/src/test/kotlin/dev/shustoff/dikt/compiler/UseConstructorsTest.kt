@@ -22,7 +22,6 @@ class UseConstructorsTest {
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
-            import dev.shustoff.dikt.DiModule
             import dev.shustoff.dikt.UseConstructors
 
             class Dependency
@@ -30,7 +29,6 @@ class UseConstructorsTest {
             class Injectable(val dependency: Dependency)
 
             @UseConstructors(Dependency::class)
-            @DiModule
             class MyModule {
                 @Create fun injectable(): Injectable
             }
@@ -49,14 +47,12 @@ class UseConstructorsTest {
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
-            import dev.shustoff.dikt.DiModule
             import dev.shustoff.dikt.UseConstructors
 
             class Dependency
 
             class Injectable(val dependency: Dependency)
 
-            @DiModule
             class MyModule {
 
                 @UseConstructors(Dependency::class)
@@ -78,14 +74,12 @@ class UseConstructorsTest {
             @file:UseConstructors(Dependency::class)
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
-            import dev.shustoff.dikt.DiModule
             import dev.shustoff.dikt.UseConstructors
 
             class Dependency
 
             class Injectable(val dependency: Dependency)
 
-            @DiModule
             class MyModule {
 
                 @Create fun injectable(): Injectable

@@ -22,13 +22,11 @@ class CreatorTest {
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
-            import dev.shustoff.dikt.DiModule
 
             class Dependency
 
             class Injectable(val dependency: Dependency)
 
-            @DiModule
             class MyModule(val dependency: Dependency) {
                 @Create fun injectable(): Injectable
             }
@@ -47,11 +45,9 @@ class CreatorTest {
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
-            import dev.shustoff.dikt.DiModule
 
             class Injectable
 
-            @DiModule
             class MyModule {
                 @Create fun injectable(): Injectable
             }
@@ -70,13 +66,11 @@ class CreatorTest {
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
-            import dev.shustoff.dikt.DiModule
 
             class Dependency()
             
             class Injectable(val dependency: Dependency)
 
-            @DiModule
             class MyModule {
                 @Create fun injectable(): Injectable
             }
@@ -84,7 +78,7 @@ class CreatorTest {
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("MyModule.kt: (10, 12): Can't resolve dependency dev.shustoff.dikt.compiler.Dependency")
+        Truth.assertThat(result.messages).contains("Can't resolve dependency dev.shustoff.dikt.compiler.Dependency")
     }
 
     @Test
@@ -101,7 +95,6 @@ class CreatorTest {
 
             class Injectable(val dependency: Dependency)
 
-            @DiModule
             class MyModule {
                 @Create fun injectable(dependency: Dependency): Injectable
             }
@@ -123,7 +116,6 @@ class CreatorTest {
 
             class Injectable
 
-            @DiModule
             class MyModule {
                 @CreateCached fun injectable(): Injectable
             }
@@ -145,7 +137,6 @@ class CreatorTest {
 
             class Injectable(val name: String)
 
-            @DiModule
             class MyModule {
                 @CreateCached fun injectable(name: String): Injectable
             }

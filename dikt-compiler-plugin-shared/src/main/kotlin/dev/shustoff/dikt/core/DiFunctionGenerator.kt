@@ -37,17 +37,16 @@ class DiFunctionGenerator(
     }
 
     override fun visitClass(module: IrClass) {
-        if (Annotations.isModule(module)) {
+        val diFunctions = module.functions.filter { Annotations.isByDi(it) }.toList()
+        if (diFunctions.isNotEmpty()) {
             if (module.isInterface) {
                 module.error("Interface modules not supported")
             } else if (!module.isFinalClass) {
                 module.error("Module should be final")
             } else {
-                module.functions.filter { Annotations.isByDi(it) }
-                    .toList()
-                    .forEach { function ->
-                        buildFunctionBody(module, function)
-                    }
+                diFunctions.forEach { function ->
+                    buildFunctionBody(module, function)
+                }
             }
         }
         super.visitClass(module)

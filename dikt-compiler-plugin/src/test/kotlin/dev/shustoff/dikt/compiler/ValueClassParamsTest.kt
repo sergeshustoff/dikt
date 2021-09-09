@@ -22,7 +22,6 @@ class ValueClassParamsTest {
                 """
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
-            import dev.shustoff.dikt.DiModule
 
             @JvmInline
             value class Id(val value: String)
@@ -34,7 +33,6 @@ class ValueClassParamsTest {
                 val title: Title
             )
 
-            @DiModule
             class MyModule(
                 val id: Id,
                 val title: Title

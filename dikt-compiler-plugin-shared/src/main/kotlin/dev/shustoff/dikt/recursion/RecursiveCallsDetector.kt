@@ -22,7 +22,7 @@ class RecursiveCallsDetector(
     override fun visitClass(declaration: IrClass) {
         super.visitClass(declaration)
 
-        if (Annotations.isModule(declaration) || declaration.functions.any { Annotations.isByDi(it) }) {
+        if (declaration.functions.any { Annotations.isByDi(it) }) {
             val dependencyMap = collectDependencyMap(declaration)
             findRecursiveCalls(dependencyMap, declaration)
         }

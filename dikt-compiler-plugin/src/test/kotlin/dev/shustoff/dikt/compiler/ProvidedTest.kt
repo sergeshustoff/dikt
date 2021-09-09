@@ -25,7 +25,6 @@ class ProvidedTest {
 
             class Dependency
 
-            @DiModule
             class MyModule(val testArg: String) {
                 @Provided fun dependency(): Dependency
                 
@@ -49,7 +48,6 @@ class ProvidedTest {
 
             class Dependency
 
-            @DiModule
             class MyModule() {
                 @Provided fun dependency(): Dependency
             }
@@ -57,6 +55,6 @@ class ProvidedTest {
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("MyModule.kt: (7, 14): Can't resolve dependency dev.shustoff.dikt.compiler.Dependency")
+        Truth.assertThat(result.messages).contains("Can't resolve dependency dev.shustoff.dikt.compiler.Dependency")
     }
 }
