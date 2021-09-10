@@ -21,15 +21,14 @@ private class ErrorCollectorImpl(
     private val messageCollector: MessageCollector
 ): ErrorCollector {
     override fun IrDeclarationWithName?.error(text: String) {
-        messageCollector.report(CompilerMessageSeverity.ERROR, text, location())
+        messageCollector.report(CompilerMessageSeverity.ERROR, getElement() + text, location())
     }
-
     override fun error(text: String) {
         messageCollector.report(CompilerMessageSeverity.ERROR, text)
     }
 
     override fun IrDeclarationWithName?.info(text: String) {
-        messageCollector.report(CompilerMessageSeverity.INFO, text, location())
+        messageCollector.report(CompilerMessageSeverity.INFO, getElement() + text, location())
     }
 
     override fun info(text: String) {
@@ -38,11 +37,15 @@ private class ErrorCollectorImpl(
 
     private fun IrDeclarationWithName?.location() = this?.let {
         CompilerMessageLocation.create(it.file.path,
-            it.fileEntry.getLineNumber(it.startOffset),
-            it.fileEntry.getColumnNumber(it.startOffset),
+            it.fileEntry.getLineNumber(it.startOffset) + 1,
+            it.fileEntry.getColumnNumber(it.startOffset) + 1,
             null
         )
     }
+
+    private fun IrDeclarationWithName?.getElement() =
+        this?.name?.asString()?.let { "$it: " }.orEmpty()
+
 }
 
 fun errorCollector(
