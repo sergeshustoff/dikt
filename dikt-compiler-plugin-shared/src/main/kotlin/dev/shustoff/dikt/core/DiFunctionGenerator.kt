@@ -68,7 +68,11 @@ class DiFunctionGenerator(
             function.error("Only final functions can have generated body")
             return
         }
-        val dependencies = if (module != null && function.valueParameters.isEmpty() && Annotations.getUsedModules(function).isEmpty()) {
+        val dependencies = if (module != null &&
+            function.valueParameters.isEmpty() &&
+            function.extensionReceiverParameter == null &&
+            Annotations.getUsedModules(function).isEmpty()
+        ) {
             // in most cases we don't need to resolve dependencies again
             dependencyByModuleCache.getOrPut(module) {
                 dependencyCollector.collectDependencies(module, function)

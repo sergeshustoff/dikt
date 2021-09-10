@@ -98,7 +98,7 @@ class InjectionBuilder(
             val functionExpression = IrFunctionExpressionImpl(
                 startOffset,
                 endOffset,
-                IrSimpleTypeImpl(pluginContext.irBuiltIns.function(0), false, emptyList(), emptyList()),
+                pluginContext.irBuiltIns.function(0).owner.typeWith(function.returnType),
                 factoryFunction,
                 IrStatementOrigin.LAMBDA
             )
