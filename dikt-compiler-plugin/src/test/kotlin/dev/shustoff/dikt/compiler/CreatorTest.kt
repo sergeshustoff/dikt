@@ -208,6 +208,31 @@ class CreatorTest {
     }
 
     @Test
+    fun `support extension functions in module with nested modules`() {
+        val result = compile(
+            folder.root,
+            SourceFile.kotlin(
+                "MyModule.kt",
+                """
+            package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.*
+
+            class Dependency()
+            class Injectable(val name: String, val dependency: Dependency)
+
+            class NestedModule(val dependency: Dependency)
+
+            @UseModules(NestedModule::class)
+            class Module(val nestedModule: NestedModule) {
+                @Create fun String.injectable(): Injectable
+            }
+            """
+            )
+        )
+        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+    }
+
+    @Test
     fun `fail on cached extension functions`() {
         val result = compile(
             folder.root,
