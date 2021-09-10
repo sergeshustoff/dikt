@@ -1,3 +1,10 @@
+pluginManagement {
+    repositories {
+        mavenLocal()
+        gradlePluginPortal()
+    }
+}
+
 include ':dikt-annotations'
 include ':dikt-gradle-plugin'
 include ':dikt-compiler-plugin-shared'

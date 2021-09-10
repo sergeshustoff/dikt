@@ -1,16 +1,14 @@
 apply plugin: "java-gradle-plugin"
 apply plugin: "org.jetbrains.kotlin.jvm"
-apply plugin: "maven"
+apply plugin: "maven-publish"
 apply plugin: 'com.gradle.plugin-publish'
 
 group = "io.github.sergeshustoff.dikt"
 archivesBaseName = "dikt-gradle-plugin"
 version = "$dikt_version"
 
-install {
-    repositories.mavenInstaller {
-        pom.artifactId = archivesBaseName
-    }
+repositories {
+    mavenLocal()
 }
 
 gradlePlugin {

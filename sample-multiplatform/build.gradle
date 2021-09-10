@@ -1,6 +1,6 @@
 plugins {
     id('org.jetbrains.kotlin.multiplatform')
-    id('io.github.sergeshustoff.dikt')
+    id('io.github.sergeshustoff.dikt') version("$dikt_sample_version")
 }
 
 kotlin {

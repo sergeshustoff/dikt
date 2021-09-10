@@ -6,14 +6,15 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilerPluginSupportPlugin
 import org.jetbrains.kotlin.gradle.plugin.SubpluginArtifact
 import org.jetbrains.kotlin.gradle.plugin.SubpluginOption
-import java.io.File
 
 class DiktGradlePlugin : KotlinCompilerPluginSupportPlugin {
 
     override fun apply(target: Project) {
         target.extensions.create("dikt", DiktGradleExtension::class.java)
-        target.configurations.filter { it.name.endsWith("implementation", ignoreCase = true) }.forEach {
-            target.dependencies.add(it.name, target.dependencies.create("io.github.sergeshustoff.dikt:dikt-annotations:$version"))
+        target.afterEvaluate { project ->
+            project.configurations.filter { it.name.endsWith("implementation", ignoreCase = true) }.forEach {
+                project.dependencies.add(it.name, project.dependencies.create("io.github.sergeshustoff.dikt:dikt-annotations:$version"))
+            }
         }
     }
 

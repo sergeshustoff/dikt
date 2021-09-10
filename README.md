@@ -11,13 +11,13 @@ Limitations: all annotations required for generating functions should be availab
 ### Why another DI?
 Variety is a good thing, and this library is a bit different from other available multiplatform solutions. It's not better, just different and might be more useful in some cases and less useful in others.
 
-#### Other viable solutions:
+#### Other solutions:
 
 [Kotlin-inject](https://github.com/evant/kotlin-inject) - incredibly powerful DI framework with Dagger-like api;
 
 [Koin](https://github.com/InsertKoinIO/koin), [Kodein-DI](https://github.com/Kodein-Framework/Kodein-DI) and [PopKorn](https://github.com/corbella83/PopKorn) - service locators with great versatility, but without compile time error detection that we used to have in Dagger;
 
-[Dagger](https://github.com/google/dagger) - most popular DI framework for Android, but doesn't support multiplatform yet.
+[Dagger](https://github.com/google/dagger) - most popular DI framework for Android, but it doesn't support multiplatform yet.
 
 ## Installation
 
@@ -26,14 +26,7 @@ In build.gradle file in module add plugin:
 
     plugins {
         ...
-        id 'io.github.sergeshustoff.dikt' version '1.0.0-aplha5'
-    }
-
-Also add runtime library to dependency if it isn't added by plugin ([bug](https://github.com/sergeshustoff/dikt/issues/2)):
-
-    dependencies {
-        ...
-        implementation "com.github.sergeshustoff.dikt:dikt-annotations:1.0.0-alpha6"
+        id 'io.github.sergeshustoff.dikt' version '1.0.0-aplha6'
     }
 
 #### IDEA plugin
@@ -94,7 +87,7 @@ Doesn't call constructor for returned type unless it's listed in @UseConstructor
 
 ### @CreateSingle and @ProvideSingle
 
-Same as @Create and @Provide, but creates a lazy property and return value from it. Functions marked with @CreateSingle and @ProvideSingle don't support parameters.
+Same as @Create and @Provide, but each annotation tells compiler to create a lazy property in containing class and return value from that property. Functions marked with @CreateSingle and @ProvideSingle don't support parameters.
 
 ### @UseConstructors
 

@@ -1,8 +1,7 @@
 buildscript {
     repositories {
-        mavenLocal()
-        maven { url "https://plugins.gradle.org/m2/" }
         mavenCentral()
+        maven { url "https://plugins.gradle.org/m2/" }
         jcenter()
     }
     dependencies {
@@ -10,7 +9,6 @@ buildscript {
         classpath 'com.github.jengelman.gradle.plugins:shadow:5.0.0'
         classpath 'com.vanniktech:gradle-maven-publish-plugin:0.17.0'
         classpath 'com.gradle.publish:plugin-publish-plugin:0.15.0'
-        classpath "io.github.sergeshustoff.dikt:dikt-gradle-plugin:$dikt_sample_version"
     }
 }
 allprojects {
