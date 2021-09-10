@@ -1,6 +1,7 @@
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.github.sergeshustoff.dikt/dikt-compiler-plugin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.github.sergeshustoff.dikt/dikt-compiler-plugin)
 [![gradle plugin](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/io/github/sergeshustoff/dikt/dikt-gradle-plugin/maven-metadata.xml.svg?label=gradle%20plugin)](https://plugins.gradle.org/plugin/io.github.sergeshustoff.dikt)
 [![IDEA plugin](https://img.shields.io/jetbrains/plugin/v/17533-di-kt.svg)](https://plugins.jetbrains.com/plugin/17533-di-kt)
+![Kotlin version](https://kotlin-version.aws.icerock.dev/kotlin-version?group=io.github.sergeshustoff.dikt&name=dikt-compiler-plugin)
 
 # DI.kt
 Simple DI with compile-time dependency graph validation for kotlin multiplatform.
