@@ -10,7 +10,9 @@ It uses IR to create method's bodies with dependency injection.
 Limitations: all annotations required for generating functions should be available in the same file as generated function. It can use methods and constructors from outside, but not annotations, because adding and removing annotations in other files would not trigger recompilation for generated function and combined with incremental compilation it would cause errors.
 
 ### Why another DI?
-Variety is a good thing, and this library is a bit different from other available multiplatform solutions. It's not better, just different and might be more useful in some cases and less useful in others.
+DI.kt is smaller and simpler than some solutions, but it verifies dependency graph in compile time like a serious DI framework. 
+DI.kt does not generate files during compilation, witch makes compilation faster (presumably, not tested).
+Because of its simplicity it might be useful for minimalistic DI in libraries and feature-modules, but it can be used in big project too.
 
 #### Other solutions:
 
@@ -46,6 +48,12 @@ Create module and declare provided dependencies. Use @Create, @Provide, @CreateS
     }
   
 Under the hood primary constructor will be called for SomethingElse and SomeSingleton. If constructor requires some parameters - they will be retrieved form module's properties and functions.
+
+### Module
+Any class or object that has a function marked with @Create, @Provide, @CreateSingle or @ProvideSingle is essentially a module. We don't need additional annotation for it, but if you need content of another 'module' provided as dependency in generated functions, you need to mark that type as module using annotation @UseModules on function, its containing class or file.
+
+### Singleton
+There are no true singletons in DI.kt, but instead you can use @CreateSingle or @ProvideSingle annotations to generate functions backed by lazy properties. Such function will return the same instance each time they called as long as they called for the same instance of containing class. Effectively it gives each module a scope of their own and makes the scoping more understandable.
 
 ## Annotations
 
