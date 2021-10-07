@@ -24,6 +24,9 @@ Because of its simplicity it might be useful for minimalistic DI in libraries an
 
 [Dagger](https://github.com/google/dagger) - most popular DI framework for Android, but it doesn't support multiplatform yet.
 
+### Sample
+I forked kotlin multiplatform sample [here](https://github.com/sergeshustoff/PeopleInSpace-dikt-sample) and replaced di with DI.kt. It's clumsy, but it shows that library works on different platforms. 
+
 ## Installation
 
 #### Gradle plugin:
