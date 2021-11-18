@@ -23,15 +23,15 @@ jobs:
     - name: Setup XCode
       uses: maxim-lobanov/setup-xcode@v1
       with:
-        xcode-version: '12.5'
+        xcode-version: latest-stable
     - name: Publish to Maven Central
       run: gradle publishAllPublicationsToMavenCentralRepository
       env: 
-        ORG_GRADLE_PROJECT_signingInMemoryKey:${{secrets.GPG_PRIVATE_KEY}}
-        ORG_GRADLE_PROJECT_signingInMemoryKeyId:${{secrets.SIGNING_KEYID}}
-        ORG_GRADLE_PROJECT_signingInMemoryPassword:${{secrets.MAVEN_GPG_PASSPHRASE}}
-        ORG_GRADLE_PROJECT_mavenCentralUsername:${{secrets.MAVENCENTRALUSERNAME}}
-        ORG_GRADLE_PROJECT_mavenCentralPassword:${{secrets.MAVENCENTRALPASSWORD}}
+        ORG_GRADLE_PROJECT_signingInMemoryKey: ${{secrets.GPG_PRIVATE_KEY}}
+        ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{secrets.SIGNING_KEYID}}
+        ORG_GRADLE_PROJECT_signingInMemoryPassword: ${{secrets.MAVEN_GPG_PASSPHRASE}}
+        ORG_GRADLE_PROJECT_mavenCentralUsername: ${{secrets.MAVENCENTRALUSERNAME}}
+        ORG_GRADLE_PROJECT_mavenCentralPassword: ${{secrets.MAVENCENTRALPASSWORD}}
     - name: Publish to Gradle Plugins
       run: gradle :dikt-gradle-plugin:publish -Pgradle.publish.key=${{secrets.GRADLE_PUBLISH_KEY}} -Pgradle.publish.secret=${{secrets.GRADLE_PUBLISH_SECRET}}
     - name: Build IDEA Plugin
