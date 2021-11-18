@@ -6,7 +6,7 @@ plugins {
 version dikt_version
 
 dependencies {
-    compile project(':dikt-compiler-plugin-analysis')
+    implementation project(':dikt-compiler-plugin-analysis')
 }
 
 intellij {
