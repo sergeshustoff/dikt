@@ -25,7 +25,7 @@ jobs:
       env: 
         ORG_GRADLE_PROJECT_signingInMemoryKey: ${{secrets.GPG_PRIVATE_KEY}}
         ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{secrets.SIGNING_KEYID}}
-        ORG_GRADLE_PROJECT_signingInMemoryPassword: ${{secrets.MAVEN_GPG_PASSPHRASE}}
+        ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{secrets.MAVEN_GPG_PASSPHRASE}}
         ORG_GRADLE_PROJECT_mavenCentralUsername: ${{secrets.MAVENCENTRALUSERNAME}}
         ORG_GRADLE_PROJECT_mavenCentralPassword: ${{secrets.MAVENCENTRALPASSWORD}}
     - name: Publish to Gradle Plugins
