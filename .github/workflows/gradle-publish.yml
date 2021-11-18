@@ -7,7 +7,7 @@ on:
 jobs:
   build:
 
-    runs-on: macos-latest
+    runs-on: macos-11
     permissions:
       contents: read
       packages: write
@@ -20,10 +20,6 @@ jobs:
       with:
         java-version: '11'
         distribution: 'adopt'
-    - name: Setup XCode
-      uses: maxim-lobanov/setup-xcode@v1
-      with:
-        xcode-version: latest-stable
     - name: Publish to Maven Central
       run: gradle publishAllPublicationsToMavenCentralRepository
       env: 
