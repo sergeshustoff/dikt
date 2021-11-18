@@ -31,7 +31,7 @@ jobs:
         ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEYID }}
 
     - name: Close maven repo
-      run: gradlew closeAndReleaseRepository --no-daemon --no-parallel
+      run: gradle closeAndReleaseRepository --no-daemon --no-parallel
       env:
         ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVENCENTRALUSERNAME }}
         ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVENCENTRALPASSWORD }}
