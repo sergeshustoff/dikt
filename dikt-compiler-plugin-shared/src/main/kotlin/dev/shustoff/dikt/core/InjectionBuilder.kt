@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.IrFunctionExpressionImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
 import org.jetbrains.kotlin.ir.types.getClass
-import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.kotlinFqName
 import org.jetbrains.kotlin.ir.util.properties
@@ -98,7 +97,7 @@ class InjectionBuilder(
             val functionExpression = IrFunctionExpressionImpl(
                 startOffset,
                 endOffset,
-                pluginContext.irBuiltIns.function(0).owner.typeWith(function.returnType),
+                pluginContext.irBuiltIns.functionN(0).typeWith(function.returnType),
                 factoryFunction,
                 IrStatementOrigin.LAMBDA
             )
