@@ -12,7 +12,7 @@ Limitations: all annotations required for generating functions should be availab
 ### Why another DI?
 DI.kt is smaller and simpler than some solutions, but it verifies dependency graph in compile time like a serious DI framework. 
 
-DI.kt does not generate files during compilation, witch makes compilation faster (presumably, not tested).
+DI.kt does not generate files during compilation, which makes compilation faster (presumably, not tested).
 
 Because of its simplicity it might be useful for minimalistic DI in libraries and feature-modules, but it can be used in big project too.
 
