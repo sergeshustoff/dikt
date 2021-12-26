@@ -5,19 +5,29 @@ import org.junit.Test
 
 class TestCarModule {
     private val module = CarModule(EngineModule(EngineNameModuleImpl("test engine")))
+
+    @Test
+    fun `car with model created successfully`() {
+        val car = module.car("Awesome model")
+        assertThat(car).isNotNull()
+        assertThat(car.model).isEqualTo("Awesome model")
+    }
+
     @Test
     fun `car created successfully`() {
-        assertThat(module.car()).isNotNull()
+        val car = module.carUnknownModel()
+        assertThat(car).isNotNull()
+        assertThat(car.model).isEqualTo("unknown")
     }
 
     @Test
     fun `cars have single owner`() {
-        assertThat(module.car().owner).isSameInstanceAs(module.car().owner)
+        assertThat(module.carUnknownModel().owner).isSameInstanceAs(module.carUnknownModel().owner)
     }
 
     @Test
     fun `different cars are produced`() {
-        assertThat(module.car()).isNotSameInstanceAs(module.car())
+        assertThat(module.carUnknownModel()).isNotSameInstanceAs(module.carUnknownModel())
     }
 
     @Test

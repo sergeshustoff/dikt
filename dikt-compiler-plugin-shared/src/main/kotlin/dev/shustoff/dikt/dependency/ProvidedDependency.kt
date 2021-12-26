@@ -4,18 +4,16 @@ import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.types.IrType
 import java.util.*
 
-sealed class Dependency {
+sealed class ProvidedDependency {
 
     abstract val id: DependencyId
 
     abstract val irElement: IrDeclarationWithName
 
-    abstract val name: String
-
-    open val fromNestedModule: Dependency? = null
+    open val fromNestedModule: ProvidedDependency? = null
 
     fun nameWithNestedChain(): String? {
-        var dependency: Dependency? = this
+        var dependency: ProvidedDependency? = this
         val list = LinkedList<String>()
         while (dependency != null) {
             list.add(0, dependency.irElement.name.asString())
@@ -24,8 +22,8 @@ sealed class Dependency {
         return list.takeUnless { it.isEmpty() }?.joinToString(separator = ".")
     }
 
-    fun isInNestedModulePath(path: Dependency): Boolean {
-        var node: Dependency? = path
+    fun isInNestedModulePath(path: ProvidedDependency): Boolean {
+        var node: ProvidedDependency? = path
         while (node != null) {
             if (fromNestedModule == node) {
                 return true
@@ -41,47 +39,31 @@ sealed class Dependency {
 
     data class Parameter(
         val parameter: IrValueParameter
-    ) : Dependency() {
+    ) : ProvidedDependency() {
         override val id: DependencyId = DependencyId(parameter.type)
         override val irElement: IrDeclarationWithName = parameter
-        override val name: String = parameter.name.asString()
-
         override fun getRequiredParams(): List<IrValueParameter> = emptyList()
-
         override fun getRequiredExtensionReceiver(): IrValueParameter? = null
     }
 
     data class Property(
         val property: IrProperty,
-        override val fromNestedModule: Dependency?,
+        override val fromNestedModule: ProvidedDependency?,
         val returnType: IrType = property.getter!!.returnType
-    ) : Dependency() {
+    ) : ProvidedDependency() {
         override val id: DependencyId = DependencyId(returnType)
         override val irElement: IrDeclarationWithName = property
-        override val name: String = property.name.asString()
-
         override fun getRequiredParams(): List<IrValueParameter> = emptyList()
         override fun getRequiredExtensionReceiver(): IrValueParameter? = property.getter?.extensionReceiverParameter
     }
 
-    data class Constructor(
-        val constructor: IrConstructor,
-    ) : Dependency() {
-        override val id: DependencyId = DependencyId(constructor.returnType)
-        override val irElement: IrDeclarationWithName = constructor
-        override val name: String = constructor.name.asString()
-        override fun getRequiredParams(): List<IrValueParameter> = constructor.valueParameters
-        override fun getRequiredExtensionReceiver(): IrValueParameter? = null
-    }
-
     data class Function(
         val function: IrFunction,
-        override val fromNestedModule: Dependency?,
+        override val fromNestedModule: ProvidedDependency?,
         val returnType: IrType = function.returnType
-    ) : Dependency() {
+    ) : ProvidedDependency() {
         override val id: DependencyId = DependencyId(returnType)
         override val irElement: IrDeclarationWithName = function
-        override val name: String = function.name.asString()
         override fun getRequiredParams(): List<IrValueParameter> = function.valueParameters
         override fun getRequiredExtensionReceiver(): IrValueParameter? = function.extensionReceiverParameter
     }

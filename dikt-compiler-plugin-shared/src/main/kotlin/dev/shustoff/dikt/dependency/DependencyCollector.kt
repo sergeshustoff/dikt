@@ -38,10 +38,10 @@ class DependencyCollector(
         params: List<IrValueParameter> = emptyList(),
         moduleTypes: Set<IrType> = emptySet()
     ): AvailableDependencies {
-        val fullDependencyMap: MutableMap<DependencyId, MutableList<Dependency>> = mutableMapOf()
+        val fullDependencyMap: MutableMap<DependencyId, MutableList<ProvidedDependency>> = mutableMapOf()
         properties
             .forEach { property ->
-                val dependency = Dependency.Property(property, null)
+                val dependency = ProvidedDependency.Property(property, null)
                 fullDependencyMap.getOrPut(dependency.id) { mutableListOf() }.add(dependency)
             }
 
@@ -51,7 +51,7 @@ class DependencyCollector(
             }
         }
         params.forEach {
-            val dependency = Dependency.Parameter(it)
+            val dependency = ProvidedDependency.Parameter(it)
             fullDependencyMap.getOrPut(dependency.id) { mutableListOf() }.add(dependency)
         }
 
@@ -94,10 +94,10 @@ class DependencyCollector(
     private fun getModuleRawProperties(
         module: Module,
         visibilityChecker: VisibilityChecker
-    ): Sequence<Dependency.Property> = module.clazz.properties
+    ): Sequence<ProvidedDependency.Property> = module.clazz.properties
         .filter { visibilityChecker.isVisible(it) }
         .map {
-            Dependency.Property(
+            ProvidedDependency.Property(
                 it,
                 module.path,
                 returnType = module.typeMap[it.getter!!.returnType] ?: it.getter!!.returnType
@@ -111,19 +111,19 @@ class DependencyCollector(
         .filter { visibilityChecker.isVisible(it) }
         .mapNotNull { createFunctionDependency(it, module) }
 
-    private fun createFunctionDependency(it: IrSimpleFunction, module: Module? = null): Dependency.Function? {
+    private fun createFunctionDependency(it: IrSimpleFunction, module: Module? = null): ProvidedDependency.Function? {
         if (!isDependencyFunction(it)) return null
-        return Dependency.Function(it, module?.path, returnType = module?.typeMap?.get(it.returnType) ?: it.returnType)
+        return ProvidedDependency.Function(it, module?.path, returnType = module?.typeMap?.get(it.returnType) ?: it.returnType)
     }
 
     private fun isDependencyFunction(it: IrSimpleFunction) =
         !it.isFakeOverride && !it.isOperator && !it.isSuspend && !it.isInfix && !it.returnType.isUnit() && !it.returnType.isNothing()
 
-    private fun getModuleClassDescriptor(dependency: Dependency, moduleTypes: Set<IrType>) =
+    private fun getModuleClassDescriptor(dependency: ProvidedDependency, moduleTypes: Set<IrType>) =
         dependency.id.type.takeIf { it.classOrNull?.defaultType in moduleTypes }?.getClass()
 
     private data class Module(
-        val path: Dependency,
+        val path: ProvidedDependency,
         val clazz: IrClass,
     ) {
         val typeMap: Map<IrType?, IrType?> by lazy {

@@ -1,6 +1,6 @@
 package dev.shustoff.dikt.core
 
-import dev.shustoff.dikt.dependency.Dependency
+import dev.shustoff.dikt.dependency.ProvidedDependency
 import dev.shustoff.dikt.dependency.ResolvedDependency
 import dev.shustoff.dikt.message_collector.ErrorCollector
 import dev.shustoff.dikt.utils.Annotations
@@ -122,60 +122,71 @@ class InjectionBuilder(
             )
         } else {
             // there should be compilation error anyway in resolveDependency call
-            +irThrow(irNull())
+            +irThrow(irNull()) //TODO:later throw a proper error just in case
         }
     }
 
     private fun IrBlockBodyBuilder.makeDependencyCall(
-        dependency: ResolvedDependency,
+        resolved: ResolvedDependency,
         receiverParameter: IrValueParameter?,
         forDiFunction: IrFunction
     ): IrExpression {
-        return when (dependency.dependency) {
-            is Dependency.Constructor -> makeConstructorDependencyCall(
-                dependency.dependency,
-                dependency.params,
+        return when (resolved) {
+            is ResolvedDependency.Constructor -> makeConstructorDependencyCall(
+                resolved.constructor,
+                resolved.params,
                 receiverParameter,
                 forDiFunction
             )
-            is Dependency.Function -> makeFunctionDependencyCall(
-                dependency.dependency,
-                receiverParameter,
-                dependency.params,
-                dependency.extensionParam,
-                dependency.nestedModulesChain,
-                forDiFunction
-            )
-            is Dependency.Property -> makePropertyDependencyCall(
-                dependency.dependency,
-                receiverParameter,
-                dependency.extensionParam,
-                dependency.nestedModulesChain,
-                forDiFunction
-            )
-            is Dependency.Parameter -> makeParameterCall(dependency.dependency)
+            is ResolvedDependency.ParameterDefaultValue -> {
+                // this should not happen
+                forDiFunction.error("Default value wasn't handled correctly, please report bug in DI.kt library")
+                resolved.defaultValue.expression
+            }
+            is ResolvedDependency.Provided -> {
+                when (val provided = resolved.provided) {
+                    is ProvidedDependency.Function -> makeFunctionDependencyCall(
+                        provided,
+                        receiverParameter,
+                        resolved.params,
+                        resolved.extensionParam,
+                        resolved.nestedModulesChain,
+                        forDiFunction
+                    )
+                    is ProvidedDependency.Property -> makePropertyDependencyCall(
+                        provided,
+                        receiverParameter,
+                        resolved.extensionParam,
+                        resolved.nestedModulesChain,
+                        forDiFunction
+                    )
+                    is ProvidedDependency.Parameter -> makeParameterCall(provided)
+                }
+            }
         }
     }
 
-    private fun IrBlockBodyBuilder.makeParameterCall(dependency: Dependency.Parameter): IrExpression {
+    private fun IrBlockBodyBuilder.makeParameterCall(dependency: ProvidedDependency.Parameter): IrExpression {
         return irGet(dependency.parameter)
     }
 
     private fun IrBlockBodyBuilder.makeConstructorDependencyCall(
-        dependency: Dependency.Constructor,
+        constructor: IrConstructor,
         params: List<ResolvedDependency>,
         receiverParameter: IrValueParameter?,
         forDiFunction: IrFunction
     ): IrConstructorCall {
-        return irCallConstructor(dependency.constructor.symbol, emptyList()).also {
+        return irCallConstructor(constructor.symbol, emptyList()).also {
             for ((index, resolved) in params.withIndex()) {
-                it.putValueArgument(index, makeDependencyCall(resolved, receiverParameter, forDiFunction))
+                if (resolved !is ResolvedDependency.ParameterDefaultValue) {
+                    it.putValueArgument(index, makeDependencyCall(resolved, receiverParameter, forDiFunction))
+                }
             }
         }
     }
 
     private fun IrBlockBodyBuilder.makeFunctionDependencyCall(
-        dependency: Dependency.Function,
+        dependency: ProvidedDependency.Function,
         receiverParameter: IrValueParameter?,
         params: List<ResolvedDependency>,
         extensionParam: ResolvedDependency?,
@@ -184,7 +195,9 @@ class InjectionBuilder(
     ): IrFunctionAccessExpression {
         val call = irCall(dependency.function.symbol, dependency.returnType).also {
             for ((index, resolved) in params.withIndex()) {
-                it.putValueArgument(index, makeDependencyCall(resolved, receiverParameter, forDiFunction))
+                if (resolved !is ResolvedDependency.ParameterDefaultValue) {
+                    it.putValueArgument(index, makeDependencyCall(resolved, receiverParameter, forDiFunction))
+                }
             }
         }
         call.extensionReceiver = extensionParam?.let { makeDependencyCall(it, receiverParameter, forDiFunction) }
@@ -195,7 +208,7 @@ class InjectionBuilder(
     }
 
     private fun IrBlockBodyBuilder.makePropertyDependencyCall(
-        dependency: Dependency.Property,
+        dependency: ProvidedDependency.Property,
         receiverParameter: IrValueParameter?,
         extensionParam: ResolvedDependency?,
         nestedModulesChain: ResolvedDependency?,

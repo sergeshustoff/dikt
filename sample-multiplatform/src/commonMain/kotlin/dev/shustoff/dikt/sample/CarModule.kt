@@ -11,7 +11,9 @@ class CarModule(
     @CreateSingle
     fun owner(): CarOwner
 
-    @Create fun car(): Car
+    @Create fun carUnknownModel(): Car
+
+    @Create fun car(model: String): Car
 
     @Create fun getGarage(): Garage
 }
