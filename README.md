@@ -27,6 +27,9 @@ Because of its simplicity it might be useful for minimalistic DI in libraries an
 ### Sample
 I forked kotlin multiplatform sample [here](https://github.com/sergeshustoff/PeopleInSpace-dikt-sample) and replaced di with DI.kt. It's clumsy, but it shows that library works on different platforms. 
 
+### Articles
+[DI.kt, One of the First Kotlin Multiplatform DI Libraries](https://medium.com/wriketechclub/di-kt-one-of-the-first-kotlin-multiplatform-di-libraries-5a5fd8665713)
+
 ## Installation
 
 #### Gradle plugin:
