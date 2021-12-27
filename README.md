@@ -34,7 +34,7 @@ In build.gradle file in module add plugin:
 
     plugins {
         ...
-        id 'io.github.sergeshustoff.dikt' version '1.0.0-aplha6'
+        id 'io.github.sergeshustoff.dikt' version '1.0.0-aplha8'
     }
 
 #### IDEA plugin
