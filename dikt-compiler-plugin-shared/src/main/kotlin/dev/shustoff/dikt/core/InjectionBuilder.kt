@@ -8,15 +8,19 @@ import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.backend.common.lower.irThrow
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
+import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.builders.declarations.addField
 import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
+import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrFunctionExpressionImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
 import org.jetbrains.kotlin.ir.types.getClass
+import org.jetbrains.kotlin.ir.types.isNullableString
 import org.jetbrains.kotlin.ir.types.typeWith
+import org.jetbrains.kotlin.ir.util.constructors
 import org.jetbrains.kotlin.ir.util.kotlinFqName
 import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.name.FqName
@@ -89,8 +93,7 @@ class InjectionBuilder(
                             makeDependencyCall(dependency, dispatchReceiverParameter ?: module.thisReceiver!!, function)
                         )
                     } else {
-                        // there should be compilation error anyway in resolveDependency call
-                        +irThrow(irNull()) //TODO:later throw a proper error just in case
+                        +irThrowNoDependencyException(function)
                     }
                 }
             }
@@ -121,9 +124,24 @@ class InjectionBuilder(
                 makeDependencyCall(dependency, function.dispatchReceiverParameter ?: module?.thisReceiver, function)
             )
         } else {
-            // there should be compilation error anyway in resolveDependency call
-            +irThrow(irNull()) //TODO:later throw a proper error just in case
+            +irThrowNoDependencyException(function)
         }
+    }
+
+    private fun IrBlockBodyBuilder.irThrowNoDependencyException(function: IrFunction): IrStatement {
+        val constructor = context.irBuiltIns.throwableClass.owner.constructors
+            .firstOrNull { it.valueParameters.size == 1 && it.valueParameters.first().type.isNullableString() }
+        if (!hasErrors()) {
+            function.error("No dependency found. Please report bug to DI.kt library, more detailed message is missing for some reason")
+        }
+        return irThrow(irCallConstructor(constructor!!.symbol, emptyList()).apply {
+            putValueArgument(
+                0, IrConstImpl.string(
+                    startOffset, endOffset, context.irBuiltIns.stringType,
+                    "Missing dependency in function ${function.name.asString()}, should be compilation error. Please report bug to DI.kt library"
+                )
+            )
+        })
     }
 
     private fun IrBlockBodyBuilder.makeDependencyCall(

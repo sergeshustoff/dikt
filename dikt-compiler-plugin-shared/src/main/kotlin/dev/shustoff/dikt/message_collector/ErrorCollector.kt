@@ -15,14 +15,20 @@ interface ErrorCollector {
     fun IrDeclarationWithName?.error(text: String)
     fun info(text: String)
     fun error(text: String)
+    fun hasErrors(): Boolean
 }
 
 private class ErrorCollectorImpl(
     private val messageCollector: MessageCollector
 ): ErrorCollector {
+    override fun hasErrors(): Boolean {
+        return messageCollector.hasErrors()
+    }
+
     override fun IrDeclarationWithName?.error(text: String) {
         messageCollector.report(CompilerMessageSeverity.ERROR, getElement() + text, location())
     }
+
     override fun error(text: String) {
         messageCollector.report(CompilerMessageSeverity.ERROR, text)
     }
