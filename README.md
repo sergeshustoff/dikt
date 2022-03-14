@@ -37,7 +37,7 @@ In build.gradle file in module add plugin:
 
     plugins {
         ...
-        id 'io.github.sergeshustoff.dikt' version '1.0.0-alpha8'
+        id 'io.github.sergeshustoff.dikt' version '1.0.0-alpha9'
     }
 
 #### IDEA plugin
