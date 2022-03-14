@@ -23,6 +23,8 @@ jobs:
       with:
         java-version: '11'
         distribution: 'adopt'
+    - name: Build before publinshing
+      run: gradle :dikt-annotations:build :dikt-compiler-plugin-analysis:build :dikt-compiler-plugin-shared:build :dikt-compiler-plugin:build :dikt-compiler-plugin-native:build
     - name: Publish to Maven Central
       run: gradle publishAllPublicationsToMavenCentralRepository --no-daemon --no-parallel
       env: 
