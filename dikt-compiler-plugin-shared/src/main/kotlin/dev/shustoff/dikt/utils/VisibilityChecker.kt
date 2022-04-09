@@ -13,11 +13,11 @@ class VisibilityChecker private constructor(
     constructor(function: IrFunction) : this({ function.toIrBasedDescriptor() })
 
     fun isVisible(target: IrConstructor): Boolean =
-        target.visibility.isVisible(null, target.toIrBasedDescriptor(), visibleFrom())
+        target.visibility.isVisible(null, target.toIrBasedDescriptor(), visibleFrom(), false)
 
     fun isVisible(target: IrProperty): Boolean =
-        target.visibility.isVisible(null, target.toIrBasedDescriptor(), visibleFrom())
+        target.visibility.isVisible(null, target.toIrBasedDescriptor(), visibleFrom(), false)
 
     fun isVisible(target: IrFunction): Boolean =
-        target.visibility.isVisible(null, target.toIrBasedDescriptor(), visibleFrom())
+        target.visibility.isVisible(null, target.toIrBasedDescriptor(), visibleFrom(), false)
 }
