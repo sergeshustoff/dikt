@@ -26,7 +26,7 @@ jobs:
     - name: Build before publinshing
       run: gradle :dikt-annotations:build :dikt-compiler-plugin-analysis:build :dikt-compiler-plugin:build
     - name: Publish to Maven Central
-      run: gradle publishAllPublicationsToMavenCentralRepository --no-daemon --no-parallel
+      run: gradle publish --no-daemon --no-parallel
       env: 
         ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVENCENTRALUSERNAME }}
         ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVENCENTRALPASSWORD }}
