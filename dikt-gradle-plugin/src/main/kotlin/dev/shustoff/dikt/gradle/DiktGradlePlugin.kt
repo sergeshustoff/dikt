@@ -32,18 +32,12 @@ class DiktGradlePlugin : KotlinCompilerPluginSupportPlugin {
         )
     }
 
-    override fun getPluginArtifactForNative(): SubpluginArtifact = SubpluginArtifact(
-        groupId = "io.github.sergeshustoff.dikt",
-        artifactId = "dikt-compiler-plugin-native",
-        version = version
-    )
-
     override fun isApplicable(kotlinCompilation: KotlinCompilation<*>): Boolean {
         return kotlinCompilation.target.project.plugins.hasPlugin(DiktGradlePlugin::class.java)
     }
 
     companion object {
-        private const val version = "1.0.1"
+        private const val version = "1.0.2-alpha1"
     }
 }
 

@@ -7,8 +7,6 @@ pluginManagement {
 
 include ':dikt-annotations'
 include ':dikt-gradle-plugin'
-include ':dikt-compiler-plugin-shared'
-include ':dikt-compiler-plugin-native'
 include ':dikt-compiler-plugin-analysis'
 include ':dikt-compiler-plugin'
 include ':dikt-idea-plugin'

@@ -3,7 +3,7 @@ apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: "com.vanniktech.maven.publish"
 
 dependencies {
-    implementation project(':dikt-compiler-plugin-shared')
+    implementation project(":dikt-compiler-plugin-analysis")
     compileOnly "org.jetbrains.kotlin:kotlin-compiler-embeddable"
 
     testImplementation 'org.jetbrains.kotlin:kotlin-compiler-embeddable'
