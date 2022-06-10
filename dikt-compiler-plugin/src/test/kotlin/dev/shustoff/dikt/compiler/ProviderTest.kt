@@ -3,10 +3,12 @@ package dev.shustoff.dikt.compiler
 import com.google.common.truth.Truth
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
+@Ignore
 class ProviderTest {
 
     @Rule

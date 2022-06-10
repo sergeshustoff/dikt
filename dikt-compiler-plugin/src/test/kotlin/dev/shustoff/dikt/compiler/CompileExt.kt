@@ -14,6 +14,5 @@ fun compile(root: File, vararg sourceFiles: SourceFile, useIR: Boolean = true): 
         sources = sourceFiles.asList()
         verbose = false
         jvmTarget = JvmTarget.JVM_1_8.description
-        this.useIR = useIR
     }.compile()
 }
