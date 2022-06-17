@@ -32,12 +32,23 @@ I forked kotlin multiplatform sample [here](https://github.com/sergeshustoff/Peo
 
 ## Installation
 
+#### Compatibility with kotlin versions:
+
+Because library uses undocumented compiler api that often changes each library version works well only with specific kotlin versions, check table bellow to decide witch library version to use.
+
+| DI.kt version | Supported kotlin versions |
+| ------------- | ------------------------- |
+| 1.0.2         | 1.7.0                     |
+| 1.0.1         | 1.6.2x                    |
+| 1.0.0-alpha9  | 1.6.10                    |
+| 1.0.0-alpha7  | 1.6.0                     |
+
 #### Gradle plugin:
 In build.gradle file in module add plugin:
 
     plugins {
         ...
-        id 'io.github.sergeshustoff.dikt' version '1.0.1'
+        id 'io.github.sergeshustoff.dikt' version '1.0.2'
     }
 
 #### IDEA plugin
