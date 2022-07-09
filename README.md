@@ -38,7 +38,7 @@ Because library uses undocumented compiler api that often changes each library v
 
 | DI.kt version | Supported kotlin versions |
 | ------------- | ------------------------- |
-| 1.0.2         | 1.7.0                     |
+| 1.0.2         | 1.7.0 - 1.7.10            |
 | 1.0.1         | 1.6.2x                    |
 | 1.0.0-alpha9  | 1.6.10                    |
 | 1.0.0-alpha7  | 1.6.0                     |
