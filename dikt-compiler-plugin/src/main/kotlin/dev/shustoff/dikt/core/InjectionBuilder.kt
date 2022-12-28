@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.constructors
 import org.jetbrains.kotlin.ir.util.kotlinFqName
 import org.jetbrains.kotlin.ir.util.properties
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
@@ -32,7 +33,7 @@ class InjectionBuilder(
 ) : ErrorCollector by errorCollector {
 
     private val lazyFunction by lazy {
-        pluginContext.referenceFunctions(FqName("kotlin.lazy")).firstOrNull()?.owner
+        pluginContext.referenceFunctions(CallableId(FqName("kotlin"), Name.identifier("lazy"))).firstOrNull()?.owner
     }
 
     fun buildModuleFunctionInjections(
