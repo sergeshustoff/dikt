@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.extensions.StorageComponentContainerContributor
 
 @OptIn(ExperimentalCompilerApi::class)
 class DiktComponentRegistrar : CompilerPluginRegistrar() {
-    override val supportsK2: Boolean get() = false // todo: implement suppressing "Function 'X' without a body must be abstract" from FIR
+    override val supportsK2: Boolean get() = true
 
     override fun ExtensionStorage.registerExtensions(configuration: CompilerConfiguration) {
         val errorCollector = errorCollector(configuration)
