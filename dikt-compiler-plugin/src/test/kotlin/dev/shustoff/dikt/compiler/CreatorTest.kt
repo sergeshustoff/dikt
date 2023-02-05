@@ -147,7 +147,7 @@ class CreatorTest {
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("@CreateSingle and @ProvideSingle functions can't have parameters")
+        Truth.assertThat(result.messages).contains("@CreateSingle functions can't have parameters")
     }
 
     @Test

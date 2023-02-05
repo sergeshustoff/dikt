@@ -4,8 +4,8 @@ object Test {
     fun verify() {
         val nestedModule = NestedModule()
         val module = SampleModule(nestedModule)
-        check(nestedModule.dependency() !== nestedModule.dependency()) {
-            "Should create new instence by @Create"
+        check(nestedModule.dependency() === nestedModule.dependency()) {
+            "Should use single instance by @CreateSingle"
         }
         check(module.dependencySingleton() === module.dependencySingleton()) {
             "Should use single instance by @ProvideCached"

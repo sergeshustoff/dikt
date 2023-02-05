@@ -22,14 +22,12 @@ class DiktPlatformDiagnosticSuppressor : PlatformDiagnosticSuppressor {
         private val createAnnotation = FqName("dev.shustoff.dikt.Create")
         private val cachedAnnotation = FqName("dev.shustoff.dikt.CreateSingle")
         private val providedAnnotation = FqName("dev.shustoff.dikt.Provide")
-        private val ProvideSingleAnnotation = FqName("dev.shustoff.dikt.ProvideSingle")
 
         private fun isProvidedByDi(descriptor: CallableMemberDescriptor): Boolean {
             if (descriptor is FunctionDescriptor) {
                 return descriptor.annotations.hasAnnotation(createAnnotation)
                         || descriptor.annotations.hasAnnotation(providedAnnotation)
-                        || ((descriptor.annotations.hasAnnotation(cachedAnnotation)
-                        || descriptor.annotations.hasAnnotation(ProvideSingleAnnotation))
+                        || ((descriptor.annotations.hasAnnotation(cachedAnnotation))
                         && !descriptor.isJvmStaticInObjectOrClassOrInterface()
                         && descriptor.parents.any { it is ClassDescriptor })
             }

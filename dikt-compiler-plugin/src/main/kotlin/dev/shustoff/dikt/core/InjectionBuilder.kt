@@ -3,12 +3,10 @@ package dev.shustoff.dikt.core
 import dev.shustoff.dikt.dependency.ProvidedDependency
 import dev.shustoff.dikt.dependency.ResolvedDependency
 import dev.shustoff.dikt.message_collector.ErrorCollector
-import dev.shustoff.dikt.utils.Annotations
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.backend.common.lower.irThrow
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
-import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.builders.declarations.addField
 import org.jetbrains.kotlin.ir.builders.declarations.buildFun
@@ -17,10 +15,9 @@ import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrFunctionExpressionImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
-import org.jetbrains.kotlin.ir.types.getClass
-import org.jetbrains.kotlin.ir.types.isNullableString
-import org.jetbrains.kotlin.ir.types.typeWith
+import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.constructors
+import org.jetbrains.kotlin.ir.util.fields
 import org.jetbrains.kotlin.ir.util.kotlinFqName
 import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.name.CallableId
@@ -36,78 +33,87 @@ class InjectionBuilder(
         pluginContext.referenceFunctions(CallableId(FqName("kotlin"), Name.identifier("lazy"))).firstOrNull()?.owner
     }
 
-    fun buildModuleFunctionInjections(
+    fun buildResolvedDependencyCall(
         module: IrClass?,
         function: IrFunction,
-        dependency: ResolvedDependency?
-    ) {
-        function.info("generating function body for ${function.kotlinFqName.asString()}")
-        function.body = if (Annotations.isCached(function) && module != null) {
-            createSingletonBody(function, dependency, module)
-        } else {
-            createFactoryBody(function, dependency, module)
+        dependency: ResolvedDependency?,
+        original: IrCall
+    ) : IrExpression {
+        function.info("resolving dependency in function ${function.kotlinFqName.asString()}")
+        if (dependency == null) {
+            return DeclarationIrBuilder(pluginContext, function.symbol).irThrowNoDependencyException(function)
         }
+        val context = Context(module, function, original)
+         return createDependencyCall(context, dependency)
     }
 
-    private fun createSingletonBody(
-        function: IrFunction,
-        dependency: ResolvedDependency?,
-        module: IrClass,
-    ): IrBlockBody {
-        val field = createLazyFieldForSingleton(function, module, dependency)
+
+    private fun createSingletonCall(
+        context: Context,
+        dependency: ResolvedDependency.Constructor,
+        receiverParameter: IrValueParameter?,
+    ): IrCall {
+        val field = getOrCreateLazyFieldForSingleton(context, dependency)
         val getValueFunction = field.type.getClass()!!.properties.first { it.name.identifier == "value" }.getter!!
-        return DeclarationIrBuilder(pluginContext, function.symbol).irBlockBody {
-            +irReturn(
-                irCall(getValueFunction.symbol, function.returnType).also {
-                    it.dispatchReceiver = irGetField(IrGetValueImpl(startOffset, endOffset, (function.dispatchReceiverParameter ?: module.thisReceiver)!!.symbol), field)
-                }
-            )
+        return with(DeclarationIrBuilder(pluginContext, field.symbol)) {
+            irCall(getValueFunction.symbol, context.original.type).also {
+                it.dispatchReceiver = irGetField(IrGetValueImpl(startOffset, endOffset, (receiverParameter ?: context.module!!.thisReceiver)!!.symbol), field)
+            }
         }
     }
 
-    private fun createLazyFieldForSingleton(
-        function: IrFunction,
-        module: IrClass,
-        dependency: ResolvedDependency?,
+    private fun getOrCreateLazyFieldForSingleton(
+        context: Context,
+        dependency: ResolvedDependency.Constructor,
     ): IrField {
+        val module = context.module ?: throw IllegalStateException("This shouldn't happen. Trying to create singleton without containing module")
+        val dependencyType = dependency.type
+        val fieldIdentifier = Name.identifier("__di_cache__${dependencyType.classFqName!!.asString().replace(".", "_")}")
+        val existingField = module.fields.firstOrNull { it.name == fieldIdentifier }
+        if (existingField != null) return existingField
+
         val lazyFunction = lazyFunction
         check(lazyFunction != null) { "kotlin.Lazy not found" }
-        val lazyType = lazyFunction.returnType.getClass()!!.typeWith(function.returnType)
+        val lazyType = lazyFunction.returnType.getClass()!!.typeWith(dependencyType)
         val field = module.addField {
             type = lazyType
-            name = Name.identifier("__di_cache__${function.name.asString()}")
+            name = fieldIdentifier
             visibility = DescriptorVisibilities.PRIVATE
-            startOffset = function.startOffset
-            endOffset = function.endOffset
+            startOffset = module.startOffset
+            endOffset = module.endOffset
+        }
+
+        val factoryFunction = field.factory.buildFun {
+            name = Name.special("<internal_injection_initializer>")
+            returnType = dependencyType
+            visibility = DescriptorVisibilities.LOCAL
+            origin = IrDeclarationOrigin.LOCAL_FUNCTION_FOR_LAMBDA
+        }.apply {
+            parent = field
+            val scopedIrBuilder = DeclarationIrBuilder(pluginContext, symbol)
+
+            body = scopedIrBuilder.irBlockBody {
+                +irReturn(
+                    scopedIrBuilder.makeConstructorDependencyCall(
+                        context = context,
+                        constructor = dependency.constructor,
+                        params = dependency.params,
+                        receiverParameter = dispatchReceiverParameter ?: module.thisReceiver!!,
+                    )
+                )
+            }
         }
         field.initializer = with(DeclarationIrBuilder(pluginContext, field.symbol)) {
-            val factoryFunction = field.factory.buildFun {
-                name = Name.special("<internal_injection_initializer>")
-                returnType = function.returnType
-                visibility = DescriptorVisibilities.LOCAL
-                origin = IrDeclarationOrigin.LOCAL_FUNCTION_FOR_LAMBDA
-            }.apply {
-                parent = field
-                body = DeclarationIrBuilder(pluginContext, symbol).irBlockBody {
-                    if (dependency != null) {
-                        +irReturn(
-                            makeDependencyCall(dependency, dispatchReceiverParameter ?: module.thisReceiver!!, function)
-                        )
-                    } else {
-                        +irThrowNoDependencyException(function)
-                    }
-                }
-            }
             val functionExpression = IrFunctionExpressionImpl(
                 startOffset,
                 endOffset,
-                pluginContext.irBuiltIns.functionN(0).typeWith(function.returnType),
+                pluginContext.irBuiltIns.functionN(0).typeWith(dependencyType),
                 factoryFunction,
                 IrStatementOrigin.LAMBDA
             )
             irExprBody(
                 irCall(lazyFunction.symbol, lazyType).also {
-                    it.putTypeArgument(0, function.returnType)
+                    it.putTypeArgument(0, dependencyType)
                     it.putValueArgument(0, functionExpression)
                 }
             )
@@ -115,21 +121,18 @@ class InjectionBuilder(
         return field
     }
 
-    private fun createFactoryBody(
-        function: IrFunction,
-        dependency: ResolvedDependency?,
-        module: IrClass?
-    ) = DeclarationIrBuilder(pluginContext, function.symbol).irBlockBody {
-        if (dependency != null) {
-            +irReturn(
-                makeDependencyCall(dependency, function.dispatchReceiverParameter ?: module?.thisReceiver, function)
-            )
-        } else {
-            +irThrowNoDependencyException(function)
-        }
+    private fun createDependencyCall(
+        context: Context,
+        dependency: ResolvedDependency,
+    ): IrExpression {
+        return DeclarationIrBuilder(pluginContext, context.forFunction.symbol).makeDependencyCall(
+            context = context,
+            resolved = dependency,
+            receiverParameter = context.forFunction.dispatchReceiverParameter ?: context.module?.thisReceiver,
+        )
     }
 
-    private fun IrBlockBodyBuilder.irThrowNoDependencyException(function: IrFunction): IrStatement {
+    private fun DeclarationIrBuilder.irThrowNoDependencyException(function: IrFunction): IrExpression {
         val constructor = context.irBuiltIns.throwableClass.owner.constructors
             .firstOrNull { it.valueParameters.size == 1 && it.valueParameters.first().type.isNullableString() }
         if (!hasErrors()) {
@@ -145,39 +148,43 @@ class InjectionBuilder(
         })
     }
 
-    private fun IrBlockBodyBuilder.makeDependencyCall(
+    private fun DeclarationIrBuilder.makeDependencyCall(
+        context: Context,
         resolved: ResolvedDependency,
         receiverParameter: IrValueParameter?,
-        forDiFunction: IrFunction
     ): IrExpression {
         return when (resolved) {
-            is ResolvedDependency.Constructor -> makeConstructorDependencyCall(
-                resolved.constructor,
-                resolved.params,
-                receiverParameter,
-                forDiFunction
-            )
+            is ResolvedDependency.Constructor -> if (resolved.isSingleton) {
+                createSingletonCall(context, resolved, receiverParameter)
+            } else {
+                makeConstructorDependencyCall(
+                    context,
+                    resolved.constructor,
+                    resolved.params,
+                    receiverParameter,
+                )
+            }
             is ResolvedDependency.ParameterDefaultValue -> {
                 // this should not happen
-                forDiFunction.error("Default value wasn't handled correctly, please report bug in DI.kt library")
+                context.forFunction.error("Default value wasn't handled correctly, please report bug in DI.kt library")
                 resolved.defaultValue.expression
             }
             is ResolvedDependency.Provided -> {
                 when (val provided = resolved.provided) {
                     is ProvidedDependency.Function -> makeFunctionDependencyCall(
+                        context,
                         provided,
                         receiverParameter,
                         resolved.params,
                         resolved.extensionParam,
                         resolved.nestedModulesChain,
-                        forDiFunction
                     )
                     is ProvidedDependency.Property -> makePropertyDependencyCall(
+                        context,
                         provided,
                         receiverParameter,
                         resolved.extensionParam,
                         resolved.nestedModulesChain,
-                        forDiFunction
                     )
                     is ProvidedDependency.Parameter -> makeParameterCall(provided)
                 }
@@ -185,59 +192,65 @@ class InjectionBuilder(
         }
     }
 
-    private fun IrBlockBodyBuilder.makeParameterCall(dependency: ProvidedDependency.Parameter): IrExpression {
+    private fun DeclarationIrBuilder.makeParameterCall(dependency: ProvidedDependency.Parameter): IrExpression {
         return irGet(dependency.parameter)
     }
 
-    private fun IrBlockBodyBuilder.makeConstructorDependencyCall(
+    private fun DeclarationIrBuilder.makeConstructorDependencyCall(
+        context: Context,
         constructor: IrConstructor,
         params: List<ResolvedDependency>,
         receiverParameter: IrValueParameter?,
-        forDiFunction: IrFunction
     ): IrConstructorCall {
         return irCallConstructor(constructor.symbol, emptyList()).also {
             for ((index, resolved) in params.withIndex()) {
                 if (resolved !is ResolvedDependency.ParameterDefaultValue) {
-                    it.putValueArgument(index, makeDependencyCall(resolved, receiverParameter, forDiFunction))
+                    it.putValueArgument(index, makeDependencyCall(context, resolved, receiverParameter))
                 }
             }
         }
     }
 
-    private fun IrBlockBodyBuilder.makeFunctionDependencyCall(
+    private fun DeclarationIrBuilder.makeFunctionDependencyCall(
+        context: Context,
         dependency: ProvidedDependency.Function,
         receiverParameter: IrValueParameter?,
         params: List<ResolvedDependency>,
         extensionParam: ResolvedDependency?,
         nestedModulesChain: ResolvedDependency?,
-        forDiFunction: IrFunction
     ): IrFunctionAccessExpression {
         val call = irCall(dependency.function.symbol, dependency.returnType).also {
             for ((index, resolved) in params.withIndex()) {
                 if (resolved !is ResolvedDependency.ParameterDefaultValue) {
-                    it.putValueArgument(index, makeDependencyCall(resolved, receiverParameter, forDiFunction))
+                    it.putValueArgument(index, makeDependencyCall(context, resolved, receiverParameter))
                 }
             }
         }
-        call.extensionReceiver = extensionParam?.let { makeDependencyCall(it, receiverParameter, forDiFunction) }
+        call.extensionReceiver = extensionParam?.let { makeDependencyCall(context, it, receiverParameter) }
         call.dispatchReceiver = nestedModulesChain?.let {
-            makeDependencyCall(nestedModulesChain, receiverParameter, forDiFunction)
+            makeDependencyCall(context, nestedModulesChain, receiverParameter)
         } ?: IrGetValueImpl(startOffset, endOffset, receiverParameter!!.symbol)
         return call
     }
 
-    private fun IrBlockBodyBuilder.makePropertyDependencyCall(
+    private fun DeclarationIrBuilder.makePropertyDependencyCall(
+        context: Context,
         dependency: ProvidedDependency.Property,
         receiverParameter: IrValueParameter?,
         extensionParam: ResolvedDependency?,
         nestedModulesChain: ResolvedDependency?,
-        forDiFunction: IrFunction
     ): IrFunctionAccessExpression {
         val call = irCall(dependency.property.getter!!.symbol, dependency.returnType)
-        val parentCall = nestedModulesChain?.let { makeDependencyCall(it, receiverParameter, forDiFunction) }
+        val parentCall = nestedModulesChain?.let { makeDependencyCall(context, it, receiverParameter) }
         call.dispatchReceiver = parentCall ?: IrGetValueImpl(startOffset, endOffset, receiverParameter!!.symbol)
-        call.extensionReceiver = extensionParam?.let { makeDependencyCall(it, receiverParameter, forDiFunction) }
+        call.extensionReceiver = extensionParam?.let { makeDependencyCall(context, it, receiverParameter) }
 
         return call
     }
+
+    private data class Context(
+        val module: IrClass?,
+        val forFunction: IrFunction,
+        val original: IrCall,
+    )
 }

@@ -65,7 +65,7 @@ Install [idea plugin](https://plugins.jetbrains.com/plugin/17533-di-kt), it will
 
 ## Usage
 
-Create module and declare provided dependencies. Use `@Create`, `@Provide`, `@CreateSingle` and `@ProvideSingle` to generate function's bodies. Use `@UseModule`s and `@UseConstructors` to control how dependencies are provided and what classes can be created by primary constructors.
+Create module and declare provided dependencies. Use `@Create`, `@Provide` and `@CreateSingle` to generate function's bodies. Use `@UseModule`s and `@UseConstructors` to control how dependencies are provided and what classes can be created by primary constructors.
 
 ```kotlin
 class SomethingModule(
@@ -79,10 +79,10 @@ class SomethingModule(
 Under the hood primary constructor will be called for SomethingElse and SomeSingleton. If constructor requires some parameters - they will be retrieved form module's properties and functions.
 
 ### Module
-Any class or object that has a function marked with `@Create`, `@Provide`, `@CreateSingle` or `@ProvideSingle` is essentially a module. We don't need additional annotation for it, but if you need content of another 'module' provided as dependency in generated functions, you need to mark that type as module using annotation `@UseModules` on function, its containing class or file.
+Any class or object that has a function marked with `@Create`, `@Provide` or `@CreateSingle` is essentially a module. We don't need additional annotation for it, but if you need content of another 'module' provided as dependency in generated functions, you need to mark that type as module using annotation `@UseModules` on function, its containing class or file.
 
 ### Singleton
-There are no true singletons in DI.kt, but instead you can use `@CreateSingle` or `@ProvideSingle` annotations to generate functions backed by lazy properties. Such function will return the same instance each time they called as long as they called for the same instance of containing class. Effectively it gives each module a scope of their own and makes the scoping more understandable.
+There are no true singletons in DI.kt, but instead you can use `@CreateSingle` annotation to generate functions backed by lazy properties. Such function will return the same instance each time they called as long as they called for the same instance of containing class. Effectively it gives each module a scope of their own and makes the scoping more understandable.
 
 ## Annotations
 
@@ -129,9 +129,9 @@ class MyModule(val external: ExternalModule) {
 }
 ```
 
-### `@CreateSingle` and `@ProvideSingle`
+### `@CreateSingle`
 
-Same as `@Create` and `@Provide`, but each annotation tells compiler to create a lazy property in containing class and return value from that property. Functions marked with `@CreateSingle` and `@ProvideSingle` don't support parameters.
+Same as `@Create`, but each annotation tells compiler to create a lazy property in containing class and return value from that property. Functions marked with `@CreateSingle` don't support parameters.
 
 ### `@UseConstructors`
 

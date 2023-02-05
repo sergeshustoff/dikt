@@ -6,7 +6,7 @@ import dev.shustoff.dikt.*
 class SampleModule(
     val nestedModule: NestedModule
 ) {
-    @ProvideSingle fun dependencySingleton(): Dependency
+    @Provide fun dependencySingleton(): Dependency
     @Create fun injectableFactory(name: String): Injectable
     @CreateSingle fun singleton(): Singleton
     @Create fun String.injectableExtension(): Injectable

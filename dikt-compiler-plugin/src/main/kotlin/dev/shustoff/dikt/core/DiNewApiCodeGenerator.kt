@@ -8,23 +8,23 @@ import dev.shustoff.dikt.utils.Annotations
 import dev.shustoff.dikt.utils.Utils
 import dev.shustoff.dikt.utils.VisibilityChecker
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
-import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.ir.IrElement
+import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrFunction
-import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
+import org.jetbrains.kotlin.ir.expressions.IrCall
+import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.file
-import org.jetbrains.kotlin.ir.util.functions
-import org.jetbrains.kotlin.ir.util.parentClassOrNull
-import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
+import org.jetbrains.kotlin.ir.util.getPackageFragment
+import org.jetbrains.kotlin.ir.visitors.IrElementTransformer
+import org.jetbrains.kotlin.name.FqName
 
-class DiFunctionGenerator(
+class DiNewApiCodeGenerator(
     private val errorCollector: ErrorCollector,
     pluginContext: IrPluginContext,
     private val incrementalHelper: IncrementalCompilationHelper?,
-) : IrElementVisitorVoid, ErrorCollector by errorCollector {
+) : IrElementTransformer<DiNewApiCodeGenerator.Data>, ErrorCollector by errorCollector {
 
     private val dependencyCollector = DependencyCollector(this)
     private val injectionBuilder = InjectionBuilder(pluginContext, errorCollector)
@@ -33,41 +33,35 @@ class DiFunctionGenerator(
     private val providedByConstructorInFileCache = mutableMapOf<IrFile, List<IrType>>()
     private val dependencyByModuleCache = mutableMapOf<IrClass, AvailableDependencies>()
 
-    override fun visitElement(element: IrElement) {
-        element.acceptChildren(this, null)
+    override fun visitClass(declaration: IrClass, data: Data): IrStatement {
+        return super.visitClass(declaration, data.copy(module = declaration))
     }
 
-    override fun visitClass(declaration: IrClass) {
-        val diFunctions = declaration.functions.filter { Annotations.isCached(it) }.toList()
-        diFunctions.forEach { function ->
-            buildFunctionBody(declaration, function)
-        }
-        super.visitClass(declaration)
+    override fun visitFunction(declaration: IrFunction, data: Data): IrStatement {
+        return super.visitFunction(declaration, data.copy(function = declaration))
     }
 
-    override fun visitFunction(declaration: IrFunction) {
-        if (Annotations.isByDi(declaration)) {
-            if (Annotations.isCached(declaration)) {
-                // cached functions handled in visitClass
-                if (declaration.parentClassOrNull == null) {
-                    declaration.error("@CreateSingle and @ProvideSingle functions can't have parameters")
-                }
+    override fun visitExpression(expression: IrExpression, data: Data): IrExpression {
+        if (expression is IrCall && isDiFunction(expression)) {
+            if (data.function == null) {
+                //TODO: remove this requirement. It's needed to avoid loops
+                expression.symbol.owner.error("Dependency can only be resolved inside functions for now")
+                return super.visitExpression(expression, data)
             } else {
-                buildFunctionBody(declaration.parentClassOrNull, declaration)
+                val resolvedExpression = resolveDependency(data.module, data.function, expression)
+                return super.visitExpression(resolvedExpression, data)
             }
+        } else {
+            return super.visitExpression(expression, data)
         }
-
-        super.visitFunction(declaration)
     }
 
-    private fun buildFunctionBody(
+    private fun resolveDependency(
         module: IrClass?,
-        function: IrFunction
-    ) {
-        if ((function as? IrSimpleFunction)?.modality != Modality.FINAL) {
-            function.error("Only final functions can have generated body")
-            return
-        }
+        function: IrFunction,
+        original: IrCall
+    ): IrExpression {
+        val singletons = module?.let { Annotations.cachedTypes(module) }.orEmpty()
         val dependencies = if (module != null &&
             function.valueParameters.isEmpty() &&
             function.extensionReceiverParameter == null &&
@@ -82,9 +76,9 @@ class DiFunctionGenerator(
         }.copy(visibilityChecker = VisibilityChecker(function))
 
         val providedByConstructor = getProvidedByConstructor(function)
-        val resolvedDependency = dependencies.resolveDependency(function.returnType, function, providedByConstructor)
-        injectionBuilder.buildModuleFunctionInjections(module, function, resolvedDependency)
+        val resolvedDependency = dependencies.resolveDependency(original.type, function, providedByConstructor, singletons)
         incrementalHelper?.recordFunctionDependency(function, resolvedDependency)
+        return injectionBuilder.buildResolvedDependencyCall(module, function, resolvedDependency, original)
     }
 
     private fun getProvidedByConstructor(function: IrFunction): Set<IrType> {
@@ -98,5 +92,19 @@ class DiFunctionGenerator(
             Annotations.getProvidedByConstructor(function.file)
         }
         return (inFile + inParentClasses + inFunction).toSet()
+    }
+
+    private fun isDiFunction(expression: IrCall) =
+        expression.symbol.owner.getPackageFragment().fqName == diktPackage &&
+                expression.symbol.owner.name.identifier == diFunctionName
+
+    data class Data(
+        val module: IrClass? = null,
+        val function: IrFunction? = null,
+    )
+
+    companion object {
+        val diFunctionName = "resolve"
+        val diktPackage = FqName("dev.shustoff.dikt")
     }
 }

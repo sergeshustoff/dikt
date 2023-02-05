@@ -1,7 +1,6 @@
 package dev.shustoff.dikt.dependency
 
 import dev.shustoff.dikt.message_collector.ErrorCollector
-import dev.shustoff.dikt.utils.Annotations
 import dev.shustoff.dikt.utils.VisibilityChecker
 import org.jetbrains.kotlin.ir.backend.js.utils.asString
 import org.jetbrains.kotlin.ir.declarations.IrFunction
@@ -18,16 +17,17 @@ data class AvailableDependencies(
     private val visibilityChecker: VisibilityChecker,
     private val dependencyMap: Map<DependencyId, List<ProvidedDependency>>,
 ) : ErrorCollector by errorCollector {
-
+//TODO: clean this up, it's unreadable
     fun resolveDependency(
         type: IrType,
         forFunction: IrFunction,
-        providedByConstructor: Set<IrType>
+        providedByConstructor: Set<IrType>,
+        singletons: Set<IrType>
     ): ResolvedDependency? {
-        val isProvider = Annotations.isProvided(forFunction)
         return resolveDependencyInternal(
             DependencyId(type), forFunction, emptyList(),
-            providedByConstructor = providedByConstructor + setOfNotNull(type.takeIf { !isProvider })
+            providedByConstructor = providedByConstructor,
+            singletons = singletons,
         )
     }
 
@@ -36,7 +36,9 @@ data class AvailableDependencies(
         forFunction: IrFunction,
         usedTypes: List<IrType>,
         providedByConstructor: Set<IrType>,
-        defaultValue: IrExpressionBody? = null
+        defaultValue: IrExpressionBody? = null,
+        singletons: Set<IrType>,
+        forbidFunctionParams: Boolean = false
     ): ResolvedDependency? {
         if (id.type in usedTypes) {
             forFunction.error(
@@ -45,10 +47,12 @@ data class AvailableDependencies(
             return null
         }
 
-        if (id.type in providedByConstructor) {
-            return buildResolvedConstructor(forFunction, id, usedTypes, providedByConstructor)
+        val isSingleton = id.type in singletons
+        if (isSingleton || id.type in providedByConstructor) {
+            return buildResolvedConstructor(forFunction, id, usedTypes, providedByConstructor, singletons, forbidFunctionParams = forbidFunctionParams || isSingleton)
         } else {
             val dependency = findProvidedDependency(id, forFunction)
+                ?.takeIf { !forbidFunctionParams || it !is ProvidedDependency.Parameter }
             if (dependency == null) {
                 if (defaultValue == null) {
                     forFunction.error(
@@ -56,10 +60,10 @@ data class AvailableDependencies(
                     )
                     return null
                 } else {
-                    return ResolvedDependency.ParameterDefaultValue(defaultValue)
+                    return ResolvedDependency.ParameterDefaultValue(id.type, defaultValue)
                 }
             } else {
-                return resolveProvidedDependency(id, forFunction, dependency, usedTypes, providedByConstructor)
+                return resolveProvidedDependency(id, forFunction, dependency, usedTypes, providedByConstructor, singletons)
             }
         }
     }
@@ -69,7 +73,8 @@ data class AvailableDependencies(
         forFunction: IrFunction,
         dependency: ProvidedDependency,
         usedTypes: List<IrType>,
-        providedByConstructor: Set<IrType>
+        providedByConstructor: Set<IrType>,
+        singletons: Set<IrType>
     ): ResolvedDependency.Provided? {
         val params = dependency.getRequiredParams()
         val extensionParam = dependency.getRequiredExtensionReceiver()
@@ -79,7 +84,8 @@ data class AvailableDependencies(
             forFunction,
             usedTypes + id.type,
             typeArgumentsMapping,
-            providedByConstructor
+            providedByConstructor,
+            singletons,
         )
         val resolvedExtensionParam = extensionParam?.let {
             getResolveParams(
@@ -87,7 +93,8 @@ data class AvailableDependencies(
                 forFunction,
                 usedTypes,
                 typeArgumentsMapping,
-                providedByConstructor
+                providedByConstructor,
+                singletons,
             )
         }
         val nestedChain = getResolveNestedChain(
@@ -95,7 +102,8 @@ data class AvailableDependencies(
             forFunction,
             usedTypes + id.type,
             typeArgumentsMapping,
-            providedByConstructor
+            providedByConstructor,
+            singletons,
         )
         return resolvedParams
             ?.let {
@@ -142,6 +150,8 @@ data class AvailableDependencies(
         usedTypes: List<IrType> = emptyList(),
         typeArgumentsMapping: Map<IrType?, IrType?>,
         providedByConstructor: Set<IrType>,
+        singletons: Set<IrType>,
+        forbidFunctionParams: Boolean = false,
     ): List<ResolvedDependency>? {
         return valueParameters
             .mapNotNull { param ->
@@ -150,7 +160,9 @@ data class AvailableDependencies(
                     forFunction,
                     usedTypes,
                     providedByConstructor = providedByConstructor,
-                    defaultValue = param.defaultValue
+                    defaultValue = param.defaultValue,
+                    singletons = singletons,
+                    forbidFunctionParams = forbidFunctionParams
                 )
             }
             .takeIf { it.size == valueParameters.size } // errors reported in resolveDependencyInternal
@@ -162,6 +174,7 @@ data class AvailableDependencies(
         usedTypes: List<IrType> = emptyList(),
         typeArgumentsMapping: Map<IrType?, IrType?>,
         providedByConstructor: Set<IrType>,
+        singletons: Set<IrType>,
     ): ResolvedDependency? {
         return dependency.fromNestedModule?.let {
             resolveDependencyInternal(
@@ -169,6 +182,7 @@ data class AvailableDependencies(
                 forFunction,
                 usedTypes,
                 providedByConstructor = providedByConstructor,
+                singletons = singletons,
             )
         }
     }
@@ -177,7 +191,9 @@ data class AvailableDependencies(
         forFunction: IrFunction,
         id: DependencyId,
         usedTypes: List<IrType>,
-        providedByConstructor: Set<IrType>
+        providedByConstructor: Set<IrType>,
+        singletons: Set<IrType>,
+        forbidFunctionParams: Boolean = false
     ): ResolvedDependency? {
         val clazz = id.type.getClass()
         val constructors = clazz?.primaryConstructor?.let { listOf(it) }
@@ -196,10 +212,18 @@ data class AvailableDependencies(
         }
         val constructor = constructors.first()
         val typeArgumentsMapping = buildTypeArgumentsMapping(id, constructor.returnType)
-        val resolvedParams = getResolveParams(constructor.valueParameters, forFunction, usedTypes + id.type, typeArgumentsMapping, providedByConstructor)
+        val resolvedParams = getResolveParams(
+            constructor.valueParameters,
+            forFunction,
+            usedTypes + id.type,
+            typeArgumentsMapping,
+            providedByConstructor,
+            singletons,
+            forbidFunctionParams = forbidFunctionParams
+        )
             ?: return null
 
-        return ResolvedDependency.Constructor(constructor, resolvedParams)
+        return ResolvedDependency.Constructor(id.type, constructor, resolvedParams, isSingleton = id.type in singletons)
     }
 
     private fun getDependencyFromGroup(forFunction: IrFunction, id: DependencyId, options: List<ProvidedDependency>): ProvidedDependency? {

@@ -1,7 +1,7 @@
 package dev.shustoff.dikt.test
 
-import dev.shustoff.dikt.Create
+import dev.shustoff.dikt.CreateSingle
 
 class NestedModule {
-    @Create fun dependency(): Dependency
+    @CreateSingle fun dependency(): Dependency
 }
