@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.getAnnotation
 import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.isAnnotation
-import org.jetbrains.kotlin.ir.util.parentClassOrNull
 import org.jetbrains.kotlin.name.FqName
 
 object Annotations {
@@ -17,8 +16,9 @@ object Annotations {
     private val CreateSingleAnnotation = FqName("dev.shustoff.dikt.CreateSingle")
     private val providedAnnotation = FqName("dev.shustoff.dikt.Provide")
     private val useModulesAnnotation = FqName("dev.shustoff.dikt.UseModules")
-    val useConstructorsAnnotation = FqName("dev.shustoff.dikt.UseConstructors")
-    private val moduleSingletonsAnnotation = FqName("dev.shustoff.dikt.ModuleSingletons")
+    private val injectByConstructorsAnnotation = FqName("dev.shustoff.dikt.InjectByConstructors")
+    private val oldUseConstructorsAnnotation = FqName("dev.shustoff.dikt.UseConstructors")
+    private val moduleSingletonsAnnotation = FqName("dev.shustoff.dikt.InjectSingleByConstructors")
 
     fun getUsedModules(descriptor: IrAnnotationContainer): List<IrType> {
         val annotation = descriptor.getAnnotation(useModulesAnnotation)
@@ -57,7 +57,7 @@ object Annotations {
     }
 
     fun getProvidedByConstructor(descriptor: IrAnnotationContainer): List<IrType> {
-        return descriptor.annotations.filter { it.isAnnotation(useConstructorsAnnotation) }
+        return descriptor.annotations.filter { it.isAnnotation(injectByConstructorsAnnotation) || it.isAnnotation(oldUseConstructorsAnnotation) }
             .flatMap { annotation ->
                 (annotation.getValueArgument(0) as? IrVararg)
                     ?.elements

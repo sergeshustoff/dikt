@@ -4,6 +4,7 @@ import kotlin.reflect.KClass
 
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS, AnnotationTarget.FILE)
 @Retention(AnnotationRetention.SOURCE)
+@Deprecated("Use InjectByConstructors or InjectSingleByConstructors instead. This annotation will be deleted in version 1.1.1")
 /**
  * Dependencies of types listed in this annotation parameters will be provided by constructor when required in generated function body.
  * Annotation might be applied to file, class, or @Create, @Provide and @CreateSingle function.

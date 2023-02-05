@@ -23,14 +23,13 @@ class DiOldApiTransformer(
     private val pluginContext: IrPluginContext,
 ) : IrElementTransformerVoid(), ErrorCollector by errorCollector {
     private val resolveFunction = pluginContext.referenceFunctions(CallableId(DiNewApiCodeGenerator.diktPackage, Name.identifier(DiNewApiCodeGenerator.diFunctionName))).firstOrNull()
-    private val useConstructorAnnotationConstructor= pluginContext.referenceConstructors(ClassId(FqName("dev.shustoff.dikt"), Name.identifier("UseConstructors")))
+    private val useConstructorAnnotationConstructor= pluginContext.referenceConstructors(ClassId(FqName("dev.shustoff.dikt"), Name.identifier("InjectByConstructors")))
         .firstOrNull()
-    private val moduleSingletonsAnnotationConstructor= pluginContext.referenceConstructors(ClassId(FqName("dev.shustoff.dikt"), Name.identifier("ModuleSingletons")))
+    private val moduleSingletonsAnnotationConstructor= pluginContext.referenceConstructors(ClassId(FqName("dev.shustoff.dikt"), Name.identifier("InjectSingleByConstructors")))
         .firstOrNull()
     private val klassType = pluginContext.referenceClass(ClassId(FqName("kotlin.reflect"), Name.identifier("KClass")))
 
     override fun visitFunction(declaration: IrFunction): IrStatement {
-        //TODO: add errors for null stuff
         val declarationIrBuilder = DeclarationIrBuilder(pluginContext, declaration.symbol)
         if (Annotations.isByDi(declaration)) {
             if ((declaration as? IrSimpleFunction)?.modality != Modality.FINAL) {

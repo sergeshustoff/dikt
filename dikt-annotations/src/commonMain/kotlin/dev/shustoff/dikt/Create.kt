@@ -2,6 +2,7 @@ package dev.shustoff.dikt
 
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.SOURCE)
+@Deprecated("Call resolve() function instead and add @InjectByConstructors annotation with list of types that can be created by constructor. This annotation will be deleted in version 1.1.1")
 /**
  * DI.kt plugin will generate body for function with this annotation using returned type's primary constructor.
  * Values for constructor parameters will be retrieved from function parameters and from functions and properties of containing class.
