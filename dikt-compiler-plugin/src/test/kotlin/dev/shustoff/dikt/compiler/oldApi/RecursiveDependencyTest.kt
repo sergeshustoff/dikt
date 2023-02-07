@@ -1,4 +1,5 @@
-package dev.shustoff.dikt.compiler
+@file:OptIn(ExperimentalCompilerApi::class)
+package dev.shustoff.dikt.compiler.oldApi
 
 import com.google.common.truth.Truth
 import com.tschuchort.compiletesting.KotlinCompilation
@@ -9,7 +10,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
-@OptIn(ExperimentalCompilerApi::class)
 class RecursiveDependencyTest {
 
     @Rule
@@ -17,29 +17,29 @@ class RecursiveDependencyTest {
     var folder: TemporaryFolder = TemporaryFolder()
 
     @Test
-    fun `fail on recursive dependency in constructors`() {
+    fun `fail on recursive properties dependency`() {
         val result = compile(
             folder.root,
             SourceFile.kotlin(
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
 
             class Dependency(val injectable: Injectable)
 
             class Injectable(val dependency: Dependency)
 
-            @InjectByConstructors(Injectable::class, Dependency::class)
             class MyModule {
-                fun injectable(): Injectable = resolve()
-                fun dependency(): Dependency = resolve()
+                @Create fun injectable(): Injectable
+                @Create fun dependency(): Dependency
             }
             """
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("Recursive dependency")
+        Truth.assertThat(result.messages).contains("Recursive dependency detected")
+        Truth.assertThat(result.messages).contains("Recursive dependency detected")
     }
 
     @Test
@@ -50,13 +50,12 @@ class RecursiveDependencyTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
 
             class Injectable(val injectable: Injectable)
 
-            @InjectByConstructors(Injectable::class)
             class MyModule {
-                fun injectable(): Injectable = resolve()
+                @Create fun injectable(): Injectable
             }
             """
             )
@@ -73,15 +72,14 @@ class RecursiveDependencyTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
 
             class Dependency()
             
             class Injectable(val dependency: Dependency)
 
-            @InjectByConstructors(Injectable::class)
             class MyModule {
-                fun injectable(): Injectable = resolve()
+                @Create fun injectable(): Injectable
                 fun dependency(dependency: Dependency) = Dependency()
             }
             """
@@ -92,23 +90,22 @@ class RecursiveDependencyTest {
     }
 
     @Test
-    fun `fail on recursive dependency in several functions`() {
+    fun `fail on recursive dependency in methods`() {
         val result = compile(
             folder.root,
             SourceFile.kotlin(
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
 
             class Dependency1()
             class Dependency2()
 
             class Injectable(val dependency: Dependency1)
 
-            @InjectByConstructors(Injectable::class)
             class MyModule {
-                fun injectable(): Injectable = resolve()
+                @Create fun injectable(): Injectable
                 
                 fun provideDependency1(): Dependency1 {
                     provideDependency2()
@@ -129,19 +126,21 @@ class RecursiveDependencyTest {
     }
 
     @Test
-    fun `fail on recursive dependency between between di and normal functions`() {
+    fun `fail on recursive dependency between method and property`() {
         val result = compile(
             folder.root,
             SourceFile.kotlin(
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
+            import dev.shustoff.dikt.Provide
+
 
             class Injectable()
 
             class MyModule {
-                fun injectable(): Injectable = resolve()
+                @Provide fun injectable(): Injectable
                 
                 fun provideInjectable(): Injectable {
                     return injectable()
@@ -152,86 +151,6 @@ class RecursiveDependencyTest {
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
         Truth.assertThat(result.messages).contains("Recursive dependency detected")
-    }
-
-    @Test
-    fun `fail on recursive dependency between between di and normal global functions`() {
-        val result = compile(
-            folder.root,
-            SourceFile.kotlin(
-                "MyModule.kt",
-                """
-            package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
-
-            class Injectable()
-
-            fun injectable(): Injectable = resolve()
-            
-            fun provideInjectable(): Injectable {
-                return injectable()
-            }
-            """
-            )
-        )
-        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("Recursive dependency detected")
-    }
-
-    @Test
-    fun `ignore recursion if di is not involved`() {
-        val result = compile(
-            folder.root,
-            SourceFile.kotlin(
-                "MyModule.kt",
-                """
-            package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
-
-            class Injectable()
-            class Injectable1()
-
-            @InjectByConstructors(Injectable1::class)
-            fun injectable1(): Injectable1 = resolve()
-
-            fun injectable(): Injectable = provideInjectable()
-            
-            fun provideInjectable(): Injectable {
-                return injectable()
-            }
-            """
-            )
-        )
-        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
-    }
-
-    @Test
-    fun `ignore recursion in module if di is not involved`() {
-        val result = compile(
-            folder.root,
-            SourceFile.kotlin(
-                "MyModule.kt",
-                """
-            package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
-
-            class Injectable()
-            class Injectable1()
-
-            @InjectByConstructors(Injectable1::class)
-            class Module {
-                fun injectable1(): Injectable1 = resolve()
-    
-                fun injectable(): Injectable = provideInjectable()
-                
-                fun provideInjectable(): Injectable {
-                    return injectable()
-                }
-            }
-            """
-            )
-        )
-        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
     }
 
 }

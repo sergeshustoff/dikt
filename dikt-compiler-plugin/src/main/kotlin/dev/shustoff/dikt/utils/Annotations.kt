@@ -39,7 +39,6 @@ object Annotations {
         return descriptor.hasAnnotation(CreateSingleAnnotation)
     }
 
-    //TODO: rename annotation in a way that implies constructor usage
     fun cachedTypes(module: IrClass): Set<IrType> {
         return module.annotations
             .filter { it.isAnnotation(moduleSingletonsAnnotation) }

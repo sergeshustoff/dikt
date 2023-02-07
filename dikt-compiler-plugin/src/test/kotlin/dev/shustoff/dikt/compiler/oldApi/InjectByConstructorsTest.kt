@@ -1,5 +1,5 @@
 @file:OptIn(ExperimentalCompilerApi::class)
-package dev.shustoff.dikt.compiler
+package dev.shustoff.dikt.compiler.oldApi
 
 import com.google.common.truth.Truth
 import com.tschuchort.compiletesting.KotlinCompilation
@@ -10,27 +10,30 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
-class DefaultArgumentTest {
+class InjectByConstructorsTest {
 
     @Rule
     @JvmField
     var folder: TemporaryFolder = TemporaryFolder()
 
     @Test
-    fun `allow default arguments in injected constructors`() {
+    fun `allow constructor calls defined in containing class`() {
         val result = compile(
             folder.root,
             SourceFile.kotlin(
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
+            import dev.shustoff.dikt.InjectByConstructors
 
-            class Injectable(val dependency: String = "default")
+            class Dependency
 
-            @InjectByConstructors(Injectable::class)
+            class Injectable(val dependency: Dependency)
+
+            @InjectByConstructors(Dependency::class)
             class MyModule {
-                fun injectable(dependency: String): Injectable = resolve()
+                @Create fun injectable(): Injectable
             }
             """
             )
@@ -39,20 +42,24 @@ class DefaultArgumentTest {
     }
 
     @Test
-    fun `allow default arguments in generated methods`() {
+    fun `allow constructor calls defined in function`() {
         val result = compile(
             folder.root,
             SourceFile.kotlin(
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
+            import dev.shustoff.dikt.InjectByConstructors
 
-            class Injectable(val dependency: String)
+            class Dependency
 
-            @InjectByConstructors(Injectable::class)
+            class Injectable(val dependency: Dependency)
+
             class MyModule {
-                fun injectable(dependency: String = "default"): Injectable = resolve()
+
+                @InjectByConstructors(Dependency::class)
+                @Create fun injectable(): Injectable
             }
             """
             )
@@ -61,23 +68,24 @@ class DefaultArgumentTest {
     }
 
     @Test
-    fun `use default value if not provided from dependencies`() {
+    fun `allow constructor calls defined in file`() {
         val result = compile(
             folder.root,
             SourceFile.kotlin(
                 "MyModule.kt",
                 """
+            @file:InjectByConstructors(Dependency::class)
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
+            import dev.shustoff.dikt.InjectByConstructors
 
-            class Injectable(
-                val dependency: String = "default",
-                val index: Int
-            )
+            class Dependency
 
-            @InjectByConstructors(Injectable::class)
+            class Injectable(val dependency: Dependency)
+
             class MyModule {
-                fun injectable(index: Int): Injectable = resolve()
+
+                @Create fun injectable(): Injectable
             }
             """
             )

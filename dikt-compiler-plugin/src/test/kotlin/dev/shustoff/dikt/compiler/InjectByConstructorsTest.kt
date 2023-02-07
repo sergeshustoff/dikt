@@ -1,14 +1,15 @@
-@file:OptIn(ExperimentalCompilerApi::class)
 package dev.shustoff.dikt.compiler
 
 import com.google.common.truth.Truth
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
+import dev.shustoff.dikt.compiler.compile
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
+@OptIn(ExperimentalCompilerApi::class)
 class InjectByConstructorsTest {
 
     @Rule
@@ -23,16 +24,15 @@ class InjectByConstructorsTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.Create
-            import dev.shustoff.dikt.InjectByConstructors
+            import dev.shustoff.dikt.*
 
             class Dependency
 
             class Injectable(val dependency: Dependency)
 
-            @InjectByConstructors(Dependency::class)
+            @InjectByConstructors(Dependency::class, Injectable::class)
             class MyModule {
-                @Create fun injectable(): Injectable
+                fun injectable(): Injectable = resolve()
             }
             """
             )
@@ -48,8 +48,7 @@ class InjectByConstructorsTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.Create
-            import dev.shustoff.dikt.InjectByConstructors
+            import dev.shustoff.dikt.*
 
             class Dependency
 
@@ -57,8 +56,8 @@ class InjectByConstructorsTest {
 
             class MyModule {
 
-                @InjectByConstructors(Dependency::class)
-                @Create fun injectable(): Injectable
+                @InjectByConstructors(Dependency::class, Injectable::class)
+                fun injectable(): Injectable = resolve()
             }
             """
             )
@@ -73,10 +72,9 @@ class InjectByConstructorsTest {
             SourceFile.kotlin(
                 "MyModule.kt",
                 """
-            @file:InjectByConstructors(Dependency::class)
+            @file:InjectByConstructors(Dependency::class, Injectable::class)
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.Create
-            import dev.shustoff.dikt.InjectByConstructors
+            import dev.shustoff.dikt.*
 
             class Dependency
 
@@ -84,7 +82,7 @@ class InjectByConstructorsTest {
 
             class MyModule {
 
-                @Create fun injectable(): Injectable
+                fun injectable(): Injectable = resolve()
             }
             """
             )

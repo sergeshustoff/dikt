@@ -47,6 +47,7 @@ data class AvailableDependencies(
             return null
         }
 
+        //TODO: need check type without generic params somehow here
         val isSingleton = id.type in singletons
         if (isSingleton || id.type in providedByConstructor) {
             return buildResolvedConstructor(forFunction, id, usedTypes, providedByConstructor, singletons, forbidFunctionParams = forbidFunctionParams || isSingleton)

@@ -1,4 +1,5 @@
-package dev.shustoff.dikt.compiler.newApi
+@file:OptIn(ExperimentalCompilerApi::class)
+package dev.shustoff.dikt.compiler.oldApi
 
 import com.google.common.truth.Truth
 import com.tschuchort.compiletesting.KotlinCompilation
@@ -9,8 +10,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
-@OptIn(ExperimentalCompilerApi::class)
-class ResolveTest {
+class ProviderTest {
 
     @Rule
     @JvmField
@@ -29,7 +29,7 @@ class ResolveTest {
             class Dependency
 
             class MyModule(val testArg: String) {
-                fun dependency(): Dependency = resolve()
+                @Provide fun dependency(): Dependency
                 
                 fun createDependency(testArg: String) = Dependency()
             }
@@ -52,7 +52,7 @@ class ResolveTest {
             class Dependency
 
             class MyModule() {
-                fun dependency(): Dependency = resolve()
+                @Provide fun dependency(): Dependency
             }
             """
             )

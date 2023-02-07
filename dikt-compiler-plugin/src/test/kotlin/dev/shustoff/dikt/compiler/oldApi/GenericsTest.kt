@@ -1,5 +1,5 @@
 @file:OptIn(ExperimentalCompilerApi::class)
-package dev.shustoff.dikt.compiler
+package dev.shustoff.dikt.compiler.oldApi
 
 import com.google.common.truth.Truth
 import com.tschuchort.compiletesting.KotlinCompilation
@@ -10,74 +10,86 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
-class DefaultArgumentTest {
-
+class GenericsTest {
     @Rule
     @JvmField
     var folder: TemporaryFolder = TemporaryFolder()
 
     @Test
-    fun `allow default arguments in injected constructors`() {
+    fun `injections with different generics are considered as different types`() {
         val result = compile(
             folder.root,
             SourceFile.kotlin(
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
-
-            class Injectable(val dependency: String = "default")
-
-            @InjectByConstructors(Injectable::class)
-            class MyModule {
-                fun injectable(dependency: String): Injectable = resolve()
-            }
-            """
-            )
-        )
-        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
-    }
-
-    @Test
-    fun `allow default arguments in generated methods`() {
-        val result = compile(
-            folder.root,
-            SourceFile.kotlin(
-                "MyModule.kt",
-                """
-            package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
-
-            class Injectable(val dependency: String)
-
-            @InjectByConstructors(Injectable::class)
-            class MyModule {
-                fun injectable(dependency: String = "default"): Injectable = resolve()
-            }
-            """
-            )
-        )
-        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
-    }
-
-    @Test
-    fun `use default value if not provided from dependencies`() {
-        val result = compile(
-            folder.root,
-            SourceFile.kotlin(
-                "MyModule.kt",
-                """
-            package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
 
             class Injectable(
-                val dependency: String = "default",
-                val index: Int
+                val strings: List<String>,
+                val numbers: List<Int>
             )
 
-            @InjectByConstructors(Injectable::class)
             class MyModule {
-                fun injectable(index: Int): Injectable = resolve()
+                @Create fun injectable(): Injectable
+                
+                fun provideStrings(): List<String> {
+                    return listOf()
+                }
+
+                fun provideNumbers(): List<Int> {
+                    return listOf()
+                }
+            }
+            """
+            )
+        )
+        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+    }
+
+    @Test
+    fun `generic function supported`() {
+        val result = compile(
+            folder.root,
+            SourceFile.kotlin(
+                "MyModule.kt",
+                """
+            package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.Create
+
+            class Injectable<T>(
+                val value: T
+            )
+
+            class MyModule<T>(val value: T) {
+                @Create fun injectable(): Injectable<T>
+            }
+            """
+            )
+        )
+        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+    }
+
+    @Test
+    fun `generic modules supported`() {
+        val result = compile(
+            folder.root,
+            SourceFile.kotlin(
+                "MyModule.kt",
+                """
+            package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.Create
+            import dev.shustoff.dikt.UseModules
+
+            class Injectable(
+                val value: String
+            )
+
+            class GenericModule<T>(val value: T)
+
+            @UseModules(GenericModule::class)
+            class MyModule(val module: GenericModule<String>) {
+                @Create fun injectable(): Injectable
             }
             """
             )

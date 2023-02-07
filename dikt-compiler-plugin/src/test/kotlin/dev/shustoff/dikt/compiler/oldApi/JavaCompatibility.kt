@@ -1,4 +1,5 @@
-package dev.shustoff.dikt.compiler
+@file:OptIn(ExperimentalCompilerApi::class)
+package dev.shustoff.dikt.compiler.oldApi
 
 import com.google.common.truth.Truth
 import com.tschuchort.compiletesting.KotlinCompilation
@@ -9,7 +10,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
-@OptIn(ExperimentalCompilerApi::class)
 class JavaCompatibility {
 
     @Rule
@@ -50,12 +50,12 @@ class JavaCompatibility {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
+            import dev.shustoff.dikt.UseModules
 
-            @InjectByConstructors(Injectable::class)
             @UseModules(OtherModule::class)
             class MyModule(val other: OtherModule, val param: Int) {
-                fun injectable(): Injectable = resolve()
+                @Create fun injectable(): Injectable
             }
             """
             )
@@ -97,12 +97,12 @@ class JavaCompatibility {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
+            import dev.shustoff.dikt.UseModules
 
-            @InjectByConstructors(Injectable::class)
             @UseModules(OtherModule::class)
             class MyModule(val other: OtherModule, val param: Int) {
-                fun injectable(): Injectable = resolve()
+                @Create fun injectable(): Injectable
             }
             """
             )

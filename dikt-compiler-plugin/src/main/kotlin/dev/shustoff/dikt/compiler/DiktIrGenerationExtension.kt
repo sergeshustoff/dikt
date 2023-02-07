@@ -17,6 +17,6 @@ class DiktIrGenerationExtension(
     override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {
         moduleFragment.transform(DiOldApiTransformer(errorCollector, pluginContext), null)
         moduleFragment.transform(DiNewApiCodeGenerator(errorCollector, pluginContext, incrementalHelper), DiNewApiCodeGenerator.Data())
-        moduleFragment.acceptVoid(RecursiveCallsDetector(errorCollector)) //TODO: check if it still works for resolve calls inside function
+        moduleFragment.acceptVoid(RecursiveCallsDetector(errorCollector))
     }
 }

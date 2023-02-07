@@ -1,4 +1,5 @@
-package dev.shustoff.dikt.compiler
+@file:OptIn(ExperimentalCompilerApi::class)
+package dev.shustoff.dikt.compiler.oldApi
 
 import com.google.common.truth.Truth
 import com.tschuchort.compiletesting.KotlinCompilation
@@ -9,7 +10,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
-@OptIn(ExperimentalCompilerApi::class)
 class UseModulesTest {
 
     @Rule
@@ -24,7 +24,8 @@ class UseModulesTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
+            import dev.shustoff.dikt.UseModules
 
             class Dependency
 
@@ -32,10 +33,9 @@ class UseModulesTest {
 
             class NestedModule(val dependency: Dependency)
 
-            @InjectByConstructors(Injectable::class)
             @UseModules(NestedModule::class)
             class MyModule(val nested: NestedModule) {
-                fun injectable(): Injectable = resolve()
+                @Create fun injectable(): Injectable
             }
             """
             )
@@ -52,7 +52,8 @@ class UseModulesTest {
                 """
             @file:UseModules(NestedModule::class)
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
+            import dev.shustoff.dikt.UseModules
 
             class Dependency
 
@@ -60,9 +61,8 @@ class UseModulesTest {
 
             class NestedModule(val dependency: Dependency)
 
-            @InjectByConstructors(Injectable::class)
             class MyModule(val nested: NestedModule) {
-                fun injectable(): Injectable = resolve()
+                @Create fun injectable(): Injectable
             }
             """
             )
@@ -78,7 +78,8 @@ class UseModulesTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
+            import dev.shustoff.dikt.UseModules
 
             class Dependency
 
@@ -86,10 +87,9 @@ class UseModulesTest {
 
             class NestedModule(val dependency: Dependency)
 
-            @InjectByConstructors(Injectable::class)
             class MyModule() {
                 @UseModules(NestedModule::class)
-                fun injectable(nested: NestedModule): Injectable = resolve()
+                @Create fun injectable(nested: NestedModule): Injectable
             }
             """
             )
@@ -105,7 +105,8 @@ class UseModulesTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
+            import dev.shustoff.dikt.UseModules
 
             class Dependency
 
@@ -113,10 +114,9 @@ class UseModulesTest {
 
             class NestedModule(val dependency: Dependency)
 
-            @InjectByConstructors(Injectable::class)
             class MyModule(val nested: NestedModule) {
                 @UseModules(NestedModule::class)
-                fun injectable(): Injectable = resolve()
+                @Create fun injectable(): Injectable
             }
             """
             )
@@ -132,7 +132,8 @@ class UseModulesTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
+            import dev.shustoff.dikt.UseModules
 
             class Dependency
 
@@ -143,10 +144,9 @@ class UseModulesTest {
             @UseModules(NestedModule2::class)
             class NestedModule(val nested: NestedModule2)
 
-            @InjectByConstructors(Injectable::class)
             @UseModules(NestedModule::class)
             class MyModule(val nested: NestedModule) {
-                fun injectable(): Injectable = resolve()
+                @Create fun injectable(): Injectable
             }
             """
             )
@@ -164,7 +164,8 @@ class UseModulesTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
+            import dev.shustoff.dikt.UseModules
 
             class Dependency
 
@@ -178,13 +179,12 @@ class UseModulesTest {
                 fun dependency() = Dependency()            
             }
 
-            @InjectByConstructors(Injectable::class)
             @UseModules(Module1::class, Module2::class)
             class MyModule(
                 val module1: Module1,
                 val module2: Module2
             ) {
-                fun injectable(): Injectable = resolve()
+                @Create fun injectable(): Injectable
             }
             """
             )
@@ -203,7 +203,8 @@ class UseModulesTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
+            import dev.shustoff.dikt.UseModules
 
             class Dependency
 
@@ -213,10 +214,9 @@ class UseModulesTest {
                 val dependency: Dependency
             }
     
-            @InjectByConstructors(Injectable::class)
             @UseModules(OtherModule::class)
             class MyModule(val other: OtherModule) {
-                fun injectable(): Injectable = resolve()
+                @Create fun injectable(): Injectable
             }
             """
             )
@@ -232,7 +232,8 @@ class UseModulesTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
+            import dev.shustoff.dikt.UseModules
 
             class Dependency
 
@@ -242,9 +243,8 @@ class UseModulesTest {
                 val dependency: Dependency
             }
     
-            @InjectByConstructors(Injectable::class)
             @UseModules(OtherModule::class)
-            fun OtherModule.injectable(): Injectable = resolve()
+            @Create fun OtherModule.injectable(): Injectable
             """
             )
         )
@@ -259,7 +259,8 @@ class UseModulesTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
+            import dev.shustoff.dikt.UseModules
 
             class Dependency
 
@@ -269,9 +270,8 @@ class UseModulesTest {
                 val dependency: Dependency
             }
     
-            @InjectByConstructors(Injectable::class)
             @UseModules(OtherModule::class)
-            fun injectable(module: OtherModule): Injectable = resolve()
+            @Create fun injectable(module: OtherModule): Injectable
             """
             )
         )

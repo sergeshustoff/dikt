@@ -1,4 +1,5 @@
-package dev.shustoff.dikt.compiler
+@file:OptIn(ExperimentalCompilerApi::class)
+package dev.shustoff.dikt.compiler.oldApi
 
 import com.google.common.truth.Truth
 import com.tschuchort.compiletesting.KotlinCompilation
@@ -9,7 +10,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
-@OptIn(ExperimentalCompilerApi::class)
 class NullabilityTest {
     @Rule
     @JvmField
@@ -23,17 +23,16 @@ class NullabilityTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
 
             class Injectable(
                 val dependency: String
             )
 
-            @InjectByConstructors(Injectable::class)
             class MyModule(
                 val dependency: String?
             ) {
-                fun injectable(): Injectable = resolve()
+                @Create fun injectable(): Injectable
             }
             """
             )
@@ -50,17 +49,16 @@ class NullabilityTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
 
             class Injectable(
                 val dependency: String?
             )
 
-            @InjectByConstructors(Injectable::class)
             class MyModule(
                 val dependency: String?
             ) {
-                fun injectable(): Injectable = resolve()
+                @Create fun injectable(): Injectable
             }
             """
             )

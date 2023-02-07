@@ -22,6 +22,7 @@ class RecursiveCallsDetector(
     override fun visitClass(declaration: IrClass) {
         super.visitClass(declaration)
 
+        //TODO: make it work for global functions too. but only when resolve is involved
         if (declaration.functions.any { Annotations.isByDi(it) }) {
             val dependencyMap = collectDependencyMap(declaration)
             findRecursiveCalls(dependencyMap, declaration)

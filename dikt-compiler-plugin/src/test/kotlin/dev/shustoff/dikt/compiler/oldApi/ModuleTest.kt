@@ -1,4 +1,5 @@
-package dev.shustoff.dikt.compiler
+@file:OptIn(ExperimentalCompilerApi::class)
+package dev.shustoff.dikt.compiler.oldApi
 
 import com.google.common.truth.Truth.assertThat
 import com.tschuchort.compiletesting.KotlinCompilation
@@ -9,7 +10,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
-@OptIn(ExperimentalCompilerApi::class)
 class ModuleTest {
 
     @Rule
@@ -24,18 +24,17 @@ class ModuleTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
 
             class Dependency
 
             class Injectable(val dependency: Dependency)
 
-            @InjectByConstructors(Injectable::class)
             class MyModule(
                 val dependency1: Dependency,
                 val dependency2: Dependency
             ) {
-                fun injectable(): Injectable = resolve()
+                @Create fun injectable(): Injectable
             }
             """
             )
@@ -52,15 +51,14 @@ class ModuleTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
 
             class Dependency
 
             class Injectable(val dependency: Dependency)
 
-            @InjectByConstructors(Injectable::class)
             class MyModule {
-                fun injectable(): Injectable = resolve()
+                @Create fun injectable(): Injectable
 
                 fun provide1() = Dependency()
                 fun provide2() = Dependency()
@@ -73,6 +71,31 @@ class ModuleTest {
     }
 
     @Test
+    fun `interface modules not supported`() {
+        val result = compile(
+            folder.root,
+            SourceFile.kotlin(
+                "MyModule.kt",
+                """
+            package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.Create
+
+            class Dependency
+
+            class Injectable(val dependency: Dependency)
+            
+            interface Module {
+                val dependency: Dependency
+                @Create fun injectable(): Injectable            
+            }
+            """
+            )
+        )
+        assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
+        assertThat(result.messages).contains("Only final functions can have generated body")
+    }
+
+    @Test
     fun `allow module functions for dependency resolution`() {
         val result = compile(
             folder.root,
@@ -80,15 +103,14 @@ class ModuleTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
 
             class Dependency
 
             class Injectable(val dependency: Dependency)
 
-            @InjectByConstructors(Injectable::class)
             class MyModule {
-                fun injectable(): Injectable = resolve()
+                @Create fun injectable(): Injectable
 
                 private fun provideDependency(): Dependency {
                     return Dependency()
@@ -108,15 +130,14 @@ class ModuleTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
 
             class Dependency
 
             class Injectable(val dependency: Dependency)
 
-            @InjectByConstructors(Injectable::class)
             class MyModule {
-                fun injectable(name: String): Injectable = resolve()
+                @Create fun injectable(name: String): Injectable
 
                 private fun String.provideDependency(): Dependency {
                     return Dependency()

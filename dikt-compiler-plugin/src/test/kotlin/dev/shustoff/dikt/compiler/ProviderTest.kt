@@ -1,14 +1,15 @@
-@file:OptIn(ExperimentalCompilerApi::class)
 package dev.shustoff.dikt.compiler
 
 import com.google.common.truth.Truth
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
+import dev.shustoff.dikt.compiler.compile
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
+@OptIn(ExperimentalCompilerApi::class)
 class ProviderTest {
 
     @Rule
@@ -28,7 +29,7 @@ class ProviderTest {
             class Dependency
 
             class MyModule(val testArg: String) {
-                @Provide fun dependency(): Dependency
+                fun dependency(): Dependency = resolve()
                 
                 fun createDependency(testArg: String) = Dependency()
             }
@@ -51,7 +52,7 @@ class ProviderTest {
             class Dependency
 
             class MyModule() {
-                @Provide fun dependency(): Dependency
+                fun dependency(): Dependency = resolve()
             }
             """
             )

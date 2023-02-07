@@ -1,10 +1,11 @@
 @file:OptIn(ExperimentalCompilerApi::class)
 
-package dev.shustoff.dikt.compiler
+package dev.shustoff.dikt.compiler.oldApi
 
 import com.google.common.truth.Truth
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
+import dev.shustoff.dikt.compiler.compile
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Rule
 import org.junit.Test

@@ -1,5 +1,5 @@
 @file:OptIn(ExperimentalCompilerApi::class)
-package dev.shustoff.dikt.compiler
+package dev.shustoff.dikt.compiler.oldApi
 
 import com.google.common.truth.Truth
 import com.tschuchort.compiletesting.KotlinCompilation
@@ -24,13 +24,12 @@ class DefaultArgumentTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
 
             class Injectable(val dependency: String = "default")
 
-            @InjectByConstructors(Injectable::class)
             class MyModule {
-                fun injectable(dependency: String): Injectable = resolve()
+                @Create fun injectable(dependency: String): Injectable
             }
             """
             )
@@ -46,13 +45,12 @@ class DefaultArgumentTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
 
             class Injectable(val dependency: String)
 
-            @InjectByConstructors(Injectable::class)
             class MyModule {
-                fun injectable(dependency: String = "default"): Injectable = resolve()
+                @Create fun injectable(dependency: String = "default"): Injectable
             }
             """
             )
@@ -68,16 +66,15 @@ class DefaultArgumentTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
 
             class Injectable(
                 val dependency: String = "default",
                 val index: Int
             )
 
-            @InjectByConstructors(Injectable::class)
             class MyModule {
-                fun injectable(index: Int): Injectable = resolve()
+                @Create fun injectable(index: Int): Injectable
             }
             """
             )

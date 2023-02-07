@@ -1,4 +1,5 @@
-package dev.shustoff.dikt.compiler
+@file:OptIn(ExperimentalCompilerApi::class)
+package dev.shustoff.dikt.compiler.oldApi
 
 import com.google.common.truth.Truth
 import com.tschuchort.compiletesting.KotlinCompilation
@@ -9,7 +10,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
-@OptIn(ExperimentalCompilerApi::class)
 class ValueClassParamsTest {
 
     @Rule
@@ -24,7 +24,7 @@ class ValueClassParamsTest {
                 "MyModule.kt",
                 """
             package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
+            import dev.shustoff.dikt.Create
 
             @JvmInline
             value class Id(val value: String)
@@ -36,12 +36,11 @@ class ValueClassParamsTest {
                 val title: Title
             )
 
-            @InjectByConstructors(Injectable::class)
             class MyModule(
                 val id: Id,
                 val title: Title
             ) {
-                fun injectable(): Injectable = resolve()
+                @Create fun injectable(): Injectable
             }
             """
             )

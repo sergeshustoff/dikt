@@ -1,23 +1,23 @@
-@file:OptIn(ExperimentalCompilerApi::class)
 package dev.shustoff.dikt.compiler
 
 import com.google.common.truth.Truth
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
-import dev.shustoff.dikt.compiler.compile
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
-class DefaultArgumentTest {
+@OptIn(ExperimentalCompilerApi::class)
+class SingletonConstructorInjectionTest {
 
     @Rule
     @JvmField
     var folder: TemporaryFolder = TemporaryFolder()
 
+
     @Test
-    fun `allow default arguments in injected constructors`() {
+    fun `can compile for singleton injectable`() {
         val result = compile(
             folder.root,
             SourceFile.kotlin(
@@ -26,11 +26,11 @@ class DefaultArgumentTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Injectable(val dependency: String = "default")
+            class Injectable
 
-            @InjectByConstructors(Injectable::class)
+            @InjectSingleByConstructors(Injectable::class)
             class MyModule {
-                fun injectable(dependency: String): Injectable = resolve()
+                fun injectable(): Injectable = resolve()
             }
             """
             )
@@ -39,7 +39,7 @@ class DefaultArgumentTest {
     }
 
     @Test
-    fun `allow default arguments in generated methods`() {
+    fun `fail on parameters in cached injectable`() {
         val result = compile(
             folder.root,
             SourceFile.kotlin(
@@ -48,20 +48,21 @@ class DefaultArgumentTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Injectable(val dependency: String)
+            class Injectable(val name: String)
 
-            @InjectByConstructors(Injectable::class)
+            @InjectSingleByConstructors(Injectable::class)
             class MyModule {
-                fun injectable(dependency: String = "default"): Injectable = resolve()
+                fun injectable(name: String): Injectable = resolve()
             }
             """
             )
         )
-        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
+        Truth.assertThat(result.messages).contains("Can't resolve dependency kotlin.String")
     }
 
     @Test
-    fun `use default value if not provided from dependencies`() {
+    fun `fail on cached extension functions`() {
         val result = compile(
             folder.root,
             SourceFile.kotlin(
@@ -70,18 +71,15 @@ class DefaultArgumentTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Injectable(
-                val dependency: String = "default",
-                val index: Int
-            )
+            class Injectable(val name: String)
 
-            @InjectByConstructors(Injectable::class)
-            class MyModule {
-                fun injectable(index: Int): Injectable = resolve()
-            }
+            @InjectSingleByConstructors(Injectable::class)
+            fun String.injectable(): Injectable = resolve()
             """
             )
         )
-        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+
+        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
+        Truth.assertThat(result.messages).contains("This annotation is not applicable to target 'top level function'")
     }
 }
