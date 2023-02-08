@@ -36,14 +36,13 @@ I forked kotlin multiplatform sample [here](https://github.com/sergeshustoff/Peo
 
 Because library uses undocumented compiler api that often changes each library version works well only with specific kotlin versions, check table bellow to decide witch library version to use.
 
-| DI.kt version | Supported kotlin versions |
-|---------------|---------------------------|
-| 1.0.3-alpha2  | 1.8.0 (k2 with hacks)     |
-| 1.0.3-alpha1  | 1.8.0 (no k2)             |
-| 1.0.2         | 1.7.0 - 1.7.21            |
-| 1.0.1         | 1.6.2x                    |
-| 1.0.0-alpha9  | 1.6.10                    |
-| 1.0.0-alpha7  | 1.6.0                     |
+| DI.kt version | Supported kotlin versions      |
+|---------------|--------------------------------|
+| 1.0.3         | 1.8.0 - 1.8.10 (k2 with hacks) |
+| 1.0.2         | 1.7.0 - 1.7.21                 |
+| 1.0.1         | 1.6.2x                         |
+| 1.0.0-alpha9  | 1.6.10                         |
+| 1.0.0-alpha7  | 1.6.0                          |
 
 #### K2 support:
 
