@@ -12,34 +12,19 @@ repositories {
 }
 
 gradlePlugin {
-    plugins {
-        diktPlugin {
-            id = "io.github.sergeshustoff.dikt"
-            displayName = 'DI.kt'
-            description = 'Simple DI for kotlin multiplatform with depdendency graph validation in compile-time.'
-            implementationClass = "dev.shustoff.dikt.gradle.DiktGradlePlugin"
-        }
-    }
-}
-
-pluginBundle {
     website = 'https://github.com/sergeshustoff/dikt'
     vcsUrl = 'https://github.com/sergeshustoff/dikt'
     description = 'Simple DI for kotlin multiplatform with depdendency graph validation in compile-time.'
-    tags = ['tags', 'kotlin', 'multiplatform', 'DI']
 
     plugins {
         diktPlugin {
             id = "io.github.sergeshustoff.dikt"
             displayName = 'DI.kt'
             version = "$dikt_version"
+            description = 'Simple DI for kotlin multiplatform with depdendency graph validation in compile-time.'
+            implementationClass = "dev.shustoff.dikt.gradle.DiktGradlePlugin"
+            tags.set(['tags', 'kotlin', 'multiplatform', 'DI'])
         }
-    }
-
-    mavenCoordinates {
-        groupId = "io.github.sergeshustoff.dikt"
-        artifactId = "dikt-gradle-plugin"
-        version = "$dikt_version"
     }
 }
 
