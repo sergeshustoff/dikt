@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.expressions.IrClassReference
 import org.jetbrains.kotlin.ir.expressions.IrVararg
 import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.util.getAnnotation
 import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.isAnnotation
@@ -39,7 +40,7 @@ object Annotations {
         return descriptor.hasAnnotation(CreateSingleAnnotation)
     }
 
-    fun cachedTypes(module: IrClass): Set<IrType> {
+    fun singletonsByConstructor(module: IrClass): Set<FqName> {
         return module.annotations
             .filter { it.isAnnotation(moduleSingletonsAnnotation) }
             .flatMap { annotation ->
@@ -48,6 +49,7 @@ object Annotations {
                     ?.mapNotNull { (it as? IrClassReference)?.classType }
                     .orEmpty()
             }
+            .mapNotNull { it.classFqName }
             .toSet()
     }
 
@@ -55,7 +57,7 @@ object Annotations {
         return descriptor.hasAnnotation(providedAnnotation)
     }
 
-    fun getProvidedByConstructor(descriptor: IrAnnotationContainer): List<IrType> {
+    fun getProvidedByConstructor(descriptor: IrAnnotationContainer): List<FqName> {
         return descriptor.annotations.filter { it.isAnnotation(injectByConstructorsAnnotation) || it.isAnnotation(oldUseConstructorsAnnotation) }
             .flatMap { annotation ->
                 (annotation.getValueArgument(0) as? IrVararg)
@@ -63,5 +65,6 @@ object Annotations {
                     ?.mapNotNull { (it as? IrClassReference)?.classType }
                     .orEmpty()
             }
+            .mapNotNull { it.classFqName }
     }
 }

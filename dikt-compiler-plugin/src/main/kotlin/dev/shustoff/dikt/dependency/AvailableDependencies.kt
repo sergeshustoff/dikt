@@ -2,15 +2,16 @@ package dev.shustoff.dikt.dependency
 
 import dev.shustoff.dikt.message_collector.ErrorCollector
 import dev.shustoff.dikt.utils.VisibilityChecker
+import org.jetbrains.kotlin.backend.jvm.codegen.anyTypeArgument
 import org.jetbrains.kotlin.ir.backend.js.utils.asString
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrValueParameter
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
-import org.jetbrains.kotlin.ir.types.IrSimpleType
-import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.types.getClass
+import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.constructors
 import org.jetbrains.kotlin.ir.util.primaryConstructor
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.types.checker.SimpleClassicTypeSystemContext.argumentsCount
 
 data class AvailableDependencies(
     private val errorCollector: ErrorCollector,
@@ -21,8 +22,8 @@ data class AvailableDependencies(
     fun resolveDependency(
         type: IrType,
         forFunction: IrFunction,
-        providedByConstructor: Set<IrType>,
-        singletons: Set<IrType>
+        providedByConstructor: Set<FqName>,
+        singletons: Set<FqName>
     ): ResolvedDependency? {
         return resolveDependencyInternal(
             DependencyId(type), forFunction, emptyList(),
@@ -35,9 +36,9 @@ data class AvailableDependencies(
         id: DependencyId,
         forFunction: IrFunction,
         usedTypes: List<IrType>,
-        providedByConstructor: Set<IrType>,
+        providedByConstructor: Set<FqName>,
         defaultValue: IrExpressionBody? = null,
-        singletons: Set<IrType>,
+        singletons: Set<FqName>,
         forbidFunctionParams: Boolean = false
     ): ResolvedDependency? {
         if (id.type in usedTypes) {
@@ -47,10 +48,13 @@ data class AvailableDependencies(
             return null
         }
 
-        //TODO: need check type without generic params somehow here
-        val isSingleton = id.type in singletons
-        if (isSingleton || id.type in providedByConstructor) {
-            return buildResolvedConstructor(forFunction, id, usedTypes, providedByConstructor, singletons, forbidFunctionParams = forbidFunctionParams || isSingleton)
+        val isClassInSingletonList = id.type.classFqName in singletons
+        if (isClassInSingletonList && id.type.anyTypeArgument { true }) {
+            forFunction.error("Generic types can't be singletons")
+        }
+        val isSingleton = isClassInSingletonList && !id.type.anyTypeArgument { true }
+        if (isClassInSingletonList || id.type.classFqName in providedByConstructor) {
+            return buildResolvedConstructor(forFunction, id, usedTypes, providedByConstructor, singletons, forbidFunctionParams = forbidFunctionParams, isSingleton = isSingleton)
         } else {
             val dependency = findProvidedDependency(id, forFunction)
                 ?.takeIf { !forbidFunctionParams || it !is ProvidedDependency.Parameter }
@@ -74,8 +78,8 @@ data class AvailableDependencies(
         forFunction: IrFunction,
         dependency: ProvidedDependency,
         usedTypes: List<IrType>,
-        providedByConstructor: Set<IrType>,
-        singletons: Set<IrType>
+        providedByConstructor: Set<FqName>,
+        singletons: Set<FqName>
     ): ResolvedDependency.Provided? {
         val params = dependency.getRequiredParams()
         val extensionParam = dependency.getRequiredExtensionReceiver()
@@ -150,8 +154,8 @@ data class AvailableDependencies(
         forFunction: IrFunction,
         usedTypes: List<IrType> = emptyList(),
         typeArgumentsMapping: Map<IrType?, IrType?>,
-        providedByConstructor: Set<IrType>,
-        singletons: Set<IrType>,
+        providedByConstructor: Set<FqName>,
+        singletons: Set<FqName>,
         forbidFunctionParams: Boolean = false,
     ): List<ResolvedDependency>? {
         return valueParameters
@@ -174,8 +178,8 @@ data class AvailableDependencies(
         forFunction: IrFunction,
         usedTypes: List<IrType> = emptyList(),
         typeArgumentsMapping: Map<IrType?, IrType?>,
-        providedByConstructor: Set<IrType>,
-        singletons: Set<IrType>,
+        providedByConstructor: Set<FqName>,
+        singletons: Set<FqName>,
     ): ResolvedDependency? {
         return dependency.fromNestedModule?.let {
             resolveDependencyInternal(
@@ -192,9 +196,10 @@ data class AvailableDependencies(
         forFunction: IrFunction,
         id: DependencyId,
         usedTypes: List<IrType>,
-        providedByConstructor: Set<IrType>,
-        singletons: Set<IrType>,
-        forbidFunctionParams: Boolean = false
+        providedByConstructor: Set<FqName>,
+        singletons: Set<FqName>,
+        forbidFunctionParams: Boolean = false,
+        isSingleton: Boolean = false,
     ): ResolvedDependency? {
         val clazz = id.type.getClass()
         val constructors = clazz?.primaryConstructor?.let { listOf(it) }
@@ -220,11 +225,11 @@ data class AvailableDependencies(
             typeArgumentsMapping,
             providedByConstructor,
             singletons,
-            forbidFunctionParams = forbidFunctionParams
+            forbidFunctionParams = forbidFunctionParams || isSingleton
         )
             ?: return null
 
-        return ResolvedDependency.Constructor(id.type, constructor, resolvedParams, isSingleton = id.type in singletons)
+        return ResolvedDependency.Constructor(id.type, constructor, resolvedParams, isSingleton = isSingleton)
     }
 
     private fun getDependencyFromGroup(forFunction: IrFunction, id: DependencyId, options: List<ProvidedDependency>): ProvidedDependency? {

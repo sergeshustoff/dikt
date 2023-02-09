@@ -71,8 +71,32 @@ class GenericsTest {
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
     }
+
     @Test
-    fun `generic singleton supported`() {
+    fun `support specific generics`() {
+        val result = compile(
+            folder.root,
+            SourceFile.kotlin(
+                "MyModule.kt",
+                """
+            package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.*
+
+            class Injectable<T>(
+                val value: T
+            )
+
+            @InjectByConstructors(Injectable::class)
+            class MyModule() {
+                fun injectable(value: String): Injectable<String> = resolve()
+            }
+            """
+            )
+        )
+        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+    }
+    @Test
+    fun `generic singletons not supported`() {
         val result = compile(
             folder.root,
             SourceFile.kotlin(
@@ -92,32 +116,8 @@ class GenericsTest {
             """
             )
         )
-        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
-    }
-    @Test
-    fun `fail on generic singleton if can't cache in module singleton`() {
-        //TODO: also add generic testing in sample
-        val result = compile(
-            folder.root,
-            SourceFile.kotlin(
-                "MyModule.kt",
-                """
-            package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
-
-            class Injectable<T>(
-                val value: T
-            )
-
-            @InjectSingleByConstructors(Injectable::class)
-            class MyModule {
-                fun <T> injectable(value: T): Injectable<T> = resolve()
-            }
-            """
-            )
-        )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("Need message here")
+        Truth.assertThat(result.messages).contains("Generic types can't be singletons")
     }
 
     @Test

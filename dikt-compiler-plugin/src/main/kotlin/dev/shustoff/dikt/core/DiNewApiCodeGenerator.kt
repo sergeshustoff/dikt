@@ -29,8 +29,8 @@ class DiNewApiCodeGenerator(
     private val dependencyCollector = DependencyCollector(this)
     private val injectionBuilder = InjectionBuilder(pluginContext, errorCollector)
 
-    private val providedByConstructorInClassCache = mutableMapOf<IrClass, List<IrType>>()
-    private val providedByConstructorInFileCache = mutableMapOf<IrFile, List<IrType>>()
+    private val providedByConstructorInClassCache = mutableMapOf<IrClass, List<FqName>>()
+    private val providedByConstructorInFileCache = mutableMapOf<IrFile, List<FqName>>()
     private val dependencyByModuleCache = mutableMapOf<IrClass, AvailableDependencies>()
 
     override fun visitClass(declaration: IrClass, data: Data): IrStatement {
@@ -44,7 +44,6 @@ class DiNewApiCodeGenerator(
     override fun visitExpression(expression: IrExpression, data: Data): IrExpression {
         if (expression is IrCall && isDiFunction(expression)) {
             if (data.function == null) {
-                //TODO: remove this requirement. It's needed to avoid loops
                 expression.symbol.owner.error("Dependency can only be resolved inside functions for now")
                 return super.visitExpression(expression, data)
             } else {
@@ -61,7 +60,6 @@ class DiNewApiCodeGenerator(
         function: IrFunction,
         original: IrCall
     ): IrExpression {
-        val singletons = module?.let { Annotations.cachedTypes(module) }.orEmpty()
         val dependencies = if (module != null &&
             function.valueParameters.isEmpty() &&
             function.extensionReceiverParameter == null &&
@@ -75,13 +73,14 @@ class DiNewApiCodeGenerator(
             dependencyCollector.collectDependencies(module, function)
         }.copy(visibilityChecker = VisibilityChecker(function))
 
+        val singletons = module?.let { Annotations.singletonsByConstructor(module) }.orEmpty()
         val providedByConstructor = getProvidedByConstructor(function)
         val resolvedDependency = dependencies.resolveDependency(original.type, function, providedByConstructor, singletons)
         incrementalHelper?.recordFunctionDependency(function, resolvedDependency)
         return injectionBuilder.buildResolvedDependencyCall(module, function, resolvedDependency, original)
     }
 
-    private fun getProvidedByConstructor(function: IrFunction): Set<IrType> {
+    private fun getProvidedByConstructor(function: IrFunction): Set<FqName> {
         val inFunction = Annotations.getProvidedByConstructor(function)
         val inParentClasses = Utils.getParentClasses(function).flatMap { clazz ->
             providedByConstructorInClassCache.getOrPut(clazz) {
