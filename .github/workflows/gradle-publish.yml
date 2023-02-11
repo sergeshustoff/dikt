@@ -36,6 +36,7 @@ jobs:
 
     - name: Close maven repo
       run: gradle closeAndReleaseRepository --no-daemon --no-parallel
+      continue-on-error: true
       env:
         ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVENCENTRALUSERNAME }}
         ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVENCENTRALPASSWORD }}
