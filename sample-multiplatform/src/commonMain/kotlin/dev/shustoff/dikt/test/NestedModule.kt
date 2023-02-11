@@ -1,7 +1,9 @@
 package dev.shustoff.dikt.test
 
-import dev.shustoff.dikt.CreateSingle
+import dev.shustoff.dikt.InjectSingleByConstructors
+import dev.shustoff.dikt.resolve
 
+@InjectSingleByConstructors(Dependency::class)
 class NestedModule {
-    @CreateSingle fun dependency(): Dependency
+    fun dependency(): Dependency = resolve()
 }

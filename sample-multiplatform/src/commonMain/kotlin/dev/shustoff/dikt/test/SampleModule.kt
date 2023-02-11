@@ -2,15 +2,13 @@ package dev.shustoff.dikt.test
 
 import dev.shustoff.dikt.*
 
-@UseModules(NestedModule::class)
+@InjectByConstructors(Injectable::class)
+@InjectSingleByConstructors(Singleton::class)
 class SampleModule(
-    val nestedModule: NestedModule
+    @ProvidesMembers private val nestedModule: NestedModule
 ) {
-    @Provide fun dependencySingleton(): Dependency
-    @Create fun injectableFactory(name: String): Injectable
-    @CreateSingle fun singleton(): Singleton
-    @Create fun String.injectableExtension(): Injectable
+    fun dependencySingleton(): Dependency = resolve()
+    fun injectableFactory(name: String): Injectable = resolve()
+    fun singleton(): Singleton = resolve()
+    fun String.injectableExtension(): Injectable = resolve()
 }
-
-@UseModules(SampleModule::class, NestedModule::class)
-@Create fun SampleModule.externalExtension(name: String): Injectable

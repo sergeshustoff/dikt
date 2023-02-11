@@ -1,19 +1,17 @@
 package dev.shustoff.dikt.sample
 
-import dev.shustoff.dikt.Create
-import dev.shustoff.dikt.CreateSingle
-import dev.shustoff.dikt.UseModules
+import dev.shustoff.dikt.*
 
-@UseModules(EngineModule::class)
+@InjectSingleByConstructors(CarOwner::class)
+@InjectByConstructors(Car::class, Garage::class)
 class CarModule(
-    val engineModule: EngineModule,
+    @ProvidesMembers private val engineModule: EngineModule,
 ) {
-    @CreateSingle
-    fun owner(): CarOwner
+    fun owner(): CarOwner = resolve()
 
-    @Create fun carUnknownModel(): Car
+    fun carUnknownModel(): Car = resolve()
 
-    @Create fun car(model: String): Car
+    fun car(model: String): Car = resolve()
 
-    @Create fun getGarage(): Garage
+    fun getGarage(): Garage = resolve()
 }

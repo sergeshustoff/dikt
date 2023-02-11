@@ -1,18 +1,19 @@
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.github.sergeshustoff.dikt/dikt-compiler-plugin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.github.sergeshustoff.dikt/dikt-compiler-plugin)
 [![gradle plugin](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/io/github/sergeshustoff/dikt/dikt-gradle-plugin/maven-metadata.xml.svg?label=gradle%20plugin)](https://plugins.gradle.org/plugin/io.github.sergeshustoff.dikt)
-[![IDEA plugin](https://img.shields.io/jetbrains/plugin/v/17533-di-kt.svg)](https://plugins.jetbrains.com/plugin/17533-di-kt)
-![Kotlin version](https://kotlin-version.aws.icerock.dev/kotlin-version?group=io.github.sergeshustoff.dikt&name=dikt-compiler-plugin)
+![Kotlin version](https://kotlin-version.aws.icerock.dev/kotlin-version?group=io.github.sergeshustoff.dikt&name=dikt-annotations)
 
 # DI.kt
-Simple DI with compile-time dependency graph validation for kotlin multiplatform.
-It uses IR to create method's bodies with dependency injection.
+**Warning**: this documentation is for library version 1.1.+ (witch is in alpha now), for older version check [old version of documentation](https://github.com/sergeshustoff/dikt/blob/3665a75221f288a1c455fe94acb2c9c84039e2af/README.md).
 
-Limitations: all annotations required for generating functions should be available in the same file as generated function. It can use methods and constructors from outside, but not annotations, because adding and removing annotations in other files would not trigger recompilation for generated function and combined with incremental compilation it would cause errors.
+Simple DI with compile-time dependency graph validation for kotlin multiplatform.
+It uses IR to generate code that finds or creates dependency in place of `resolve()` call.
+
+Limitations: all annotations required for generating code should be available in the same file as generated code. It can use methods and constructors from outside, but not annotations, because adding and removing annotations in other files would not trigger recompilation for generated code and combined with incremental compilation it would cause errors.
 
 ### Why another DI?
 DI.kt is smaller and simpler than some solutions, but it verifies dependency graph in compile time like a serious DI framework. 
 
-DI.kt does not generate files during compilation, which makes compilation faster (presumably, not tested).
+DI.kt does not generate files during compilation, which makes compilation faster.
 
 Because of its simplicity it might be useful for minimalistic DI in libraries and feature-modules, but it can be used in big project too.
 
@@ -26,9 +27,6 @@ Because of its simplicity it might be useful for minimalistic DI in libraries an
 
 ### Sample
 I forked kotlin multiplatform sample [here](https://github.com/sergeshustoff/PeopleInSpace-dikt-sample) and replaced di with DI.kt. It's clumsy, but it shows that library works on different platforms. 
-
-### Articles
-[DI.kt, One of the First Kotlin Multiplatform DI Libraries](https://medium.com/wriketechclub/di-kt-one-of-the-first-kotlin-multiplatform-di-libraries-5a5fd8665713)
 
 ## Installation
 
@@ -47,7 +45,8 @@ Because library uses undocumented compiler api that often changes each library v
 
 #### K2 support:
 
-Version 1.0.3-alpha2 has limited support for k2, but requires hack to work properly - annotation @Suppress("NON_ABSTRACT_FUNCTION_WITH_NO_BODY") is required for module or each di function because plugin can't bypass function body check on k2 for now.
+Version 1.0.3 has limited support for k2, but requires hack to work properly - annotation @Suppress("NON_ABSTRACT_FUNCTION_WITH_NO_BODY") is required for module or each di function because plugin can't bypass function body check on k2 for now.
+Version 1.1.0 has new api compatible with k2 without additional hacks. Old incompatible api is deprecated
 
 #### Gradle plugin:
 In build.gradle file in module add plugin:
@@ -55,91 +54,90 @@ In build.gradle file in module add plugin:
 ```groovy
 plugins {
     ...
-    id 'io.github.sergeshustoff.dikt' version '1.0.3'
+    id 'io.github.sergeshustoff.dikt' version '1.1.0'
 }
 ```
-
-#### IDEA plugin
-
-Install [idea plugin](https://plugins.jetbrains.com/plugin/17533-di-kt), it will remove errors from ide for methods with generated body.
 
 ## Usage
 
-Create module and declare provided dependencies. Use `@Create`, `@Provide` and `@CreateSingle` to generate function's bodies. Use `@UseModule`s and `@UseConstructors` to control how dependencies are provided and what classes can be created by primary constructors.
+Create module and declare provided dependencies. 
+Use `resolve()` function in places where you need your dependencies provided/created.
+Use `@UseModule`, `@InjectByConstructors` and `@InjectSingleByConstructors` to control how dependencies are provided and what classes can be created by primary constructors.
 
+#### Example:
 ```kotlin
+@InjectSingleByConstructors(SomeSingleton::class)
+@InjectByConstructors(SomethingElse::class)
 class SomethingModule(
     val externalDependency: Something,
 ) {
-    @CreateSingle fun someSingleton(): SomeSingleton
-    @Create fun provideSomethingElse(): SomethingElse
+    fun someSingleton(): SomeSingleton = resolve()
+    fun provideSomethingElse(): SomethingElse = resolve()
+}
+```
+
+#### Generated code:
+```kotlin
+@InjectSingleByConstructors(SomeSingleton::class)
+@InjectByConstructors(SomethingElse::class)
+class SomethingModule(
+    val externalDependency: Something,
+) {
+    private val someSingletonBackingField by lazy { SomeSingleton(externalDependency) }
+    fun someSingleton(): SomeSingleton = someSingletonBackingField
+    fun provideSomethingElse(): SomethingElse = SomethingElse(someSingletonBackingField)
 }
 ```
   
-Under the hood primary constructor will be called for SomethingElse and SomeSingleton. If constructor requires some parameters - they will be retrieved form module's properties and functions.
+Under the hood primary constructor will be called for SomethingElse and SomeSingleton. If constructor requires some parameters - they will be retrieved form module's properties and functions, and from function parameters.
 
-### Module
-Any class or object that has a function marked with `@Create`, `@Provide` or `@CreateSingle` is essentially a module. We don't need additional annotation for it, but if you need content of another 'module' provided as dependency in generated functions, you need to mark that type as module using annotation `@UseModules` on function, its containing class or file.
+### Recursive dependency
+Library will fail compilation if there are any recursive dependencies in generated code, but there might be a situation when users code uses generated code to provide dependencies for injection.
+In this case it's better to write a function and list all needed dependencies in parameters instead of calling module functions directly:
 
-### Singleton
-There are no true singletons in DI.kt, but instead you can use `@CreateSingle` annotation to generate functions backed by lazy properties. Such function will return the same instance each time they called as long as they called for the same instance of containing class. Effectively it gives each module a scope of their own and makes the scoping more understandable.
+#### Don't do this:
 
-## Annotations
+```kotlin
+class Injectable(val manual: ManualInjectable)
 
-### `@Create`
+class ManualInjectable(val injectable: Injectable)
 
-Magical annotation that tells compiler plugin to generate method body using returned type's primary constructor.
-Values for constructor parameters will be retrieved from function parameters and from functions and properties of containing class.
-
-Code generated by this annotation always uses returned type's primary constructor, even if dependency of returned type is available in parameters or in containing class.
-
-#### Example:
+@InjectByConstructors(Injectable::class)
+class MyModule {
+    fun injectable(): Injectable = resolve()
     
-```kotlin
-class Something(val name: String)
-
-@Create fun provideSomething(name: String): Something
-```
-
-Code above will be transformed into
-
-```kotlin
-fun provideSomething(name: String) = Something(name)
-```
-
-### `@Provide`
-
-Tells compiler plugin to generate method body that returns value of specified type retrieved from dependencies. For example from containing class properties or functions. 
-
-It's useful for elevating dependencies from nested modules.
-Doesn't call constructor for returned type unless it's listed in `@UseConstructors`.
-
-#### Example:
-
-```kotlin
-class Something(val name: String)
-
-class ExternalModule(
-    val something: Something
-)
-
-@UseModules(ExternalModule::class)
-class MyModule(val external: ExternalModule) {
-    @Provide fun provideSomething(): Something
+    fun manualInjectable() = ManualInjectable(injectable()) // here is the recursion in users code that will not be detected by library
 }
 ```
 
-### `@CreateSingle`
+#### Do this instead:
 
-Same as `@Create`, but each annotation tells compiler to create a lazy property in containing class and return value from that property. Functions marked with `@CreateSingle` don't support parameters.
+```kotlin
+class Injectable(val manual: ManualInjectable)
 
-### `@UseConstructors`
+class ManualInjectable(val injectable: Injectable)
+
+@InjectByConstructors(Injectable::class)
+class MyModule {
+    fun injectable(): Injectable = resolve()
+
+    fun manualInjectable(injectable: Injectable) = ManualInjectable(injectable) // this way library detects recursion and fails compilation
+}
+```
+
+### Module
+Any class or object that has `resolve()` calls somewhere inside is essentially a module. We don't need additional annotation for it, but if you need content of another 'module' provided as dependency in generated code, you need to mark a function or property returning that class as module using annotation `@ProvidesMembers`.
+
+### Singleton
+There are no true singletons in DI.kt, but instead you can use `@InjectSingleByConstructors`. When resolving types listed in this annotation backing lazy field will be generated in module and instance of that type will be reused when it's resolved again. Such singleton instances persist as long as they resolved for the same instance of containing class (module). Effectively it gives each module a scope of their own and makes the scoping more understandable.
+
+## Annotations
+
+### `@InjectByConstructors`
 
 Dependencies of types listed in this annotation parameters will be provided by constructor when required.
 
-Might be applied to file, class, or `@Create` or `@Provide` function.
-
-When constructor called for returned type of `@Create` function requires parameter of type listed in `@UseConstructors` it's constructor will be called instead of looking for provided dependency of that type.
+Might be applied to file, class or function.
 
 #### Example:
 
@@ -148,19 +146,62 @@ class SomeDependency
 
 class Something(val dependency: SomeDependency)
 
-@UseConstructors(SomeDependency::class)
+@InjectByConstructors(Something::class, SomeDependency::class)
 class MyModule {
-    @Create fun provideSomething(): Something
+    fun provideSomething(): Something = resolve()
 }
 ```
 
-### `@UseModules`
+#### Generated code:
 
-Marks types that should provide all visible properties and functions as dependencies. Such dependencies can be used in `@Create` function as constructor parameters or in `@Provide` function as returned type.
+```kotlin
+class SomeDependency
 
-Listed type should be available from DI function in order to provide type's properties and functions.
+class Something(val dependency: SomeDependency)
 
-WARNING: This annotation doesn't work recursively. It means that function can only use modules listed in its own annotation or in its class annotation or in its file annotation. 
+class MyModule {
+    fun provideSomething(): Something = Something(SomeDependency())
+}
+```
+
+### `@InjectSingleByConstructors`
+
+Dependencies of types listed in this annotation parameters will be provided by constructor when required, plus instance will be cached for future use in the same module by backing lazy field.
+
+Might be applied to class.
+
+#### Example:
+
+```kotlin
+class SomeDependency
+
+class Something(val dependency: SomeDependency)
+
+@InjectByConstructors(Something::class)
+@InjectSingleByConstructors(SomeDependency::class)
+class MyModule {
+    fun provideSomething(): Something = resolve()
+}
+```
+
+#### Generated code:
+
+```kotlin
+class SomeDependency
+
+class Something(val dependency: SomeDependency)
+
+class MyModule {
+    private val cachedDependency by lazy { SomeDependency() }
+    fun provideSomething(): Something = Something(cachedDependency)
+}
+```
+
+### `@ProvidesMembers`
+
+Indicates that all visible members of dependency returned from marked function or property can be used in dependency resolution.
+
+WARNING: This annotation doesn't work recursively. It means that any `@ProvidesMembers` annotations in other classes or files will be ignored when generation dependency resolution.
 
 #### Example:
 
@@ -169,10 +210,24 @@ class ExternalModule(val name: String)
 
 class Something(val name: String)
 
-@UseModules(ExternalModule::class)
+@InjectByConstructors(Something::class)
+class MyModule(
+    @ProvidesMembers private val external: ExternalModule
+) {
+    fun provideSomething(): Something = resolve()
+}
+```
+
+#### Generated code:
+
+```kotlin
+class ExternalModule(val name: String)
+
+class Something(val name: String)
+
 class MyModule(
     private val external: ExternalModule
 ) {
-    @Create fun provideSomething(): Something // will call constructor using external.name as parameter
+    fun provideSomething(): Something = Something(external.name)
 }
 ```

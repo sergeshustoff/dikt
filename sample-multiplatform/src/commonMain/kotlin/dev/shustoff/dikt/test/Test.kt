@@ -19,8 +19,5 @@ object Test {
         check(with(module) { "test".injectableExtension() } != null) {
             "Should return value from generated function"
         }
-        check(module.externalExtension("test") != null) {
-            "Should return value from generated function"
-        }
     }
 }

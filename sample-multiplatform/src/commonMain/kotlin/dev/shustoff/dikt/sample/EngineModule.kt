@@ -1,13 +1,11 @@
 package dev.shustoff.dikt.sample
 
-import dev.shustoff.dikt.Create
-import dev.shustoff.dikt.UseModules
+import dev.shustoff.dikt.*
 
-@UseModules(EngineNameModule::class)
+@InjectByConstructors(Engine::class)
 class EngineModule(
-    private val engineNameModule: EngineNameModule<String>
+    @ProvidesMembers private val engineNameModule: EngineNameModule<String>
 ) {
 
-    @Create
-    fun buildEngine(): Engine
+    fun buildEngine(): Engine = resolve()
 }
