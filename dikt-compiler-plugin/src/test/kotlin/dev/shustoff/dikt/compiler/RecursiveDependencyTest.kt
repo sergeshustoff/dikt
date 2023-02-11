@@ -110,13 +110,11 @@ class RecursiveDependencyTest {
             class MyModule {
                 fun injectable(): Injectable = resolve()
                 
-                fun provideDependency1(): Dependency1 {
-                    provideDependency2()
+                fun provideDependency1(dependency: Dependency2): Dependency1 {
                     return Dependency1()
                 }
 
-                fun provideDependency2(): Dependency2 {
-                    provideDependency1()
+                fun provideDependency2(dependency: Dependency1): Dependency2 {
                     return Dependency2()
                 }
             }
@@ -124,12 +122,11 @@ class RecursiveDependencyTest {
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("Recursive dependency detected")
-        Truth.assertThat(result.messages).contains("Recursive dependency detected")
+        Truth.assertThat(result.messages).contains("Recursive dependency: dev.shustoff.dikt.compiler.Injectable -> dev.shustoff.dikt.compiler.Dependency1 -> dev.shustoff.dikt.compiler.Dependency2")
     }
 
     @Test
-    fun `fail on recursive dependency between between di and normal functions`() {
+    fun `fail on recursive dependency in provider function`() {
         val result = compile(
             folder.root,
             SourceFile.kotlin(
@@ -143,39 +140,15 @@ class RecursiveDependencyTest {
             class MyModule {
                 fun injectable(): Injectable = resolve()
                 
-                fun provideInjectable(): Injectable {
-                    return injectable()
+                fun provideInjectable(injectable: Injectable): Injectable {
+                    return injectable
                 }
             }
             """
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("Recursive dependency detected")
-    }
-
-    @Test
-    fun `fail on recursive dependency between between di and normal global functions`() {
-        val result = compile(
-            folder.root,
-            SourceFile.kotlin(
-                "MyModule.kt",
-                """
-            package dev.shustoff.dikt.compiler
-            import dev.shustoff.dikt.*
-
-            class Injectable()
-
-            fun injectable(): Injectable = resolve()
-            
-            fun provideInjectable(): Injectable {
-                return injectable()
-            }
-            """
-            )
-        )
-        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("Recursive dependency detected")
+        Truth.assertThat(result.messages).contains("Recursive dependency: dev.shustoff.dikt.compiler.Injectable")
     }
 
     @Test
