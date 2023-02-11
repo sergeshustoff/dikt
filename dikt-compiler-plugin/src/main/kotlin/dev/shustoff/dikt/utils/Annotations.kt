@@ -17,6 +17,7 @@ object Annotations {
     private val CreateSingleAnnotation = FqName("dev.shustoff.dikt.CreateSingle")
     private val providedAnnotation = FqName("dev.shustoff.dikt.Provide")
     private val useModulesAnnotation = FqName("dev.shustoff.dikt.UseModules")
+    private val providesMembersAnnotation = FqName("dev.shustoff.dikt.ProvidesMembers")
     private val injectByConstructorsAnnotation = FqName("dev.shustoff.dikt.InjectByConstructors")
     private val oldUseConstructorsAnnotation = FqName("dev.shustoff.dikt.UseConstructors")
     private val moduleSingletonsAnnotation = FqName("dev.shustoff.dikt.InjectSingleByConstructors")
@@ -28,6 +29,10 @@ object Annotations {
             ?.elements
             ?.mapNotNull { (it as? IrClassReference)?.classType }
             .orEmpty()
+    }
+
+    fun providesMembers(descriptor: IrAnnotationContainer): Boolean {
+        return descriptor.hasAnnotation(providesMembersAnnotation)
     }
 
     fun isByDi(descriptor: IrFunction): Boolean {

@@ -10,6 +10,7 @@ import kotlin.reflect.KClass
  *
  * This annotation doesn't work recursively. It means that function can only use modules listed in its own annotation or in its class annotation or in its file annotation.
  */
+@Deprecated("Use ProvidesMembers instead. It's a bit more strict, but much more readable")
 annotation class UseModules(
     vararg val modules: KClass<*>
 )

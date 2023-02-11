@@ -226,8 +226,7 @@ class CreatorTest {
 
             class NestedModule(val dependency: Dependency)
 
-            @UseModules(NestedModule::class)
-            class Module(val nestedModule: NestedModule) {
+            class Module(@ProvidesMembers val nestedModule: NestedModule) {
                 @Create fun String.injectable(): Injectable
             }
             """

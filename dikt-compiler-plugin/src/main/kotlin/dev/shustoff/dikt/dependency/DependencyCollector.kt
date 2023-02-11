@@ -6,10 +6,7 @@ import dev.shustoff.dikt.utils.Utils
 import dev.shustoff.dikt.utils.VisibilityChecker
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.types.*
-import org.jetbrains.kotlin.ir.util.defaultType
-import org.jetbrains.kotlin.ir.util.file
-import org.jetbrains.kotlin.ir.util.functions
-import org.jetbrains.kotlin.ir.util.properties
+import org.jetbrains.kotlin.ir.util.*
 import java.util.*
 
 class DependencyCollector(
@@ -23,7 +20,7 @@ class DependencyCollector(
             properties = module?.properties.orEmpty(),
             functions = module?.functions.orEmpty(),
             params = functionParams,
-            moduleTypes = getAllUseModulesTypes(function),
+            moduleTypes = getAllUseModulesTypes(function, module),
         )
     }
 
@@ -130,14 +127,19 @@ class DependencyCollector(
     }
 
     companion object {
-        private fun getAllUseModulesTypes(function: IrFunction): Set<IrType> {
+        private fun getAllUseModulesTypes(function: IrFunction, module: IrClass?): Set<IrType> {
             val classes =  Utils.getParentClasses(function)
             val fromClasses = classes.flatMap { Annotations.getUsedModules(it) }
             val fromFile = Annotations.getUsedModules(function.file)
             val fromFunction = Annotations.getUsedModules(function)
-            return (fromFile + fromClasses + fromFunction)
+            val oldUseModulesAnnotationTypes = (fromFile + fromClasses + fromFunction)
                 .mapNotNull { it.classOrNull?.defaultType } // for generics
                 .toSet()
+
+            val providesMembersAnnotated = module?.properties?.filter { Annotations.providesMembers(it) }?.mapNotNull { it.getter?.returnType?.classOrNull?.defaultType }.orEmpty() +
+                    module?.functions?.filter { Annotations.providesMembers(it) }?.mapNotNull { it.returnType.classOrNull?.defaultType }.orEmpty()
+
+            return oldUseModulesAnnotationTypes + providesMembersAnnotated
         }
     }
 }

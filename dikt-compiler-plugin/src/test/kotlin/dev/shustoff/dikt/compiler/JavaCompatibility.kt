@@ -53,8 +53,7 @@ class JavaCompatibility {
             import dev.shustoff.dikt.*
 
             @InjectByConstructors(Injectable::class)
-            @UseModules(OtherModule::class)
-            class MyModule(val other: OtherModule, val param: Int) {
+            class MyModule(@ProvidesMembers val other: OtherModule, val param: Int) {
                 fun injectable(): Injectable = resolve()
             }
             """
@@ -100,8 +99,7 @@ class JavaCompatibility {
             import dev.shustoff.dikt.*
 
             @InjectByConstructors(Injectable::class)
-            @UseModules(OtherModule::class)
-            class MyModule(val other: OtherModule, val param: Int) {
+            class MyModule(@ProvidesMembers val other: OtherModule, val param: Int) {
                 fun injectable(): Injectable = resolve()
             }
             """

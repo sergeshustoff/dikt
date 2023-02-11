@@ -166,8 +166,7 @@ class SimpleConstructorInjectionTest {
             class NestedModule(val dependency: Dependency)
 
             @InjectByConstructors(Injectable::class)
-            @UseModules(NestedModule::class)
-            class Module(val nestedModule: NestedModule) {
+            class Module(@ProvidesMembers val nestedModule: NestedModule) {
                 fun String.injectable(): Injectable = resolve()
             }
             """

@@ -137,8 +137,7 @@ class GenericsTest {
             class GenericModule<T>(val value: T)
 
             @InjectByConstructors(Injectable::class)
-            @UseModules(GenericModule::class)
-            class MyModule(val module: GenericModule<String>) {
+            class MyModule(@ProvidesMembers val module: GenericModule<String>) {
                 fun injectable(): Injectable = resolve()
             }
             """
