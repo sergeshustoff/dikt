@@ -54,7 +54,7 @@ In build.gradle file in module add plugin:
 ```groovy
 plugins {
     ...
-    id 'io.github.sergeshustoff.dikt' version '1.1.0'
+    id 'io.github.sergeshustoff.dikt' version '1.1.0-alpha2'
 }
 ```
 
