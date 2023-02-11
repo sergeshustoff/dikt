@@ -29,8 +29,8 @@ class DiNewApiCodeGenerator(
     private val dependencyCollector = DependencyCollector(this)
     private val injectionBuilder = InjectionBuilder(pluginContext, errorCollector)
 
-    private val providedByConstructorInClassCache = mutableMapOf<IrClass, List<FqName>>()
-    private val providedByConstructorInFileCache = mutableMapOf<IrFile, List<FqName>>()
+    private val providedByConstructorInClassCache = mutableMapOf<IrClass, List<IrType>>()
+    private val providedByConstructorInFileCache = mutableMapOf<IrFile, List<IrType>>()
     private val dependencyByModuleCache = mutableMapOf<IrClass, AvailableDependencies>()
 
     override fun visitClass(declaration: IrClass, data: Data): IrStatement {
@@ -80,7 +80,7 @@ class DiNewApiCodeGenerator(
         return injectionBuilder.buildResolvedDependencyCall(module, function, resolvedDependency, original)
     }
 
-    private fun getProvidedByConstructor(function: IrFunction): Set<FqName> {
+    private fun getProvidedByConstructor(function: IrFunction): Set<IrType> {
         val inFunction = Annotations.getProvidedByConstructor(function)
         val inParentClasses = Utils.getParentClasses(function).flatMap { clazz ->
             providedByConstructorInClassCache.getOrPut(clazz) {
