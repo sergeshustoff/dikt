@@ -36,7 +36,7 @@ Because library uses undocumented compiler api that often changes each library v
 
 | DI.kt version | Supported kotlin versions        |
 |---------------|----------------------------------|
-| 1.1.0-alpha2  | 1.8.0 - 1.8.10 (k2 with new api) |
+| 1.1.0-alpha3  | 1.8.0 - 1.8.10 (k2 with new api) |
 | 1.0.3         | 1.8.0 - 1.8.10 (k2 with hacks)   |
 | 1.0.2         | 1.7.0 - 1.7.21                   |
 | 1.0.1         | 1.6.2x                           |
@@ -54,7 +54,7 @@ In build.gradle file in module add plugin:
 ```groovy
 plugins {
     ...
-    id 'io.github.sergeshustoff.dikt' version '1.1.0-alpha2'
+    id 'io.github.sergeshustoff.dikt' version '1.1.0-alpha3'
 }
 ```
 
@@ -62,7 +62,7 @@ plugins {
 
 Create module and declare provided dependencies. 
 Use `resolve()` function in places where you need your dependencies provided/created.
-Use `@UseModule`, `@InjectByConstructors` and `@InjectSingleByConstructors` to control how dependencies are provided and what classes can be created by primary constructors.
+Use `@ProvidesMembers`, `@InjectByConstructors` and `@InjectSingleByConstructors` annotations or `Injectable` interface to control how dependencies are provided and what classes can be created by primary constructors.
 
 #### Example:
 ```kotlin
@@ -98,13 +98,13 @@ In this case it's better to write a function and list all needed dependencies in
 #### Don't do this:
 
 ```kotlin
-class Injectable(val manual: ManualInjectable)
+class AutoInjectable(val manual: ManualInjectable)
 
-class ManualInjectable(val injectable: Injectable)
+class ManualInjectable(val injectable: AutoInjectable)
 
-@InjectByConstructors(Injectable::class)
+@InjectByConstructors(AutoInjectable::class)
 class MyModule {
-    fun injectable(): Injectable = resolve()
+    fun injectable(): AutoInjectable = resolve()
     
     fun manualInjectable() = ManualInjectable(injectable()) // here is the recursion in users code that will not be detected by library
 }
@@ -113,15 +113,15 @@ class MyModule {
 #### Do this instead:
 
 ```kotlin
-class Injectable(val manual: ManualInjectable)
+class AutoInjectable(val manual: ManualInjectable)
 
-class ManualInjectable(val injectable: Injectable)
+class ManualInjectable(val injectable: AutoInjectable)
 
-@InjectByConstructors(Injectable::class)
+@InjectByConstructors(AutoInjectable::class)
 class MyModule {
-    fun injectable(): Injectable = resolve()
+    fun injectable(): AutoInjectable = resolve()
 
-    fun manualInjectable(injectable: Injectable) = ManualInjectable(injectable) // this way library detects recursion and fails compilation
+    fun manualInjectable(injectable: AutoInjectable) = ManualInjectable(injectable) // this way library detects recursion and fails compilation
 }
 ```
 
@@ -131,7 +131,35 @@ Any class or object that has `resolve()` calls somewhere inside is essentially a
 ### Singleton
 There are no true singletons in DI.kt, but instead you can use `@InjectSingleByConstructors`. When resolving types listed in this annotation backing lazy field will be generated in module and instance of that type will be reused when it's resolved again. Such singleton instances persist as long as they resolved for the same instance of containing class (module). Effectively it gives each module a scope of their own and makes the scoping more understandable.
 
-## Annotations
+### `Injectable` interface
+
+Dependencies directly implementing interface `Injectable` will be provided by constructor when required. It is similar to @Inject annotation in java, but for compiler plugin compatibility with incremental compilation it had to be an interface (changing annotations will not cause dependant code to recompile, while changing supertypes will).
+
+#### Example:
+
+```kotlin
+class SomeDependency : Injectable
+
+class Something(val dependency: SomeDependency) : Injectable
+
+class MyModule {
+    fun provideSomething(): Something = resolve()
+}
+```
+
+#### Generated code:
+
+```kotlin
+class SomeDependency : Injectable
+
+class Something(val dependency: SomeDependency) : Injectable
+
+class MyModule {
+    fun provideSomething(): Something = Something(SomeDependency())
+}
+```
+
+## Controlling annotations
 
 ### `@InjectByConstructors`
 
@@ -200,6 +228,8 @@ class MyModule {
 ### `@ProvidesMembers`
 
 Indicates that all visible members of dependency returned from marked function or property can be used in dependency resolution.
+
+If dependency is available in a nested module it will be used from there instead of calling a constructor even if it's marked with `@InjectByConstructors` or implements `Injectable`.
 
 WARNING: This annotation doesn't work recursively. It means that any `@ProvidesMembers` annotations in other classes or files will be ignored when generation dependency resolution.
 
