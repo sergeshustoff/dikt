@@ -4,6 +4,7 @@ import kotlin.reflect.KClass
 
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FILE, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.SOURCE)
+@Repeatable
 /**
  * Tells compiler that dependencies of listed types should be created by constructor when needed.
  *

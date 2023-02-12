@@ -4,6 +4,7 @@ import kotlin.reflect.KClass
 
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.SOURCE)
+@Repeatable
 /**
  * Tells compiler to create a lazy properties initialized with constructor calls for listed types and use that property in di functions.
  *
