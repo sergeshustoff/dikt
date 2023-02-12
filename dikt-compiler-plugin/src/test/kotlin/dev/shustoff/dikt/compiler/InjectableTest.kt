@@ -9,7 +9,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
 @OptIn(ExperimentalCompilerApi::class)
-class InjectByConstructorTest {
+class InjectableTest {
     @Rule
     @JvmField
     var folder: TemporaryFolder = TemporaryFolder()
@@ -24,9 +24,9 @@ class InjectByConstructorTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Dependency : InjectByConstructor
+            class Dependency : Injectable
 
-            class TestObject(val dependency: Dependency): InjectByConstructor
+            class TestObject(val dependency: Dependency): Injectable
 
             class MyModule {
                 fun injectable(): TestObject = resolve()
@@ -49,7 +49,7 @@ class InjectByConstructorTest {
 
             class Dependency
 
-            class TestObject(val dependency: Dependency): InjectByConstructor
+            class TestObject(val dependency: Dependency): Injectable
 
             class NestedModule(private val dependency: Dependency) {
                 fun injectable() = resolve<TestObject>()

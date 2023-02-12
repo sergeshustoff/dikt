@@ -24,7 +24,7 @@ object Annotations {
     private val injectByConstructorsAnnotation = FqName("dev.shustoff.dikt.InjectByConstructors")
     private val oldUseConstructorsAnnotation = FqName("dev.shustoff.dikt.UseConstructors")
     private val moduleSingletonsAnnotation = FqName("dev.shustoff.dikt.InjectSingleByConstructors")
-    private val injectableByConstructor = FqName("dev.shustoff.dikt.InjectByConstructor") //TODO: rename to injectable
+    private val injectable = FqName("dev.shustoff.dikt.Injectable")
 
     fun getUsedModules(descriptor: IrAnnotationContainer): List<IrType> {
         val annotation = descriptor.getAnnotation(useModulesAnnotation)
@@ -77,7 +77,7 @@ object Annotations {
             .mapNotNull { it.classOrNull?.defaultType }
     }
 
-    fun isInjectableByConstructor(type: IrType): Boolean {
-        return type.superTypes().any { it.classFqName == injectableByConstructor }
+    fun isInjectable(type: IrType): Boolean {
+        return type.superTypes().any { it.classFqName == injectable }
     }
 }

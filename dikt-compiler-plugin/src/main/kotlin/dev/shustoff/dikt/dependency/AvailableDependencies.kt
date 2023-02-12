@@ -58,7 +58,7 @@ data class AvailableDependencies(
 
         val canInjectByConstructor = isClassInSingletonList ||
                 id.type.classOrNull?.defaultType in providedByConstructor ||
-                Annotations.isInjectableByConstructor(id.type)
+                Annotations.isInjectable(id.type)
 
         // only inject by constructor if not already provided from nested module
         if (canInjectByConstructor && providedDependency?.fromNestedModule == null) {
