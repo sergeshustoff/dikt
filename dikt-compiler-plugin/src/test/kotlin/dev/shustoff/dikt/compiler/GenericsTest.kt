@@ -25,14 +25,14 @@ class GenericsTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Injectable(
+            class TestObject(
                 val strings: List<String>,
                 val numbers: List<Int>
             )
 
-            @InjectByConstructors(Injectable::class)
+            @InjectByConstructors(TestObject::class)
             class MyModule {
-                fun injectable(): Injectable = resolve()
+                fun injectable(): TestObject = resolve()
                 
                 fun provideStrings(): List<String> {
                     return listOf()
@@ -58,13 +58,13 @@ class GenericsTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Injectable<T>(
+            class TestObject<T>(
                 val value: T
             )
 
-            @InjectByConstructors(Injectable::class)
+            @InjectByConstructors(TestObject::class)
             class MyModule<T>(val value: T) {
-                fun injectable(): Injectable<T> = resolve()
+                fun injectable(): TestObject<T> = resolve()
             }
             """
             )
@@ -82,13 +82,13 @@ class GenericsTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Injectable<T>(
+            class TestObject<T>(
                 val value: T
             )
 
-            @InjectByConstructors(Injectable::class)
+            @InjectByConstructors(TestObject::class)
             class MyModule() {
-                fun injectable(value: String): Injectable<String> = resolve()
+                fun injectable(value: String): TestObject<String> = resolve()
             }
             """
             )
@@ -105,13 +105,13 @@ class GenericsTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Injectable<T>(
+            class TestObject<T>(
                 val value: T
             )
 
-            @InjectSingleByConstructors(Injectable::class)
+            @InjectSingleByConstructors(TestObject::class)
             class MyModule<T>(val value: T) {
-                fun injectable(): Injectable<T> = resolve()
+                fun injectable(): TestObject<T> = resolve()
             }
             """
             )
@@ -130,15 +130,15 @@ class GenericsTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Injectable(
+            class TestObject(
                 val value: String
             )
 
             class GenericModule<T>(val value: T)
 
-            @InjectByConstructors(Injectable::class)
+            @InjectByConstructors(TestObject::class)
             class MyModule(@ProvidesMembers val module: GenericModule<String>) {
-                fun injectable(): Injectable = resolve()
+                fun injectable(): TestObject = resolve()
             }
             """
             )

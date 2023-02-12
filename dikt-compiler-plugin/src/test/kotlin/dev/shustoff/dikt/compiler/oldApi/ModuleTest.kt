@@ -28,13 +28,13 @@ class ModuleTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
             class MyModule(
                 val dependency1: Dependency,
                 val dependency2: Dependency
             ) {
-                @Create fun injectable(): Injectable
+                @Create fun injectable(): TestObject
             }
             """
             )
@@ -55,10 +55,10 @@ class ModuleTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
             class MyModule {
-                @Create fun injectable(): Injectable
+                @Create fun injectable(): TestObject
 
                 fun provide1() = Dependency()
                 fun provide2() = Dependency()
@@ -82,11 +82,11 @@ class ModuleTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
             
             interface Module {
                 val dependency: Dependency
-                @Create fun injectable(): Injectable            
+                @Create fun injectable(): TestObject            
             }
             """
             )
@@ -107,10 +107,10 @@ class ModuleTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
             class MyModule {
-                @Create fun injectable(): Injectable
+                @Create fun injectable(): TestObject
 
                 private fun provideDependency(): Dependency {
                     return Dependency()
@@ -134,10 +134,10 @@ class ModuleTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
             class MyModule {
-                @Create fun injectable(name: String): Injectable
+                @Create fun injectable(name: String): TestObject
 
                 private fun String.provideDependency(): Dependency {
                     return Dependency()

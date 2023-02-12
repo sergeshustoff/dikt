@@ -31,7 +31,7 @@ class ValueClassParamsTest {
             @JvmInline
             value class Title(val value: String)
 
-            class Injectable(
+            class TestObject(
                 val id: Id,
                 val title: Title
             )
@@ -40,7 +40,7 @@ class ValueClassParamsTest {
                 val id: Id,
                 val title: Title
             ) {
-                @Create fun injectable(): Injectable
+                @Create fun injectable(): TestObject
             }
             """
             )

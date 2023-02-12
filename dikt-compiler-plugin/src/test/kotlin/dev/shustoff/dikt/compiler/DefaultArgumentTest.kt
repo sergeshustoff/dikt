@@ -26,11 +26,11 @@ class DefaultArgumentTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Injectable(val dependency: String = "default")
+            class TestObject(val dependency: String = "default")
 
-            @InjectByConstructors(Injectable::class)
+            @InjectByConstructors(TestObject::class)
             class MyModule {
-                fun injectable(dependency: String): Injectable = resolve()
+                fun injectable(dependency: String): TestObject = resolve()
             }
             """
             )
@@ -48,11 +48,11 @@ class DefaultArgumentTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Injectable(val dependency: String)
+            class TestObject(val dependency: String)
 
-            @InjectByConstructors(Injectable::class)
+            @InjectByConstructors(TestObject::class)
             class MyModule {
-                fun injectable(dependency: String = "default"): Injectable = resolve()
+                fun injectable(dependency: String = "default"): TestObject = resolve()
             }
             """
             )
@@ -70,14 +70,14 @@ class DefaultArgumentTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Injectable(
+            class TestObject(
                 val dependency: String = "default",
                 val index: Int
             )
 
-            @InjectByConstructors(Injectable::class)
+            @InjectByConstructors(TestObject::class)
             class MyModule {
-                fun injectable(index: Int): Injectable = resolve()
+                fun injectable(index: Int): TestObject = resolve()
             }
             """
             )

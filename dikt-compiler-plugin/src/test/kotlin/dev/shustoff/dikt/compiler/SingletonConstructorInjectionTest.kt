@@ -26,11 +26,11 @@ class SingletonConstructorInjectionTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Injectable
+            class TestObject
 
-            @InjectSingleByConstructors(Injectable::class)
+            @InjectSingleByConstructors(TestObject::class)
             class MyModule {
-                fun injectable(): Injectable = resolve()
+                fun injectable(): TestObject = resolve()
             }
             """
             )
@@ -48,11 +48,11 @@ class SingletonConstructorInjectionTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Injectable(val name: String)
+            class TestObject(val name: String)
 
-            @InjectSingleByConstructors(Injectable::class)
+            @InjectSingleByConstructors(TestObject::class)
             class MyModule {
-                fun injectable(name: String): Injectable = resolve()
+                fun injectable(name: String): TestObject = resolve()
             }
             """
             )
@@ -71,10 +71,10 @@ class SingletonConstructorInjectionTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Injectable(val name: String)
+            class TestObject(val name: String)
 
-            @InjectSingleByConstructors(Injectable::class)
-            fun String.injectable(): Injectable = resolve()
+            @InjectSingleByConstructors(TestObject::class)
+            fun String.injectable(): TestObject = resolve()
             """
             )
         )

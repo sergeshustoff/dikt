@@ -28,11 +28,11 @@ class InjectByConstructorsTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
-            @InjectByConstructors(Dependency::class, Injectable::class)
+            @InjectByConstructors(Dependency::class, TestObject::class)
             class MyModule {
-                fun injectable(): Injectable = resolve()
+                fun injectable(): TestObject = resolve()
             }
             """
             )
@@ -52,12 +52,12 @@ class InjectByConstructorsTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
             class MyModule {
 
-                @InjectByConstructors(Dependency::class, Injectable::class)
-                fun injectable(): Injectable = resolve()
+                @InjectByConstructors(Dependency::class, TestObject::class)
+                fun injectable(): TestObject = resolve()
             }
             """
             )
@@ -72,17 +72,17 @@ class InjectByConstructorsTest {
             SourceFile.kotlin(
                 "MyModule.kt",
                 """
-            @file:InjectByConstructors(Dependency::class, Injectable::class)
+            @file:InjectByConstructors(Dependency::class, TestObject::class)
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
             class MyModule {
 
-                fun injectable(): Injectable = resolve()
+                fun injectable(): TestObject = resolve()
             }
             """
             )

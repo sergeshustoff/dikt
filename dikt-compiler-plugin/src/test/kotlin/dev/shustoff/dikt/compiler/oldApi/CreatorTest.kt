@@ -29,10 +29,10 @@ class CreatorTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
             class MyModule(val dependency: Dependency) {
-                @Create fun injectable(): Injectable
+                @Create fun injectable(): TestObject
             }
             """
             )
@@ -50,10 +50,10 @@ class CreatorTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
 
-            class Injectable
+            class TestObject
 
             class MyModule {
-                @Create fun injectable(): Injectable
+                @Create fun injectable(): TestObject
             }
             """
             )
@@ -73,10 +73,10 @@ class CreatorTest {
 
             class Dependency()
             
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
             class MyModule {
-                @Create fun injectable(): Injectable
+                @Create fun injectable(): TestObject
             }
             """
             )
@@ -97,10 +97,10 @@ class CreatorTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
             class MyModule {
-                @Create fun injectable(dependency: Dependency): Injectable
+                @Create fun injectable(dependency: Dependency): TestObject
             }
             """
             )
@@ -118,10 +118,10 @@ class CreatorTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Injectable
+            class TestObject
 
             class MyModule {
-                @CreateSingle fun injectable(): Injectable
+                @CreateSingle fun injectable(): TestObject
             }
             """
             )
@@ -139,10 +139,10 @@ class CreatorTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Injectable(val name: String)
+            class TestObject(val name: String)
 
             class MyModule {
-                @CreateSingle fun injectable(name: String): Injectable
+                @CreateSingle fun injectable(name: String): TestObject
             }
             """
             )
@@ -161,10 +161,10 @@ class CreatorTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Injectable(val name: String)
+            class TestObject(val name: String)
 
             interface MyModule {
-                @Create fun injectable(name: String): Injectable
+                @Create fun injectable(name: String): TestObject
             }
             """
             )
@@ -183,9 +183,9 @@ class CreatorTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Injectable(val name: String)
+            class TestObject(val name: String)
 
-            @Create fun injectable(name: String): Injectable
+            @Create fun injectable(name: String): TestObject
             """
             )
         )
@@ -202,9 +202,9 @@ class CreatorTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Injectable(val name: String)
+            class TestObject(val name: String)
 
-            @Create fun String.injectable(): Injectable
+            @Create fun String.injectable(): TestObject
             """
             )
         )
@@ -222,12 +222,12 @@ class CreatorTest {
             import dev.shustoff.dikt.*
 
             class Dependency()
-            class Injectable(val name: String, val dependency: Dependency)
+            class TestObject(val name: String, val dependency: Dependency)
 
             class NestedModule(val dependency: Dependency)
 
             class Module(@ProvidesMembers val nestedModule: NestedModule) {
-                @Create fun String.injectable(): Injectable
+                @Create fun String.injectable(): TestObject
             }
             """
             )
@@ -245,9 +245,9 @@ class CreatorTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Injectable(val name: String)
+            class TestObject(val name: String)
 
-            @CreateSingle fun String.injectable(): Injectable
+            @CreateSingle fun String.injectable(): TestObject
             """
             )
         )

@@ -26,13 +26,13 @@ class RecursiveDependencyTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Dependency(val injectable: Injectable)
+            class Dependency(val injectable: TestObject)
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
-            @InjectByConstructors(Injectable::class, Dependency::class)
+            @InjectByConstructors(TestObject::class, Dependency::class)
             class MyModule {
-                fun injectable(): Injectable = resolve()
+                fun injectable(): TestObject = resolve()
                 fun dependency(): Dependency = resolve()
             }
             """
@@ -52,17 +52,17 @@ class RecursiveDependencyTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Injectable(val injectable: Injectable)
+            class TestObject(val injectable: TestObject)
 
-            @InjectByConstructors(Injectable::class)
+            @InjectByConstructors(TestObject::class)
             class MyModule {
-                fun injectable(): Injectable = resolve()
+                fun injectable(): TestObject = resolve()
             }
             """
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("Recursive dependency: dev.shustoff.dikt.compiler.Injectable")
+        Truth.assertThat(result.messages).contains("Recursive dependency: dev.shustoff.dikt.compiler.TestObject")
     }
 
     @Test
@@ -77,18 +77,18 @@ class RecursiveDependencyTest {
 
             class Dependency()
             
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
-            @InjectByConstructors(Injectable::class)
+            @InjectByConstructors(TestObject::class)
             class MyModule {
-                fun injectable(): Injectable = resolve()
+                fun injectable(): TestObject = resolve()
                 fun dependency(dependency: Dependency) = Dependency()
             }
             """
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("Recursive dependency: dev.shustoff.dikt.compiler.Injectable -> dev.shustoff.dikt.compiler.Dependency")
+        Truth.assertThat(result.messages).contains("Recursive dependency: dev.shustoff.dikt.compiler.TestObject -> dev.shustoff.dikt.compiler.Dependency")
     }
 
     @Test
@@ -104,11 +104,11 @@ class RecursiveDependencyTest {
             class Dependency1()
             class Dependency2()
 
-            class Injectable(val dependency: Dependency1)
+            class TestObject(val dependency: Dependency1)
 
-            @InjectByConstructors(Injectable::class)
+            @InjectByConstructors(TestObject::class)
             class MyModule {
-                fun injectable(): Injectable = resolve()
+                fun injectable(): TestObject = resolve()
                 
                 fun provideDependency1(dependency: Dependency2): Dependency1 {
                     return Dependency1()
@@ -122,7 +122,7 @@ class RecursiveDependencyTest {
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("Recursive dependency: dev.shustoff.dikt.compiler.Injectable -> dev.shustoff.dikt.compiler.Dependency1 -> dev.shustoff.dikt.compiler.Dependency2")
+        Truth.assertThat(result.messages).contains("Recursive dependency: dev.shustoff.dikt.compiler.TestObject -> dev.shustoff.dikt.compiler.Dependency1 -> dev.shustoff.dikt.compiler.Dependency2")
     }
 
     @Test
@@ -135,12 +135,12 @@ class RecursiveDependencyTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Injectable()
+            class TestObject()
 
             class MyModule {
-                fun injectable(): Injectable = resolve()
+                fun injectable(): TestObject = resolve()
                 
-                fun provideInjectable(injectable: Injectable): Injectable {
+                fun provideTestObject(injectable: TestObject): TestObject {
                     return injectable
                 }
             }
@@ -148,7 +148,7 @@ class RecursiveDependencyTest {
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("Recursive dependency: dev.shustoff.dikt.compiler.Injectable")
+        Truth.assertThat(result.messages).contains("Recursive dependency: dev.shustoff.dikt.compiler.TestObject")
     }
 
     @Test
@@ -161,15 +161,15 @@ class RecursiveDependencyTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Injectable()
-            class Injectable1()
+            class TestObject()
+            class TestObject1()
 
-            @InjectByConstructors(Injectable1::class)
-            fun injectable1(): Injectable1 = resolve()
+            @InjectByConstructors(TestObject1::class)
+            fun injectable1(): TestObject1 = resolve()
 
-            fun injectable(): Injectable = provideInjectable()
+            fun injectable(): TestObject = provideTestObject()
             
-            fun provideInjectable(): Injectable {
+            fun provideTestObject(): TestObject {
                 return injectable()
             }
             """
@@ -188,16 +188,16 @@ class RecursiveDependencyTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Injectable()
-            class Injectable1()
+            class TestObject()
+            class TestObject1()
 
-            @InjectByConstructors(Injectable1::class)
+            @InjectByConstructors(TestObject1::class)
             class Module {
-                fun injectable1(): Injectable1 = resolve()
+                fun injectable1(): TestObject1 = resolve()
     
-                fun injectable(): Injectable = provideInjectable()
+                fun injectable(): TestObject = provideTestObject()
                 
-                fun provideInjectable(): Injectable {
+                fun provideTestObject(): TestObject {
                     return injectable()
                 }
             }

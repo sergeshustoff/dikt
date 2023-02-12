@@ -31,17 +31,17 @@ class ValueClassParamsTest {
             @JvmInline
             value class Title(val value: String)
 
-            class Injectable(
+            class TestObject(
                 val id: Id,
                 val title: Title
             )
 
-            @InjectByConstructors(Injectable::class)
+            @InjectByConstructors(TestObject::class)
             class MyModule(
                 val id: Id,
                 val title: Title
             ) {
-                fun injectable(): Injectable = resolve()
+                fun injectable(): TestObject = resolve()
             }
             """
             )

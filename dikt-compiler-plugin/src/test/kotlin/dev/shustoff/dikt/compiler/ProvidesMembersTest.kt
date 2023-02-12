@@ -27,13 +27,13 @@ class ProvidesMembersTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
             class NestedModule(val dependency: Dependency)
 
-            @InjectByConstructors(Injectable::class)
+            @InjectByConstructors(TestObject::class)
             class MyModule(@ProvidesMembers val nested: NestedModule) {
-                fun injectable(): Injectable = resolve()
+                fun testObject(): TestObject = resolve()
             }
             """
             )
@@ -53,13 +53,13 @@ class ProvidesMembersTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
             class NestedModule(val dependency: Dependency)
 
-            @InjectByConstructors(Injectable::class)
+            @InjectByConstructors(TestObject::class)
             class MyModule(@ProvidesMembers val nested: NestedModule) {
-                fun injectable(): Injectable = resolve()
+                fun injectable(): TestObject = resolve()
             }
             """
             )
@@ -79,15 +79,15 @@ class ProvidesMembersTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
             class NestedModule2(val dependency: Dependency)
 
             class NestedModule(@ProvidesMembers val nested: NestedModule2)
 
-            @InjectByConstructors(Injectable::class)
+            @InjectByConstructors(TestObject::class)
             class MyModule(@ProvidesMembers val nested: NestedModule) {
-                fun injectable(): Injectable = resolve()
+                fun injectable(): TestObject = resolve()
             }
             """
             )
@@ -109,7 +109,7 @@ class ProvidesMembersTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
             class Module1 {
                 fun dependency() = Dependency()
@@ -119,12 +119,12 @@ class ProvidesMembersTest {
                 fun dependency() = Dependency()            
             }
 
-            @InjectByConstructors(Injectable::class)
+            @InjectByConstructors(TestObject::class)
             class MyModule(
                 @ProvidesMembers val module1: Module1,
                 @ProvidesMembers val module2: Module2
             ) {
-                fun injectable(): Injectable = resolve()
+                fun injectable(): TestObject = resolve()
             }
             """
             )
@@ -147,15 +147,15 @@ class ProvidesMembersTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
             
             interface OtherModule {
                 val dependency: Dependency
             }
     
-            @InjectByConstructors(Injectable::class)
+            @InjectByConstructors(TestObject::class)
             class MyModule(@ProvidesMembers val other: OtherModule) {
-                fun injectable(): Injectable = resolve()
+                fun injectable(): TestObject = resolve()
             }
             """
             )

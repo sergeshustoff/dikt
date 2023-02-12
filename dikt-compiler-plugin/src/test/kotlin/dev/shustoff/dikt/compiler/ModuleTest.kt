@@ -28,14 +28,14 @@ class ModuleTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
-            @InjectByConstructors(Injectable::class)
+            @InjectByConstructors(TestObject::class)
             class MyModule(
                 val dependency1: Dependency,
                 val dependency2: Dependency
             ) {
-                fun injectable(): Injectable = resolve()
+                fun injectable(): TestObject = resolve()
             }
             """
             )
@@ -56,11 +56,11 @@ class ModuleTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
-            @InjectByConstructors(Injectable::class)
+            @InjectByConstructors(TestObject::class)
             class MyModule {
-                fun injectable(): Injectable = resolve()
+                fun injectable(): TestObject = resolve()
 
                 fun provide1() = Dependency()
                 fun provide2() = Dependency()
@@ -84,11 +84,11 @@ class ModuleTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
-            @InjectByConstructors(Injectable::class)
+            @InjectByConstructors(TestObject::class)
             class MyModule {
-                fun injectable(): Injectable = resolve()
+                fun injectable(): TestObject = resolve()
 
                 private fun provideDependency(): Dependency {
                     return Dependency()
@@ -112,11 +112,11 @@ class ModuleTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
-            @InjectByConstructors(Injectable::class)
+            @InjectByConstructors(TestObject::class)
             class MyModule {
-                fun injectable(name: String): Injectable = resolve()
+                fun injectable(name: String): TestObject = resolve()
 
                 private fun String.provideDependency(): Dependency {
                     return Dependency()

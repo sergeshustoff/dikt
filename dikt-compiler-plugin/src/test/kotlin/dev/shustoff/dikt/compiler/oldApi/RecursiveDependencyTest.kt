@@ -26,12 +26,12 @@ class RecursiveDependencyTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
 
-            class Dependency(val injectable: Injectable)
+            class Dependency(val injectable: TestObject)
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
             class MyModule {
-                @Create fun injectable(): Injectable
+                @Create fun injectable(): TestObject
                 @Create fun dependency(): Dependency
             }
             """
@@ -52,16 +52,16 @@ class RecursiveDependencyTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
 
-            class Injectable(val injectable: Injectable)
+            class TestObject(val injectable: TestObject)
 
             class MyModule {
-                @Create fun injectable(): Injectable
+                @Create fun injectable(): TestObject
             }
             """
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("Recursive dependency: dev.shustoff.dikt.compiler.Injectable")
+        Truth.assertThat(result.messages).contains("Recursive dependency: dev.shustoff.dikt.compiler.TestObject")
     }
 
     @Test
@@ -76,17 +76,17 @@ class RecursiveDependencyTest {
 
             class Dependency()
             
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
             class MyModule {
-                @Create fun injectable(): Injectable
+                @Create fun injectable(): TestObject
                 fun dependency(dependency: Dependency) = Dependency()
             }
             """
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("Recursive dependency: dev.shustoff.dikt.compiler.Injectable -> dev.shustoff.dikt.compiler.Dependency")
+        Truth.assertThat(result.messages).contains("Recursive dependency: dev.shustoff.dikt.compiler.TestObject -> dev.shustoff.dikt.compiler.Dependency")
     }
 
     @Test
@@ -102,10 +102,10 @@ class RecursiveDependencyTest {
             class Dependency1()
             class Dependency2()
 
-            class Injectable(val dependency: Dependency1)
+            class TestObject(val dependency: Dependency1)
 
             class MyModule {
-                @Create fun injectable(): Injectable
+                @Create fun injectable(): TestObject
                 
                 fun provideDependency1(): Dependency1 {
                     provideDependency2()
@@ -137,12 +137,12 @@ class RecursiveDependencyTest {
             import dev.shustoff.dikt.Provide
 
 
-            class Injectable()
+            class TestObject()
 
             class MyModule {
-                @Provide fun injectable(): Injectable
+                @Provide fun injectable(): TestObject
                 
-                fun provideInjectable(): Injectable {
+                fun provideTestObject(): TestObject {
                     return injectable()
                 }
             }

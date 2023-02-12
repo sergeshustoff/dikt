@@ -25,14 +25,14 @@ class NullabilityTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
 
-            class Injectable(
+            class TestObject(
                 val dependency: String
             )
 
             class MyModule(
                 val dependency: String?
             ) {
-                @Create fun injectable(): Injectable
+                @Create fun injectable(): TestObject
             }
             """
             )
@@ -51,14 +51,14 @@ class NullabilityTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.Create
 
-            class Injectable(
+            class TestObject(
                 val dependency: String?
             )
 
             class MyModule(
                 val dependency: String?
             ) {
-                @Create fun injectable(): Injectable
+                @Create fun injectable(): TestObject
             }
             """
             )

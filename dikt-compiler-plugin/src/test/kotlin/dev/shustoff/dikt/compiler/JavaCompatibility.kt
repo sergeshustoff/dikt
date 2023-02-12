@@ -21,16 +21,16 @@ class JavaCompatibility {
         val result = compile(
             folder.root,
             SourceFile.java(
-                "Injectable.java",
+                "TestObject.java",
                 """
             package dev.shustoff.dikt.compiler;
             
-            public class Injectable {
+            public class TestObject {
                 public final String dependency;
-                public Injectable(String dependency) {
+                public TestObject(String dependency) {
                     this.dependency = dependency;
                 }
-                private Injectable() {
+                private TestObject() {
                     this.dependency = "";
                 }
             }
@@ -52,9 +52,9 @@ class JavaCompatibility {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            @InjectByConstructors(Injectable::class)
+            @InjectByConstructors(TestObject::class)
             class MyModule(@ProvidesMembers val other: OtherModule, val param: Int) {
-                fun injectable(): Injectable = resolve()
+                fun injectable(): TestObject = resolve()
             }
             """
             )
@@ -67,16 +67,16 @@ class JavaCompatibility {
         val result = compile(
             folder.root,
             SourceFile.java(
-                "Injectable.java",
+                "TestObject.java",
                 """
             package dev.shustoff.dikt.compiler;
             
-            public class Injectable {
+            public class TestObject {
                 public final String dependency;
-                public Injectable(String dependency) {
+                public TestObject(String dependency) {
                     this.dependency = dependency;
                 }
-                public Injectable() {
+                public TestObject() {
                     this.dependency = "";
                 }
             }
@@ -98,14 +98,14 @@ class JavaCompatibility {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            @InjectByConstructors(Injectable::class)
+            @InjectByConstructors(TestObject::class)
             class MyModule(@ProvidesMembers val other: OtherModule, val param: Int) {
-                fun injectable(): Injectable = resolve()
+                fun injectable(): TestObject = resolve()
             }
             """
             )
         )
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        Truth.assertThat(result.messages).contains("Multiple visible constructors found for dev.shustoff.dikt.compiler.Injectable")
+        Truth.assertThat(result.messages).contains("Multiple visible constructors found for dev.shustoff.dikt.compiler.TestObject")
     }
 }

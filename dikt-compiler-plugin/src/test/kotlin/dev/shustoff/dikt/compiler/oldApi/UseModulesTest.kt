@@ -29,13 +29,13 @@ class UseModulesTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
             class NestedModule(val dependency: Dependency)
 
             @UseModules(NestedModule::class)
             class MyModule(val nested: NestedModule) {
-                @Create fun injectable(): Injectable
+                @Create fun injectable(): TestObject
             }
             """
             )
@@ -57,12 +57,12 @@ class UseModulesTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
             class NestedModule(val dependency: Dependency)
 
             class MyModule(val nested: NestedModule) {
-                @Create fun injectable(): Injectable
+                @Create fun injectable(): TestObject
             }
             """
             )
@@ -83,13 +83,13 @@ class UseModulesTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
             class NestedModule(val dependency: Dependency)
 
             class MyModule() {
                 @UseModules(NestedModule::class)
-                @Create fun injectable(nested: NestedModule): Injectable
+                @Create fun injectable(nested: NestedModule): TestObject
             }
             """
             )
@@ -110,13 +110,13 @@ class UseModulesTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
             class NestedModule(val dependency: Dependency)
 
             class MyModule(val nested: NestedModule) {
                 @UseModules(NestedModule::class)
-                @Create fun injectable(): Injectable
+                @Create fun injectable(): TestObject
             }
             """
             )
@@ -137,7 +137,7 @@ class UseModulesTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
             class NestedModule2(val dependency: Dependency)
 
@@ -146,7 +146,7 @@ class UseModulesTest {
 
             @UseModules(NestedModule::class)
             class MyModule(val nested: NestedModule) {
-                @Create fun injectable(): Injectable
+                @Create fun injectable(): TestObject
             }
             """
             )
@@ -169,7 +169,7 @@ class UseModulesTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
             class Module1 {
                 fun dependency() = Dependency()
@@ -184,7 +184,7 @@ class UseModulesTest {
                 val module1: Module1,
                 val module2: Module2
             ) {
-                @Create fun injectable(): Injectable
+                @Create fun injectable(): TestObject
             }
             """
             )
@@ -208,7 +208,7 @@ class UseModulesTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
             
             interface OtherModule {
                 val dependency: Dependency
@@ -216,7 +216,7 @@ class UseModulesTest {
     
             @UseModules(OtherModule::class)
             class MyModule(val other: OtherModule) {
-                @Create fun injectable(): Injectable
+                @Create fun injectable(): TestObject
             }
             """
             )
@@ -237,14 +237,14 @@ class UseModulesTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
             
             interface OtherModule {
                 val dependency: Dependency
             }
     
             @UseModules(OtherModule::class)
-            @Create fun OtherModule.injectable(): Injectable
+            @Create fun OtherModule.injectable(): TestObject
             """
             )
         )
@@ -264,14 +264,14 @@ class UseModulesTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
             
             interface OtherModule {
                 val dependency: Dependency
             }
     
             @UseModules(OtherModule::class)
-            @Create fun injectable(module: OtherModule): Injectable
+            @Create fun injectable(module: OtherModule): TestObject
             """
             )
         )

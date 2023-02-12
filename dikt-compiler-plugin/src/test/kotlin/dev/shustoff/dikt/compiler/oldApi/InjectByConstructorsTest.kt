@@ -29,11 +29,11 @@ class InjectByConstructorsTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
             @InjectByConstructors(Dependency::class)
             class MyModule {
-                @Create fun injectable(): Injectable
+                @Create fun injectable(): TestObject
             }
             """
             )
@@ -54,12 +54,12 @@ class InjectByConstructorsTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
             class MyModule {
 
                 @InjectByConstructors(Dependency::class)
-                @Create fun injectable(): Injectable
+                @Create fun injectable(): TestObject
             }
             """
             )
@@ -81,11 +81,11 @@ class InjectByConstructorsTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
             class MyModule {
 
-                @Create fun injectable(): Injectable
+                @Create fun injectable(): TestObject
             }
             """
             )

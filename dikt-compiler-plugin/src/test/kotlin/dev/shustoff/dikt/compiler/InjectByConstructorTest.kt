@@ -26,10 +26,10 @@ class InjectByConstructorTest {
 
             class Dependency : InjectByConstructor
 
-            class Injectable(val dependency: Dependency): InjectByConstructor
+            class TestObject(val dependency: Dependency): InjectByConstructor
 
             class MyModule {
-                fun injectable(): Injectable = resolve()
+                fun injectable(): TestObject = resolve()
             }
             """
             )
@@ -49,14 +49,14 @@ class InjectByConstructorTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency): InjectByConstructor
+            class TestObject(val dependency: Dependency): InjectByConstructor
 
             class NestedModule(private val dependency: Dependency) {
-                fun injectable() = resolve<Injectable>()
+                fun injectable() = resolve<TestObject>()
             }
 
             class MyModule(@ProvidesMembers val module: NestedModule) {
-                fun injectable(): Injectable = resolve()
+                fun injectable(): TestObject = resolve()
             }
             """
             )

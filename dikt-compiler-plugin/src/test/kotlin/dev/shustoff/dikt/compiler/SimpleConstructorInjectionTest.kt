@@ -27,11 +27,11 @@ class SimpleConstructorInjectionTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
-            @InjectByConstructors(Injectable::class)
+            @InjectByConstructors(TestObject::class)
             class MyModule(val dependency: Dependency) {
-                fun injectable(): Injectable = resolve()
+                fun injectable(): TestObject = resolve()
             }
             """
             )
@@ -49,11 +49,11 @@ class SimpleConstructorInjectionTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Injectable
+            class TestObject
 
-            @InjectByConstructors(Injectable::class)
+            @InjectByConstructors(TestObject::class)
             class MyModule {
-                fun injectable(): Injectable = resolve()
+                fun injectable(): TestObject = resolve()
             }
             """
             )
@@ -73,11 +73,11 @@ class SimpleConstructorInjectionTest {
 
             class Dependency()
             
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
-            @InjectByConstructors(Injectable::class)
+            @InjectByConstructors(TestObject::class)
             class MyModule {
-                fun injectable(): Injectable = resolve()
+                fun injectable(): TestObject = resolve()
             }
             """
             )
@@ -98,11 +98,11 @@ class SimpleConstructorInjectionTest {
 
             class Dependency
 
-            class Injectable(val dependency: Dependency)
+            class TestObject(val dependency: Dependency)
 
-            @InjectByConstructors(Injectable::class)
+            @InjectByConstructors(TestObject::class)
             class MyModule {
-                fun injectable(dependency: Dependency): Injectable = resolve()
+                fun injectable(dependency: Dependency): TestObject = resolve()
             }
             """
             )
@@ -120,10 +120,10 @@ class SimpleConstructorInjectionTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Injectable(val name: String)
+            class TestObject(val name: String)
 
-            @InjectByConstructors(Injectable::class)
-            fun injectable(name: String): Injectable = resolve()
+            @InjectByConstructors(TestObject::class)
+            fun injectable(name: String): TestObject = resolve()
             """
             )
         )
@@ -140,10 +140,10 @@ class SimpleConstructorInjectionTest {
             package dev.shustoff.dikt.compiler
             import dev.shustoff.dikt.*
 
-            class Injectable(val name: String)
+            class TestObject(val name: String)
 
-            @InjectByConstructors(Injectable::class)
-            fun String.injectable(): Injectable = resolve()
+            @InjectByConstructors(TestObject::class)
+            fun String.injectable(): TestObject = resolve()
             """
             )
         )
@@ -161,13 +161,13 @@ class SimpleConstructorInjectionTest {
             import dev.shustoff.dikt.*
 
             class Dependency()
-            class Injectable(val name: String, val dependency: Dependency)
+            class TestObject(val name: String, val dependency: Dependency)
 
             class NestedModule(val dependency: Dependency)
 
-            @InjectByConstructors(Injectable::class)
+            @InjectByConstructors(TestObject::class)
             class Module(@ProvidesMembers val nestedModule: NestedModule) {
-                fun String.injectable(): Injectable = resolve()
+                fun String.injectable(): TestObject = resolve()
             }
             """
             )
