@@ -1,6 +1,7 @@
 package dev.shustoff.dikt.dependency
 
 import dev.shustoff.dikt.message_collector.ErrorCollector
+import dev.shustoff.dikt.utils.Annotations
 import dev.shustoff.dikt.utils.VisibilityChecker
 import org.jetbrains.kotlin.backend.jvm.codegen.anyTypeArgument
 import org.jetbrains.kotlin.ir.backend.js.utils.asString
@@ -10,8 +11,6 @@ import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.constructors
 import org.jetbrains.kotlin.ir.util.primaryConstructor
-import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.types.checker.SimpleClassicTypeSystemContext.argumentsCount
 
 data class AvailableDependencies(
     private val errorCollector: ErrorCollector,
@@ -53,23 +52,25 @@ data class AvailableDependencies(
             forFunction.error("Generic types can't be singletons")
         }
         val isSingleton = isClassInSingletonList && !id.type.anyTypeArgument { true }
-        if (isClassInSingletonList || id.type.classOrNull?.defaultType in providedByConstructor) {
+
+        val providedDependency = findProvidedDependency(id, forFunction)
+            ?.takeIf { !forbidFunctionParams || it !is ProvidedDependency.Parameter }
+
+        val canInjectByConstructor = isClassInSingletonList ||
+                id.type.classOrNull?.defaultType in providedByConstructor ||
+                Annotations.isInjectableByConstructor(id.type)
+
+        // only inject by constructor if not already provided from nested module
+        if (canInjectByConstructor && providedDependency?.fromNestedModule == null) {
             return buildResolvedConstructor(forFunction, id, usedTypes, providedByConstructor, singletons, forbidFunctionParams = forbidFunctionParams, isSingleton = isSingleton)
+        } else if (providedDependency != null) {
+            // TODO: maybe return something even in case of error to postpone throwing it? In this case we can try different type of injection
+            return resolveProvidedDependency(id, forFunction, providedDependency, usedTypes, providedByConstructor, singletons)
+        } else if (defaultValue != null) {
+            return ResolvedDependency.ParameterDefaultValue(id.type, defaultValue)
         } else {
-            val dependency = findProvidedDependency(id, forFunction)
-                ?.takeIf { !forbidFunctionParams || it !is ProvidedDependency.Parameter }
-            if (dependency == null) {
-                if (defaultValue == null) {
-                    forFunction.error(
-                        "Can't resolve dependency ${id.asErrorString()}",
-                    )
-                    return null
-                } else {
-                    return ResolvedDependency.ParameterDefaultValue(id.type, defaultValue)
-                }
-            } else {
-                return resolveProvidedDependency(id, forFunction, dependency, usedTypes, providedByConstructor, singletons)
-            }
+            forFunction.error("Can't resolve dependency ${id.asErrorString()}")
+            return null
         }
     }
 

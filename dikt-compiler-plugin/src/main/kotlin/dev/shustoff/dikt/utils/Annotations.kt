@@ -6,11 +6,13 @@ import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.expressions.IrClassReference
 import org.jetbrains.kotlin.ir.expressions.IrVararg
 import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.util.getAnnotation
 import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.isAnnotation
+import org.jetbrains.kotlin.ir.util.superTypes
 import org.jetbrains.kotlin.name.FqName
 
 object Annotations {
@@ -22,6 +24,7 @@ object Annotations {
     private val injectByConstructorsAnnotation = FqName("dev.shustoff.dikt.InjectByConstructors")
     private val oldUseConstructorsAnnotation = FqName("dev.shustoff.dikt.UseConstructors")
     private val moduleSingletonsAnnotation = FqName("dev.shustoff.dikt.InjectSingleByConstructors")
+    private val injectableByConstructor = FqName("dev.shustoff.dikt.InjectByConstructor") //TODO: rename to injectable
 
     fun getUsedModules(descriptor: IrAnnotationContainer): List<IrType> {
         val annotation = descriptor.getAnnotation(useModulesAnnotation)
@@ -72,5 +75,9 @@ object Annotations {
                     .orEmpty()
             }
             .mapNotNull { it.classOrNull?.defaultType }
+    }
+
+    fun isInjectableByConstructor(type: IrType): Boolean {
+        return type.superTypes().any { it.classFqName == injectableByConstructor }
     }
 }
