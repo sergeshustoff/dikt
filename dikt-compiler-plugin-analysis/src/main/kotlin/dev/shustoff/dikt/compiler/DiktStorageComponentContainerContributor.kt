@@ -14,7 +14,6 @@ class DiktStorageComponentContainerContributor : StorageComponentContainerContri
         platform: TargetPlatform,
         moduleDescriptor: ModuleDescriptor
     ) {
-        super.registerModuleComponents(container, platform, moduleDescriptor)
         container.useInstance(DiktPlatformDiagnosticSuppressor())
         container.useClashResolver(PlatformDiagnosticSuppressorClashesResolver())
     }
