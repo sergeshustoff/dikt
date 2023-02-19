@@ -1,6 +1,6 @@
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.github.sergeshustoff.dikt/dikt-compiler-plugin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.github.sergeshustoff.dikt/dikt-compiler-plugin)
 [![gradle plugin](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/io/github/sergeshustoff/dikt/dikt-gradle-plugin/maven-metadata.xml.svg?label=gradle%20plugin)](https://plugins.gradle.org/plugin/io.github.sergeshustoff.dikt)
-![Kotlin version](https://kotlin-version.aws.icerock.dev/kotlin-version?group=io.github.sergeshustoff.dikt&name=dikt-annotations)
+![Kotlin version](https://kotlin-version.aws.icerock.dev/kotlin-version?group=io.github.sergeshustoff.dikt&name=dikt)
 
 # DI.kt
 **Warning**: this documentation is for library version 1.1.+ (witch is in alpha now), for older version check [old version of documentation](https://github.com/sergeshustoff/dikt/blob/3665a75221f288a1c455fe94acb2c9c84039e2af/README.md).
@@ -36,7 +36,7 @@ Because library uses undocumented compiler api that often changes each library v
 
 | DI.kt version | Supported kotlin versions        |
 |---------------|----------------------------------|
-| 1.1.0-alpha3  | 1.8.0 - 1.8.10 (k2 with new api) |
+| 1.1.0-alpha4  | 1.8.0 - 1.8.10 (k2 with new api) |
 | 1.0.3         | 1.8.0 - 1.8.10 (k2 with hacks)   |
 | 1.0.2         | 1.7.0 - 1.7.21                   |
 | 1.0.1         | 1.6.2x                           |
@@ -54,7 +54,7 @@ In build.gradle file in module add plugin:
 ```groovy
 plugins {
     ...
-    id 'io.github.sergeshustoff.dikt' version '1.1.0-alpha3'
+    id 'io.github.sergeshustoff.dikt' version '1.1.0-alpha4'
 }
 ```
 
@@ -62,7 +62,7 @@ plugins {
 
 Create module and declare provided dependencies. 
 Use `resolve()` function in places where you need your dependencies provided/created.
-Use `@ProvidesMembers`, `@InjectByConstructors` and `@InjectSingleByConstructors` annotations or `Injectable` interface to control how dependencies are provided and what classes can be created by primary constructors.
+Use `@ProvidesMembers`, `@InjectByConstructors` and `@InjectSingleByConstructors` annotations, or `Injectable` and `InjectableSingleInScope<Scope>` interfaces to control how dependencies are provided and what classes can be created by primary constructors.
 
 #### Example:
 ```kotlin
@@ -128,12 +128,25 @@ class MyModule {
 ### Module
 Any class or object that has `resolve()` calls somewhere inside is essentially a module. We don't need additional annotation for it, but if you need content of another 'module' provided as dependency in generated code, you need to mark a function or property returning that class as module using annotation `@ProvidesMembers`.
 
+If you need module to contain singletons of some scope mark it with `@ModuleScopes(YourScope::class)`
+
 ### Singleton
-There are no true singletons in DI.kt, but instead you can use `@InjectSingleByConstructors`. When resolving types listed in this annotation backing lazy field will be generated in module and instance of that type will be reused when it's resolved again. Such singleton instances persist as long as they resolved for the same instance of containing class (module). Effectively it gives each module a scope of their own and makes the scoping more understandable.
+There are no true singletons in DI.kt, but instead you can use `@InjectSingleByConstructors`. When resolving types listed in this annotation backing lazy field will be generated in module and instance of that type will be reused when it's resolved again. Such singleton instances persist as long as they resolved for the same instance of containing class (module). 
+Effectively it gives each module a scope of their own and makes the scoping more understandable.
+
+Same effect as with `@InjectSingleByConstructors` can be achieved using `InjectableSingleInScope<Scope>` interface on dependency and `@ModuleScopes(Scope::class)` annotation on module.
 
 ### `Injectable` interface
 
 Dependencies directly implementing interface `Injectable` will be provided by constructor when required. It is similar to @Inject annotation in java, but for compiler plugin compatibility with incremental compilation it had to be an interface (changing annotations will not cause dependant code to recompile, while changing supertypes will).
+
+This interface can be used in project without dikt compiler plugin:
+
+```groovy
+dependencies {
+    implementation 'io.github.sergeshustoff.dikt:dikt:1.1.0-alpha4'
+}
+```
 
 #### Example:
 
@@ -159,7 +172,47 @@ class MyModule {
 }
 ```
 
-## Controlling annotations
+### `InjectableSingleInScope<Scope>` interface
+
+Similar to `Injectable` interface, but for types implementing this interface directly can only be created in module annotated with @ModuleScopes(Scope::class) with the same type used for scope.
+
+Only one instance of that type will be created in module, lazy backing field will be used to ensure that.
+
+This interface can be used in project without dikt compiler plugin, same as `Injectable`:
+
+#### Example:
+
+```kotlin
+object Scope
+
+class SomeSingleton : InjectableSingleInScope<Scope>
+
+class Something(val dependency: SomeSingleton) : Injectable
+
+@ModuleScopes(Scope::class)
+class MyModule {
+    fun provideSomething(): Something = resolve()
+}
+```
+
+#### Generated code:
+
+```kotlin
+object Scope
+
+class SomeSingleton : InjectableSingleInScope<Scope>
+
+class Something(val dependency: SomeSingleton) : Injectable
+
+class MyModule {
+    private val _someSingleton by lazy { SomeSingleton() }
+    fun provideSomething(): Something = Something(_someSingleton)
+}
+```
+
+## Annotations
+
+For controlling how things created or provided by di there are a few annotations. Those annotations allow to use DI.kt without injectable code knowing anything about DI.kt.
 
 ### `@InjectByConstructors`
 
@@ -259,5 +312,41 @@ class MyModule(
     private val external: ExternalModule
 ) {
     fun provideSomething(): Something = Something(external.name)
+}
+```
+
+### `@ModuleScopes`
+
+Indicates that singletons for given scopes can be created in module marked with the annotation. Allows multiple scopes for a single module if needed.
+
+Should be used in pair with InjectableSingleInScope interface on dependencies, scope should be the same in @ModuleScopes and in type parameter of InjectableSingleInScope
+
+#### Example:
+
+```kotlin
+object Scope
+
+class SomeSingleton : InjectableSingleInScope<Scope>
+
+class Something(val dependency: SomeSingleton) : Injectable
+
+@ModuleScopes(Scope::class)
+class MyModule {
+    fun provideSomething(): Something = resolve()
+}
+```
+
+#### Generated code:
+
+```kotlin
+object Scope
+
+class SomeSingleton : InjectableSingleInScope<Scope>
+
+class Something(val dependency: SomeSingleton) : Injectable
+
+class MyModule {
+    private val _someSingleton by lazy { SomeSingleton() }
+    fun provideSomething(): Something = Something(_someSingleton)
 }
 ```

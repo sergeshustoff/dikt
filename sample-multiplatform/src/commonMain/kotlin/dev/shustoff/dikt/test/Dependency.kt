@@ -1,3 +1,5 @@
 package dev.shustoff.dikt.test
 
-class Dependency()
+import dev.shustoff.dikt.InjectableSingleInScope
+
+class Dependency() : InjectableSingleInScope<NestedScope>

@@ -2,8 +2,7 @@ package dev.shustoff.dikt.sample
 
 import dev.shustoff.dikt.*
 
-@InjectSingleByConstructors(CarOwner::class)
-@InjectByConstructors(Car::class, Garage::class)
+@ModuleScopes(CarScope::class)
 class CarModule(
     @ProvidesMembers private val engineModule: EngineModule,
 ) {
@@ -15,3 +14,5 @@ class CarModule(
 
     fun getGarage(): Garage = resolve()
 }
+
+object CarScope

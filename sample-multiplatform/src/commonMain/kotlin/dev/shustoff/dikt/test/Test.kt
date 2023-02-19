@@ -5,13 +5,13 @@ object Test {
         val nestedModule = NestedModule()
         val module = SampleModule(nestedModule)
         check(nestedModule.dependency() === nestedModule.dependency()) {
-            "Should use single instance by @CreateSingle"
+            "Should use single instance of Dependency"
         }
         check(module.dependencySingleton() === module.dependencySingleton()) {
-            "Should use single instance by @ProvideCached"
+            "Should use single instance of provided Dependency"
         }
         check(module.singleton() === module.singleton()) {
-            "Should use single instance by @CreateCached"
+            "Should use single instance of Singleton"
         }
         check(module.injectableFactory("asd") != null) {
             "Should return value from generated function"

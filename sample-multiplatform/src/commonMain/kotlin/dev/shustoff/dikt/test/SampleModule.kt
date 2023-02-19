@@ -2,8 +2,7 @@ package dev.shustoff.dikt.test
 
 import dev.shustoff.dikt.*
 
-@InjectByConstructors(SomeInjectable::class)
-@InjectSingleByConstructors(Singleton::class)
+@ModuleScopes(SampleModuleScope::class)
 class SampleModule(
     @ProvidesMembers private val nestedModule: NestedModule
 ) {
@@ -12,3 +11,5 @@ class SampleModule(
     fun singleton(): Singleton = resolve()
     fun String.injectableExtension(): SomeInjectable = resolve()
 }
+
+object SampleModuleScope
