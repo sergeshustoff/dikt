@@ -21,7 +21,8 @@ data class AvailableDependencies(
         type: IrType,
         forFunction: IrFunction,
         providedByConstructor: Set<IrType>,
-        singletons: Set<IrType>
+        singletons: Set<IrType>,
+        moduleScopes: Set<IrType>
     ): ResolvedDependency? {
         return resolveDependencyInternal(
             DependencyId(type),
@@ -31,6 +32,7 @@ data class AvailableDependencies(
                 providedByConstructor = providedByConstructor,
                 singletons = singletons,
                 forbidFunctionParams = false,
+                moduleScopes = moduleScopes,
             )
         )
     }
@@ -47,7 +49,8 @@ data class AvailableDependencies(
             return null
         }
 
-        val isClassInSingletonList = id.type.classOrNull?.defaultType in context.singletons
+        val isClassInSingletonList = id.type.classOrNull?.defaultType in context.singletons ||
+                Annotations.isInjectableSingletonInScopes(id.type, context.moduleScopes)
         if (isClassInSingletonList && id.type.anyTypeArgument { true }) {
             context.forFunction.error("Generic types can't be singletons")
         }
@@ -220,6 +223,7 @@ data class AvailableDependencies(
         val usedTypes: List<IrType>,
         val providedByConstructor: Set<IrType>,
         val singletons: Set<IrType>,
-        val forbidFunctionParams: Boolean
+        val forbidFunctionParams: Boolean,
+        val moduleScopes: Set<IrType>,
     )
 }

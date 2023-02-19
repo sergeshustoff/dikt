@@ -5,10 +5,7 @@ import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.expressions.IrClassReference
 import org.jetbrains.kotlin.ir.expressions.IrVararg
-import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.types.classFqName
-import org.jetbrains.kotlin.ir.types.classOrNull
-import org.jetbrains.kotlin.ir.types.defaultType
+import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.getAnnotation
 import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.isAnnotation
@@ -17,7 +14,7 @@ import org.jetbrains.kotlin.name.FqName
 
 object Annotations {
     private val createAnnotation = FqName("dev.shustoff.dikt.Create")
-    private val CreateSingleAnnotation = FqName("dev.shustoff.dikt.CreateSingle")
+    private val createSingleAnnotation = FqName("dev.shustoff.dikt.CreateSingle")
     private val providedAnnotation = FqName("dev.shustoff.dikt.Provide")
     private val useModulesAnnotation = FqName("dev.shustoff.dikt.UseModules")
     private val providesMembersAnnotation = FqName("dev.shustoff.dikt.ProvidesMembers")
@@ -25,6 +22,8 @@ object Annotations {
     private val oldUseConstructorsAnnotation = FqName("dev.shustoff.dikt.UseConstructors")
     private val moduleSingletonsAnnotation = FqName("dev.shustoff.dikt.InjectSingleByConstructors")
     private val injectable = FqName("dev.shustoff.dikt.Injectable")
+    private val injectableSingle = FqName("dev.shustoff.dikt.InjectableSingleInScope")
+    private val moduleScopesAnnotation = FqName("dev.shustoff.dikt.ModuleScopes")
 
     fun getUsedModules(descriptor: IrAnnotationContainer): List<IrType> {
         val annotation = descriptor.getAnnotation(useModulesAnnotation)
@@ -35,18 +34,28 @@ object Annotations {
             .orEmpty()
     }
 
+    fun getModuleScopes(descriptor: IrClass): Set<IrType> {
+        val annotation = descriptor.getAnnotation(moduleScopesAnnotation)
+
+        return (annotation?.getValueArgument(0) as? IrVararg)
+            ?.elements
+            ?.mapNotNull { (it as? IrClassReference)?.classType }
+            .orEmpty()
+            .toSet()
+    }
+
     fun providesMembers(descriptor: IrAnnotationContainer): Boolean {
         return descriptor.hasAnnotation(providesMembersAnnotation)
     }
 
     fun isByDi(descriptor: IrFunction): Boolean {
         return descriptor.annotations.hasAnnotation(createAnnotation)
-                || descriptor.annotations.hasAnnotation(CreateSingleAnnotation)
+                || descriptor.annotations.hasAnnotation(createSingleAnnotation)
                 || descriptor.annotations.hasAnnotation(providedAnnotation)
     }
 
     fun isCached(descriptor: IrFunction): Boolean {
-        return descriptor.hasAnnotation(CreateSingleAnnotation)
+        return descriptor.hasAnnotation(createSingleAnnotation)
     }
 
     fun singletonsByConstructor(module: IrClass): Set<IrType> {
@@ -79,5 +88,13 @@ object Annotations {
 
     fun isInjectable(type: IrType): Boolean {
         return type.superTypes().any { it.classFqName == injectable }
+    }
+
+    fun isInjectableSingletonInScopes(type: IrType, scopes: Set<IrType>): Boolean {
+        val singletonParent = type.classOrNull?.superTypes()
+            ?.firstOrNull { it.classFqName == injectableSingle } as? IrSimpleType
+        val scope = singletonParent?.arguments?.firstOrNull()?.typeOrNull ?: return false
+
+        return scope in scopes
     }
 }

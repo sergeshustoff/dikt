@@ -13,8 +13,10 @@ class DiktGradlePlugin : KotlinCompilerPluginSupportPlugin {
         target.extensions.create("dikt", DiktGradleExtension::class.java)
         target.afterEvaluate { project ->
             project.configurations.filter { it.name.endsWith("implementation", ignoreCase = true) }.forEach {
-                project.dependencies.add(it.name, project.dependencies.create("io.github.sergeshustoff.dikt:dikt:$version"))
                 project.dependencies.add(it.name, project.dependencies.create("io.github.sergeshustoff.dikt:dikt-internal:$version"))
+            }
+            project.configurations.filter { it.name.endsWith("api", ignoreCase = true) }.forEach {
+                project.dependencies.add(it.name, project.dependencies.create("io.github.sergeshustoff.dikt:dikt:$version"))
             }
         }
     }

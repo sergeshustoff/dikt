@@ -75,7 +75,8 @@ class DiNewApiCodeGenerator(
 
         val singletons = module?.let { Annotations.singletonsByConstructor(module) }.orEmpty()
         val providedByConstructor = getProvidedByConstructor(function)
-        val resolvedDependency = dependencies.resolveDependency(original.type, function, providedByConstructor, singletons)
+        val moduleScopes = module?.let { Annotations.getModuleScopes(module) }.orEmpty()
+        val resolvedDependency = dependencies.resolveDependency(original.type, function, providedByConstructor, singletons, moduleScopes)
         incrementalHelper?.recordFunctionDependency(function, resolvedDependency)
         return injectionBuilder.buildResolvedDependencyCall(module, function, resolvedDependency, original)
     }
