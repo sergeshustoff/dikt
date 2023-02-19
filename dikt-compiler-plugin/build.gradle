@@ -10,7 +10,8 @@ dependencies {
     testImplementation 'dev.zacsweers.kctfork:core:0.2.1'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'com.google.truth:truth:1.1.3'
-    testImplementation project(":dikt-annotations")
+    testImplementation project(":dikt")
+    testImplementation project(":dikt-internal")
 }
 
 task fatJar(type: Jar) {

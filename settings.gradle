@@ -5,7 +5,8 @@ pluginManagement {
     }
 }
 
-include ':dikt-annotations'
+include ':dikt'
+include ':dikt-internal'
 include ':dikt-gradle-plugin'
 include ':dikt-compiler-plugin-analysis'
 include ':dikt-compiler-plugin'

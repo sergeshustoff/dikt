@@ -13,7 +13,8 @@ class DiktGradlePlugin : KotlinCompilerPluginSupportPlugin {
         target.extensions.create("dikt", DiktGradleExtension::class.java)
         target.afterEvaluate { project ->
             project.configurations.filter { it.name.endsWith("implementation", ignoreCase = true) }.forEach {
-                project.dependencies.add(it.name, project.dependencies.create("io.github.sergeshustoff.dikt:dikt-annotations:$version"))
+                project.dependencies.add(it.name, project.dependencies.create("io.github.sergeshustoff.dikt:dikt:$version"))
+                project.dependencies.add(it.name, project.dependencies.create("io.github.sergeshustoff.dikt:dikt-internal:$version"))
             }
         }
     }
@@ -37,7 +38,7 @@ class DiktGradlePlugin : KotlinCompilerPluginSupportPlugin {
     }
 
     companion object {
-        private const val version = "1.1.0-alpha3"
+        private const val version = "1.1.0-alpha4"
     }
 }
 
