@@ -36,7 +36,7 @@ Because library uses undocumented compiler api that often changes each library v
 
 | DI.kt version | Supported kotlin versions        |
 |---------------|----------------------------------|
-| 1.1.0-alpha4  | 1.8.0 - 1.8.10 (k2 with new api) |
+| 1.1.0-alpha5  | 1.8.0 - 1.8.10 (k2 with new api) |
 | 1.0.3         | 1.8.0 - 1.8.10 (k2 with hacks)   |
 | 1.0.2         | 1.7.0 - 1.7.21                   |
 | 1.0.1         | 1.6.2x                           |
@@ -54,7 +54,15 @@ In build.gradle file in module add plugin:
 ```groovy
 plugins {
     ...
-    id 'io.github.sergeshustoff.dikt' version '1.1.0-alpha4'
+    id 'io.github.sergeshustoff.dikt' version '1.1.0-alpha5'
+}
+```
+
+Or use this if you only need base api without code generation (Injectable and InjectableSingleInScope interfaces):
+
+```groovy
+dependencies {
+    implementation "io.github.sergeshustoff.dikt:dikt:1.1.0-alpha5"
 }
 ```
 
@@ -144,7 +152,7 @@ This interface can be used in project without dikt compiler plugin:
 
 ```groovy
 dependencies {
-    implementation 'io.github.sergeshustoff.dikt:dikt:1.1.0-alpha4'
+    implementation 'io.github.sergeshustoff.dikt:dikt:1.1.0-alpha5'
 }
 ```
 
