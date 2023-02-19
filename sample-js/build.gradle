@@ -7,6 +7,7 @@ version 'unspecified'
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-js"
     implementation project(':sample-multiplatform')
+    implementation "io.github.sergeshustoff.dikt:dikt:$dikt_sample_version"
     testImplementation "org.jetbrains.kotlin:kotlin-test-js"
 }
 
