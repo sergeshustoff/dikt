@@ -32,7 +32,6 @@ shadowJar {
     }
     baseName = "dikt-compiler-plugin"
     version = "$dikt_version"
-    classifier = null
 }
 
 publishing {
