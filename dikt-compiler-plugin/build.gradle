@@ -16,7 +16,7 @@ dependencies {
 
 task fatJar(type: Jar) {
     baseName = "dikt-compiler-plugin"
-    version = "$dikt_version"
+    version = "$VERSION_NAME"
     manifest {
         attributes 'Implementation-Title': 'Gradle Jar File Example',
                 'Implementation-Version': version,
@@ -32,7 +32,7 @@ shadowJar {
         inheritFrom project.tasks.fatJar.manifest
     }
     baseName = "dikt-compiler-plugin"
-    version = "$dikt_version"
+    version = "$VERSION_NAME"
     classifier = null
 }
 

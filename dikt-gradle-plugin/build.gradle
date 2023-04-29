@@ -5,7 +5,7 @@ apply plugin: 'com.gradle.plugin-publish'
 
 group = "io.github.sergeshustoff.dikt"
 archivesBaseName = "dikt-gradle-plugin"
-version = "$dikt_version"
+version = "$VERSION_NAME"
 
 repositories {
     mavenLocal()
@@ -20,7 +20,7 @@ gradlePlugin {
         diktPlugin {
             id = "io.github.sergeshustoff.dikt"
             displayName = 'DI.kt'
-            version = "$dikt_version"
+            version = "$VERSION_NAME"
             description = 'Simple DI for kotlin multiplatform with depdendency graph validation in compile-time.'
             implementationClass = "dev.shustoff.dikt.gradle.DiktGradlePlugin"
             tags.set(['tags', 'kotlin', 'multiplatform', 'DI'])
