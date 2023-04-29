@@ -26,7 +26,9 @@ Because of its simplicity it might be useful for minimalistic DI in libraries an
 [Dagger](https://github.com/google/dagger) - most popular DI framework for Android, but it doesn't support multiplatform yet.
 
 ### Sample
-I forked kotlin multiplatform sample [here](https://github.com/sergeshustoff/PeopleInSpace-dikt-sample) and replaced di with DI.kt. It's clumsy, but it shows that library works on different platforms. 
+I forked kotlin multiplatform sample [here](https://github.com/sergeshustoff/PeopleInSpace-dikt-sample) and replaced di with DI.kt. It's clumsy, but it shows that library works on different platforms.
+
+[Here](https://github.com/holdbetter/PremierLeague) you can find more extensive project by [@holdbetter](https://github.com/holdbetter) that uses DI.kt.
 
 ## Installation
 
@@ -34,20 +36,22 @@ I forked kotlin multiplatform sample [here](https://github.com/sergeshustoff/Peo
 
 Because library uses undocumented compiler api that often changes each library version works well only with specific kotlin versions, check table bellow to decide witch library version to use.
 
-| DI.kt version | Supported kotlin versions        |
-|---------------|----------------------------------|
-| 1.1.0-alpha6  | 1.8.20 (k2 with new api)         |
-| 1.1.0-alpha5  | 1.8.0 - 1.8.10 (k2 with new api) |
-| 1.0.4         | 1.8.20 (k2 with hacks)           |
-| 1.0.3         | 1.8.0 - 1.8.10 (k2 with hacks)   |
-| 1.0.2         | 1.7.0 - 1.7.21                   |
-| 1.0.1         | 1.6.2x                           |
-| 1.0.0-alpha9  | 1.6.10                           |
-| 1.0.0-alpha7  | 1.6.0                            |
+| DI.kt version       | Supported kotlin versions         |
+|---------------------|-----------------------------------|
+| 1.1.0               | 1.8.20 - 1.8.21 (k2 with new api) |
+| 1.1.0-kotlin-1.8.10 | 1.8.0 - 1.8.10 (k2 with new api)  |
+| 1.1.0-kotlin-1.7.21 | 1.7.20 - 1.7.21 (k2 with new api) |
+| 1.0.4               | 1.8.20 - 1.8.21 (k2 with hacks)   |
+| 1.0.3               | 1.8.0 - 1.8.10 (k2 with hacks)    |
+| 1.0.2               | 1.7.0 - 1.7.21                    |
+| 1.0.1               | 1.6.2x                            |
+| 1.0.0-alpha9        | 1.6.10                            |
+| 1.0.0-alpha7        | 1.6.0                             |
 
 #### K2 support:
 
 Version 1.0.3 has limited support for k2, but requires hack to work properly - annotation @Suppress("NON_ABSTRACT_FUNCTION_WITH_NO_BODY") is required for module or each di function because plugin can't bypass function body check on k2 for now.
+
 Version 1.1.0 has new api compatible with k2 without additional hacks. Old incompatible api is deprecated
 
 #### Gradle plugin:
@@ -55,8 +59,7 @@ In build.gradle file in module add plugin:
 
 ```groovy
 plugins {
-    ...
-    id 'io.github.sergeshustoff.dikt' version '1.1.0-alpha5'
+    id 'io.github.sergeshustoff.dikt' version '1.1.0'
 }
 ```
 
@@ -64,7 +67,7 @@ Or use this if you only need base api without code generation (Injectable and In
 
 ```groovy
 dependencies {
-    implementation "io.github.sergeshustoff.dikt:dikt:1.1.0-alpha5"
+    implementation "io.github.sergeshustoff.dikt:dikt:1.1.0"
 }
 ```
 
@@ -154,7 +157,7 @@ This interface can be used in project without dikt compiler plugin:
 
 ```groovy
 dependencies {
-    implementation 'io.github.sergeshustoff.dikt:dikt:1.1.0-alpha5'
+    implementation 'io.github.sergeshustoff.dikt:dikt:1.1.0'
 }
 ```
 
