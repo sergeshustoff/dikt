@@ -20,12 +20,12 @@ fun compile(root: File, vararg sourceFiles: SourceFile): KotlinCompilation.Resul
         workingDir = root
         //TODO: uncomment when fixed
 //        compilerPluginRegistrars = listOf(DiktComponentRegistrar())
-        componentRegistrars = listOf(DiktComponentRegistrarLegacy())
+        componentRegistrars = listOf(DiktComponentRegistrar())
         inheritClassPath = true
         sources = sourceFiles.asList()
         verbose = false
         useIR = true
-//        jvmTarget = JvmTarget.JVM_1_8.description
+        jvmTarget = JvmTarget.JVM_1_8.description
     }.compile()
 }
 

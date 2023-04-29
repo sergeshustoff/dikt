@@ -38,7 +38,7 @@ class DiktGradlePlugin : KotlinCompilerPluginSupportPlugin {
     }
 
     companion object {
-        private const val version = "1.1.0-kotlin-1.8.10"
+        private const val version = "1.1.0-kotlin-1.7.21"
     }
 }
 
