@@ -8,23 +8,27 @@ import dev.shustoff.dikt.utils.Annotations
 import dev.shustoff.dikt.utils.Utils
 import dev.shustoff.dikt.utils.VisibilityChecker
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
+import org.jetbrains.kotlin.backend.wasm.ir2wasm.getSourceLocation
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrFunction
+import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.file
 import org.jetbrains.kotlin.ir.util.getPackageFragment
+import org.jetbrains.kotlin.ir.util.isAnonymousFunction
+import org.jetbrains.kotlin.ir.util.isAnonymousObject
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformer
 import org.jetbrains.kotlin.name.FqName
 
-class DiNewApiCodeGenerator(
+class CodeGenerator(
     private val errorCollector: ErrorCollector,
     pluginContext: IrPluginContext,
     private val incrementalHelper: IncrementalCompilationHelper?,
-) : IrElementTransformer<DiNewApiCodeGenerator.Data>, ErrorCollector by errorCollector {
+) : IrElementTransformer<CodeGenerator.Data>, ErrorCollector by errorCollector {
 
     private val dependencyCollector = DependencyCollector(this)
     private val injectionBuilder = InjectionBuilder(pluginContext, errorCollector)
@@ -32,6 +36,10 @@ class DiNewApiCodeGenerator(
     private val providedByConstructorInClassCache = mutableMapOf<IrClass, List<IrType>>()
     private val providedByConstructorInFileCache = mutableMapOf<IrFile, List<IrType>>()
     private val dependencyByModuleCache = mutableMapOf<IrClass, AvailableDependencies>()
+
+    override fun visitFile(declaration: IrFile, data: Data): IrFile {
+        return super.visitFile(declaration, data.copy(file = declaration))
+    }
 
     override fun visitClass(declaration: IrClass, data: Data): IrStatement {
         return super.visitClass(declaration, data.copy(module = declaration))
@@ -41,10 +49,14 @@ class DiNewApiCodeGenerator(
         return super.visitFunction(declaration, data.copy(function = declaration))
     }
 
+    override fun visitProperty(declaration: IrProperty, data: Data): IrStatement {
+        return super.visitProperty(declaration, data.copy(property = declaration))
+    }
+
     override fun visitExpression(expression: IrExpression, data: Data): IrExpression {
         if (expression is IrCall && isDiFunction(expression)) {
-            if (data.function == null) {
-                expression.symbol.owner.error("Dependency can only be resolved inside functions for now")
+            if (data.function == null || data.property != null) {
+                error("Dependency can only be resolved inside functions and getters", expression.getSourceLocation(data.file?.fileEntry))
                 return super.visitExpression(expression, data)
             } else {
                 val resolvedExpression = resolveDependency(data.module, data.function, expression)
@@ -99,7 +111,9 @@ class DiNewApiCodeGenerator(
                 expression.symbol.owner.name.identifier == diFunctionName
 
     data class Data(
+        val file: IrFile? = null,
         val module: IrClass? = null,
+        val property: IrProperty? = null,
         val function: IrFunction? = null,
     )
 

@@ -1,5 +1,6 @@
 package dev.shustoff.dikt.message_collector
 
+import org.jetbrains.kotlin.backend.wasm.ir2wasm.getSourceLocation
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
@@ -9,12 +10,13 @@ import org.jetbrains.kotlin.ir.declarations.IrDeclarationWithName
 import org.jetbrains.kotlin.ir.declarations.path
 import org.jetbrains.kotlin.ir.util.file
 import org.jetbrains.kotlin.ir.util.fileEntry
+import org.jetbrains.kotlin.wasm.ir.source.location.SourceLocation
 
 interface ErrorCollector {
     fun IrDeclarationWithName?.info(text: String)
     fun IrDeclarationWithName?.error(text: String)
     fun info(text: String)
-    fun error(text: String)
+    fun error(text: String, location: SourceLocation? = null)
     fun hasErrors(): Boolean
 }
 
@@ -29,8 +31,11 @@ private class ErrorCollectorImpl(
         messageCollector.report(CompilerMessageSeverity.ERROR, getElement() + text, location())
     }
 
-    override fun error(text: String) {
-        messageCollector.report(CompilerMessageSeverity.ERROR, text)
+    override fun error(text: String, location: SourceLocation?) {
+        val messageLocation = (location as? SourceLocation.Location)?.let {
+            CompilerMessageLocation.create(it.file, it.line + 1, it.column + 1, null)
+        }
+        messageCollector.report(CompilerMessageSeverity.ERROR, text, messageLocation)
     }
 
     override fun IrDeclarationWithName?.info(text: String) {

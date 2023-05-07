@@ -104,6 +104,29 @@ class SomethingModule(
   
 Under the hood primary constructor will be called for SomethingElse and SomeSingleton. If constructor requires some parameters - they will be retrieved form module's properties and functions, and from function parameters.
 
+### `resolve()` function limitations
+`resolve()` function can be called only in functions bodies. It shouldn't be called in constructors or property initializers
+
+
+#### Example
+
+```kotlin
+class Module {
+    fun something(): Something = resolve() // correct
+    
+    fun processSomething() {
+        val something: Something = resolve() // correct
+    }
+    
+    val something: Something = resolve() // incorrect
+    val something: Something by lazy { resolve() } // incorrect
+    val something: Something get() = resolve() // incorrect
+    init {
+        val something: Something = resolve() // incorrect
+    }
+}
+```
+
 ### Recursive dependency
 Library will fail compilation if there are any recursive dependencies in generated code, but there might be a situation when users code uses generated code to provide dependencies for injection.
 In this case it's better to write a function and list all needed dependencies in parameters instead of calling module functions directly:
