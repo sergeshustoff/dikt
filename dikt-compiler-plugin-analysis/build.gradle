@@ -1,6 +1,0 @@
-apply plugin: "org.jetbrains.kotlin.jvm"
-apply plugin: "com.vanniktech.maven.publish"
-
-dependencies {
-    compileOnly "org.jetbrains.kotlin:kotlin-compiler-embeddable"
-}

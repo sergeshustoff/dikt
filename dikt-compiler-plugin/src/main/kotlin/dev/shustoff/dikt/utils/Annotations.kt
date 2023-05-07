@@ -13,13 +13,9 @@ import org.jetbrains.kotlin.ir.util.superTypes
 import org.jetbrains.kotlin.name.FqName
 
 object Annotations {
-    private val createAnnotation = FqName("dev.shustoff.dikt.Create")
-    private val createSingleAnnotation = FqName("dev.shustoff.dikt.CreateSingle")
-    private val providedAnnotation = FqName("dev.shustoff.dikt.Provide")
     private val useModulesAnnotation = FqName("dev.shustoff.dikt.UseModules")
     private val providesMembersAnnotation = FqName("dev.shustoff.dikt.ProvidesMembers")
     private val injectByConstructorsAnnotation = FqName("dev.shustoff.dikt.InjectByConstructors")
-    private val oldUseConstructorsAnnotation = FqName("dev.shustoff.dikt.UseConstructors")
     private val moduleSingletonsAnnotation = FqName("dev.shustoff.dikt.InjectSingleByConstructors")
     private val injectable = FqName("dev.shustoff.dikt.Injectable")
     private val injectableSingle = FqName("dev.shustoff.dikt.InjectableSingleInScope")
@@ -48,16 +44,6 @@ object Annotations {
         return descriptor.hasAnnotation(providesMembersAnnotation)
     }
 
-    fun isByDi(descriptor: IrFunction): Boolean {
-        return descriptor.annotations.hasAnnotation(createAnnotation)
-                || descriptor.annotations.hasAnnotation(createSingleAnnotation)
-                || descriptor.annotations.hasAnnotation(providedAnnotation)
-    }
-
-    fun isCached(descriptor: IrFunction): Boolean {
-        return descriptor.hasAnnotation(createSingleAnnotation)
-    }
-
     fun singletonsByConstructor(module: IrClass): Set<IrType> {
         return module.annotations
             .filter { it.isAnnotation(moduleSingletonsAnnotation) }
@@ -71,12 +57,8 @@ object Annotations {
             .toSet()
     }
 
-    fun isProvided(descriptor: IrFunction): Boolean {
-        return descriptor.hasAnnotation(providedAnnotation)
-    }
-
     fun getProvidedByConstructor(descriptor: IrAnnotationContainer): List<IrType> {
-        return descriptor.annotations.filter { it.isAnnotation(injectByConstructorsAnnotation) || it.isAnnotation(oldUseConstructorsAnnotation) }
+        return descriptor.annotations.filter { it.isAnnotation(injectByConstructorsAnnotation) }
             .flatMap { annotation ->
                 (annotation.getValueArgument(0) as? IrVararg)
                     ?.elements

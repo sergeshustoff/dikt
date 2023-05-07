@@ -6,7 +6,6 @@ import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.extensions.StorageComponentContainerContributor
 
 @OptIn(ExperimentalCompilerApi::class)
 class DiktComponentRegistrar : CompilerPluginRegistrar() {
@@ -15,7 +14,6 @@ class DiktComponentRegistrar : CompilerPluginRegistrar() {
     override fun ExtensionStorage.registerExtensions(configuration: CompilerConfiguration) {
         val errorCollector = errorCollector(configuration)
         val incrementalCache = incrementalHelper(configuration)
-        StorageComponentContainerContributor.registerExtension(DiktStorageComponentContainerContributor())
         IrGenerationExtension.registerExtension(DiktIrGenerationExtension(errorCollector, incrementalCache))
     }
 }

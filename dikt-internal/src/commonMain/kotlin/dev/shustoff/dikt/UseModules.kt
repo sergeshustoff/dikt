@@ -5,7 +5,7 @@ import kotlin.reflect.KClass
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS, AnnotationTarget.FILE)
 @Retention(AnnotationRetention.SOURCE)
 /**
- * Marks types that should provide all visible properties and functions as dependencies. Such dependencies can be used in @Create function as constructor parameters or in @Provide function as returned type.
+ * Marks types that should provide all visible properties and functions as dependencies. Such dependencies can be used in `resolve()` calls as returned type or as a parameters for dependency consturctors.
  * Listed type should be available from DI function in order to provide type's properties and functions.
  *
  * This annotation doesn't work recursively. It means that function can only use modules listed in its own annotation or in its class annotation or in its file annotation.

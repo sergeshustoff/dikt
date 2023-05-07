@@ -3,11 +3,10 @@ apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: "com.vanniktech.maven.publish"
 
 dependencies {
-    implementation project(":dikt-compiler-plugin-analysis")
     compileOnly "org.jetbrains.kotlin:kotlin-compiler-embeddable"
 
     testImplementation 'org.jetbrains.kotlin:kotlin-compiler-embeddable'
-    testImplementation 'dev.zacsweers.kctfork:core:0.2.1'
+    testImplementation 'com.github.tschuchortdev:kotlin-compile-testing:1.5.0'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'com.google.truth:truth:1.1.3'
     testImplementation project(":dikt")
