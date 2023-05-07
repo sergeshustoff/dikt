@@ -24,7 +24,7 @@ jobs:
         java-version: '11'
         distribution: 'adopt'
     - name: Build before publinshing
-      run: ./gradlew :dikt:build :dikt-internal:build :dikt-compiler-plugin-analysis:build :dikt-compiler-plugin:build
+      run: ./gradlew :dikt:build :dikt-internal:build :dikt-compiler-plugin:build
     - name: Publish to Maven Central
       run: ./gradlew publish --no-daemon --no-parallel
       env: 
