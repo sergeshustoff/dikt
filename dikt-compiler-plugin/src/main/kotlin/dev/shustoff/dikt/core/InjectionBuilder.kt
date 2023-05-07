@@ -44,7 +44,7 @@ class InjectionBuilder(
             return DeclarationIrBuilder(pluginContext, function.symbol).irThrowNoDependencyException(function)
         }
         val context = Context(module, function, original)
-         return createDependencyCall(context, dependency)
+        return createDependencyCall(context, dependency)
     }
 
 

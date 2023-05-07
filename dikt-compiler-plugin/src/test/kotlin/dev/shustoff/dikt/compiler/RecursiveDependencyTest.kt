@@ -207,4 +207,33 @@ class RecursiveDependencyTest {
         Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
     }
 
+    @Test
+    fun `recursive dependency between functions is detected correctly`() {
+        val result = compile(
+            folder.root,
+            SourceFile.kotlin(
+                "MyModule.kt",
+                """
+            package dev.shustoff.dikt.compiler
+            import dev.shustoff.dikt.*
+
+            class Injectable1(val dependency: Injectable2)
+            class Injectable2(val dependency: Injectable1)
+
+            class MyModule() {
+            
+                @InjectByConstructors(Injectable1::class)
+                fun injectable1(): Injectable1 = resolve()
+
+                @InjectByConstructors(Injectable2::class)
+                fun injectable2(): Injectable2 = resolve()
+            }
+            """
+            )
+        )
+        Truth.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
+        Truth.assertThat(result.messages).contains("injectable1: Recursive dependency detected")
+        Truth.assertThat(result.messages).contains("injectable1: Recursive dependency detected")
+        Truth.assertThat(result.messages).contains("MyModule: Recursive dependency detected: injectable1, injectable2")
+    }
 }
