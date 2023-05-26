@@ -1,5 +1,6 @@
 package dev.shustoff.dikt.gradle
 
+import io.github.sergeshustoff.dikt.dikt_gradle_plugin.BuildConfig
 import org.gradle.api.Project
 import org.gradle.api.provider.Provider
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
@@ -38,7 +39,7 @@ class DiktGradlePlugin : KotlinCompilerPluginSupportPlugin {
     }
 
     companion object {
-        private const val version = "1.1.1-alpha1"
+        private const val version = BuildConfig.VERSION_NAME
     }
 }
 

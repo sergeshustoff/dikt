@@ -1,7 +1,15 @@
-apply plugin: "java-gradle-plugin"
-apply plugin: "org.jetbrains.kotlin.jvm"
-apply plugin: "maven-publish"
-apply plugin: 'com.gradle.plugin-publish'
+plugins {
+    id("com.github.gmazzo.buildconfig") version("4.0.4")
+    id("java-gradle-plugin")
+    id("org.jetbrains.kotlin.jvm")
+    id("maven-publish")
+    id("com.gradle.plugin-publish")
+}
+
+buildConfig {
+    buildConfigField("String", "VERSION_NAME", provider { "\"$VERSION_NAME\"" })
+    useKotlinOutput()
+}
 
 group = "io.github.sergeshustoff.dikt"
 archivesBaseName = "dikt-gradle-plugin"

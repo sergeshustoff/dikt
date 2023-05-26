@@ -1,7 +1,8 @@
-apply plugin: "org.jetbrains.kotlin.jvm"
-apply plugin: 'com.github.johnrengelman.shadow'
-apply plugin: "com.vanniktech.maven.publish"
-
+plugins {
+    id("org.jetbrains.kotlin.jvm")
+    id('com.github.johnrengelman.shadow')
+    id("com.vanniktech.maven.publish")
+}
 dependencies {
     compileOnly "org.jetbrains.kotlin:kotlin-compiler-embeddable"
 
