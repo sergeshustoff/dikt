@@ -4,7 +4,6 @@ import dev.shustoff.dikt.message_collector.ErrorCollector
 import dev.shustoff.dikt.utils.Annotations
 import dev.shustoff.dikt.utils.VisibilityChecker
 import org.jetbrains.kotlin.backend.jvm.codegen.anyTypeArgument
-import org.jetbrains.kotlin.ir.backend.js.utils.asString
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrValueParameter
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
@@ -113,7 +112,15 @@ data class AvailableDependencies(
         id: DependencyId,
         forFunction: IrFunction
     ): ProvidedDependency? {
-        val dependencyOptions = dependencyMap[id].orEmpty().filter { it.irElement !== forFunction }
+        val rawDependencyOptions = dependencyMap[id].orEmpty().filter { it.irElement !== forFunction }
+
+        val dependencyOptions = if (id.type.isNullable() && rawDependencyOptions.isEmpty()) {
+            val nonNullableId = DependencyId(id.type.makeNotNull())
+            dependencyMap[nonNullableId].orEmpty().filter { it.irElement !== forFunction }
+        } else {
+            rawDependencyOptions
+        }
+
         // check local and nested in groups as well as parameterless and parameterized
         val dependency = getDependencyFromGroup(
             forFunction,
