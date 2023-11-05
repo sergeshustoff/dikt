@@ -44,7 +44,7 @@ data class AvailableDependencies(
     ): ResolvedDependency? {
         if (id.type in context.usedTypes) {
             context.forFunction.error(
-                context.usedTypes.joinToString(prefix = "Recursive dependency: ",separator = " -> ") { it.asString() }
+                context.usedTypes.joinToString(prefix = "Recursive dependency: ",separator = " -> ") { it.classFqName!!.asString() }
             )
             return null
         }
