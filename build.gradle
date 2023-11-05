@@ -13,7 +13,7 @@ buildscript {
 }
 allprojects {
     repositories {
-        mavenLocal()
         mavenCentral()
+        mavenLocal()
     }
 }
