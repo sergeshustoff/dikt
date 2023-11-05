@@ -95,7 +95,7 @@ class DiNewApiCodeGenerator(
     }
 
     private fun isDiFunction(expression: IrCall) =
-        expression.symbol.owner.getPackageFragment().fqName == diktPackage &&
+        expression.symbol.owner.getPackageFragment().packageFqName == diktPackage &&
                 expression.symbol.owner.name.identifier == diFunctionName
 
     data class Data(

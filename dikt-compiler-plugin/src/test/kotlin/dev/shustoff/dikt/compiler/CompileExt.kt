@@ -1,5 +1,6 @@
 package dev.shustoff.dikt.compiler
 
+import com.tschuchort.compiletesting.JvmCompilationResult
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import dev.shustoff.dikt.incremental.incrementalHelper
@@ -10,12 +11,11 @@ import org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
-import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.extensions.StorageComponentContainerContributor
 import java.io.File
 
 @OptIn(ExperimentalCompilerApi::class)
-fun compile(root: File, vararg sourceFiles: SourceFile): KotlinCompilation.Result {
+fun compile(root: File, vararg sourceFiles: SourceFile): JvmCompilationResult {
     return KotlinCompilation().apply {
         workingDir = root
         //TODO: uncomment when fixed
@@ -24,8 +24,6 @@ fun compile(root: File, vararg sourceFiles: SourceFile): KotlinCompilation.Resul
         inheritClassPath = true
         sources = sourceFiles.asList()
         verbose = false
-        useIR = true
-//        jvmTarget = JvmTarget.JVM_1_8.description
     }.compile()
 }
 

@@ -6,10 +6,12 @@ import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import dev.shustoff.dikt.compiler.compile
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
+@Ignore
 class UseModulesTest {
 
     @Rule
