@@ -123,7 +123,7 @@ class CodeGenerator(
     override fun visitExpression(expression: IrExpression, data: Data): IrExpression {
         if (expression is IrCall && isDiFunction(expression)) {
             if (data.function == null || data.property != null) {
-                error("Dependency can only be resolved inside functions and getters", expression.getSourceLocation(data.file?.fileEntry))
+                error("Dependency can only be resolved inside functions and getters", expression.getSourceLocation(data.file))
                 return super.visitExpression(expression, data)
             } else {
                 val resolvedDependency = resolveDependency(data.module?.irClass, data.function, expression)
