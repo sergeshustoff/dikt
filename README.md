@@ -38,7 +38,8 @@ Because library uses undocumented compiler api that often changes each library v
 
 | DI.kt version       | Supported kotlin versions         |
 |---------------------|-----------------------------------|
-| 1.1.0-kotlin-2.0.0  | 2.0.0 (k2 with new api)           |
+| 1.1.0-kotlin-2.0.20 | 2.0.20 (k2 with new api)          |
+| 1.1.0-kotlin-2.0.0  | 2.0.0 - 2.0.10 (k2 with new api)  |
 | 1.1.0               | 1.8.20 - 1.9.20 (k2 with new api) |
 | 1.1.0-kotlin-1.8.10 | 1.8.0 - 1.8.10 (k2 with new api)  |
 | 1.1.0-kotlin-1.7.21 | 1.7.20 - 1.7.21 (k2 with new api) |

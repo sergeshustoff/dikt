@@ -7,8 +7,8 @@ System.setProperty("kotlin.compiler.execution.strategy", "in-process") // For de
 dependencies {
     implementation project(':sample-multiplatform')
     implementation "io.github.sergeshustoff.dikt:dikt:$dikt_sample_version"
-    testImplementation "junit:junit:4.13"
-    testImplementation "com.google.truth:truth:1.0.1"
+    testImplementation 'junit:junit:4.13.1'
+    testImplementation 'com.google.truth:truth:1.4.2'
 }
 application {
     mainClass = 'dev.shustoff.dikt.sample.SampleMain'
